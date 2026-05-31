@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "ES2022",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "esModuleInterop": true,
+
+    /* File Layout */
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* Strict Type-Checking */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+
+    /* Formatting & Compatibility */
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+
+    /* Environment Setup & Crucial Type Roots Mapping */
+    "types": ["node", "jest"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts"
+  ]
+}

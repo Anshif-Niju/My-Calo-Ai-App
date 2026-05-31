@@ -1,0 +1,69 @@
+
+
+services:
+  # 1. MongoDB Service
+  mongodb:
+    image: mongo:7
+    container_name: mycalo_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mycalo_network
+
+  # 2. Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: mycalo_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mycalo_network
+
+  # 3. Backend Node.js API
+  api:
+    build:
+      context: ./mycalo-backend
+      dockerfile: Dockerfile
+    container_name: mycalo_api
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/mycalo
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=super_secret_access_key_123_anshif
+      - REFRESH_SECRET=super_secret_refresh_key_789_anshif
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - mycalo_network
+
+  # 4. Frontend Next.js App
+  web:
+    build:
+      context: ./mycalo-frontend
+      dockerfile: Dockerfile
+    container_name: mycalo_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:5000
+    depends_on:
+      - api
+    networks:
+      - mycalo_network
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  mycalo_network:
+    driver: bridge
