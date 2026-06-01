@@ -7,16 +7,17 @@ import authRoutes from "./modules/auth/auth.routes";
 const app = express();
 
 // 1. Security Middlewares
+
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true 
+  credentials: true
 }));
 
-// 2. Parsers
-app.use(express.json()); // JSON ബോഡി റീഡ് ചെയ്യാൻ
+// 2. req parsing
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // HTTP-Only കുക്കികൾ റീഡ് ചെയ്യാൻ
+app.use(cookieParser());
 
 // 3. API Routes
 app.use("/api/auth", authRoutes);

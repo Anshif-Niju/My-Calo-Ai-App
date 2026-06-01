@@ -1,29 +1,23 @@
-import dotenv from "dotenv";
-import mongoose from "mongoose";
-import app from "./app"; // ഇവിടെയാണ് നമ്മൾ എക്സ്പ്രസ്സ് ഇമ്പോർട്ട് ചെയ്യുന്നത്
+import app from "./app";
+import { connectDB } from "./config/db";
 import { redis } from "./config/redis";
+import { env } from "./config/env";
+import "./jobs/workers/email.worker"; 
 
-dotenv.config();
-
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
 const startServer = async () => {
   try {
-    // 1. Connect MongoDB
-    const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/mycalo";
-    await mongoose.connect(mongoUri);
-    console.log(" MongoDB connected successfully");
+    await connectDB();
 
-    // 2. Verify Redis Connection
     await redis.ping();
-    console.log(" Shared Redis instance verified active");
 
-    // 3. Start Express Server Directly
     app.listen(PORT, () => {
-      console.log(` MyCalo AI Server running on: http://localhost:${PORT}`);
+      console.log(`MyCalo AI Server running in ${env.NODE_ENV} mode on port: http://localhost:${PORT}`);
     });
-  } catch (error) {
-    console.error(" Failed to start the infrastructure:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("Server startup failed:", errorMessage);
     process.exit(1);
   }
 };

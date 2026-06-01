@@ -1,0 +1,30 @@
+import { z } from "zod";
+
+
+const envSchema = z.object({
+  PORT: z.string().transform((val) => parseInt(val, 10)).default(5000),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+
+  MONGODB_URI: z.string().url("MONGODB_URI must be a valid connection string"),
+  REDIS_URL: z.string().url("REDIS_URL must be a valid connection string"),
+
+  JWT_SECRET: z.string().min(8, "JWT_SECRET must be at least 8 characters long"),
+  REFRESH_SECRET: z.string().min(8, "REFRESH_SECRET must be at least 8 characters long"),
+
+  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
+
+  FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
+});
+
+const parsedEnv = envSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+  console.error("Invalid environment configurations:");
+  console.error(JSON.stringify(parsedEnv.error.format(), null, 2));
+  process.exit(1);
+}
+
+export const env = parsedEnv.data;
+
+export type EnvConfig = z.infer<typeof envSchema>;

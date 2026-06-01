@@ -1,11 +1,9 @@
 import { Redis } from "ioredis";
-import dotenv from "dotenv";
+import { env } from "./env";
 
-dotenv.config();
-
-// We create a singleton instance of Redis.
+// create a singleton instance of Redis.
 // BullMQ requires maxRetriesPerRequest to be null to handle blocking operations safely.
-export const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
+export const redis = new Redis(env.REDIS_URL || "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 
