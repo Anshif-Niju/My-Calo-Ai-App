@@ -1,12 +1,13 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { User } from "../models/User.model";
+import { env } from '../config/env.js';
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      clientID: env.GOOGLE_CLIENT_ID ,
+      clientSecret: env.GOOGLE_CLIENT_SECRET ,
       callbackURL: "/api/auth/google/callback",
       proxy: true,
     },
@@ -30,7 +31,7 @@ passport.use(
               name: profile.displayName,
               email: email,
               googleId: profile.id,
-              isEmailVerified: true, 
+              isEmailVerified: true,
               profilePhoto: profile.photos?.[0]?.value,
               onboardingCompleted: false,
             });

@@ -9,18 +9,19 @@ import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index.js";
 import { getErrorMessage } from "../../utils/error.util";
 import { generateOTP } from "../../utils/otp.utils";
+import { env } from '../../config/env';
 
 // Token helpers
-const generateAccessToken = (userId: string, role: string, email: string): string => jwt.sign({ userId, role, email }, process.env.JWT_SECRET as string, { expiresIn: "15m" });
+const generateAccessToken = (userId: string, role: string, email: string): string => jwt.sign({ userId, role, email }, env.JWT_SECRET , { expiresIn: "15m" });
 
-const generateRefreshToken = (userId: string): string => jwt.sign({ userId }, process.env.REFRESH_SECRET as string, { expiresIn: "7d" });
+const generateRefreshToken = (userId: string): string => jwt.sign({ userId }, env.JWT_REFRESH_SECRET , { expiresIn: "7d" });
 
-const generateTemp2FAToken = (userId: string): string => jwt.sign({ userId }, process.env.JWT_2FA_TEMP_SECRET as string, { expiresIn: "5m" });
+const generateTemp2FAToken = (userId: string): string => jwt.sign({ userId }, env.JWT_2FA_TEMP_SECRET , { expiresIn: "5m" });
 
 const setRefreshCookie = (res: Response, token: string): void => {
   res.cookie("refreshToken", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -238,7 +239,7 @@ export const refresh = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "No refresh token provided" });
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET as string) as any;
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET as string) as any;
     const user = await User.findById(decoded.userId);
     if (!user) return res.status(401).json({ message: "User not found" });
 
@@ -286,7 +287,7 @@ export const verify2FA = async (req: Request, res: Response) => {
 
     if (tempToken) {
       // Use dedicated 2FA temporary handshake secret
-      const decoded = jwt.verify(tempToken, process.env.JWT_2FA_TEMP_SECRET as string) as any;
+      const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET as string) as any;
       userId = decoded.userId;
     }
 
@@ -361,13 +362,13 @@ export const googleCallback = async (req: Request, res: Response) => {
   try {
     const user = req.user as any;
     if (!user) {
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+      return res.redirect(`${env.FRONTEND_URL}/login?error=auth_failed`);
     }
 
     // Direct user to 2FA layout if enabled via OAuth link
     if (user.isTwoFactorEnabled) {
       const tempToken = generateTemp2FAToken(user._id.toString());
-      return res.redirect(`${process.env.FRONTEND_URL}/verify-2fa?tempToken=${tempToken}`);
+      return res.redirect(`${env.FRONTEND_URL}/verify-2fa?tempToken=${tempToken}`);
     }
 
     const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
@@ -382,8 +383,8 @@ export const googleCallback = async (req: Request, res: Response) => {
       })
       .catch((err) => console.error("Failed to queue Google login email:", err));
 
-    return res.redirect(`${process.env.FRONTEND_URL}/auth-callback?token=${accessToken}`);
+    return res.redirect(`${env.FRONTEND_URL}/auth-callback?token=${accessToken}`);
   } catch (error) {
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+    return res.redirect(`${env.FRONTEND_URL}/login?error=server_error`);
   }
 };

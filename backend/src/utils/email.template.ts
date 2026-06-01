@@ -1,13 +1,8 @@
 import { Resend } from "resend";
 import { env } from "../config/env";
+import { SendEmailArgs } from "../types/index";
 
 const resend = new Resend(env.RESEND_API_KEY);
-
-interface SendEmailArgs {
-  to: string;
-  subject: string;
-  html: string;
-}
 
 export const sendEmail = async ({ to, subject, html }: SendEmailArgs): Promise<void> => {
   if (env.NODE_ENV === "test") {
@@ -30,13 +25,8 @@ export const sendEmail = async ({ to, subject, html }: SendEmailArgs): Promise<v
 
 //  Template 1: Email Verification OTP
 
-export const getEmailVerificationTemplate = ({
-  name,
-  otp,
-}: {
-  name: string;
-  otp: string;
-}): string => `
+export const getEmailVerificationTemplate = ({ name, otp }: { name: string; otp: string }): string =>
+  `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,13 +82,8 @@ export const getEmailVerificationTemplate = ({
 
 // Template 2: Forgot Password OTP
 
-export const getForgotPasswordTemplate = ({
-  name,
-  otp,
-}: {
-  name: string;
-  otp: string;
-}): string => `
+export const getForgotPasswordTemplate = ({ name, otp }: { name: string; otp: string }): string =>
+  `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,7 +139,8 @@ export const getLoginSuccessTemplate = ({
 }: {
   name: string;
   loginTime: string; // e.g. "Monday, 2 June 2025 at 10:34 AM"
-}): string => `
+}): string =>
+  `
 <!DOCTYPE html>
 <html lang="en">
 <head>

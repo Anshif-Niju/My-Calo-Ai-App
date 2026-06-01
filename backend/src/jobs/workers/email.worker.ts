@@ -1,8 +1,8 @@
 import { Job, Worker } from "bullmq";
 import { redis } from "../../config/redis";
 import { User } from "../../models/User.model";
-import { getEmailVerificationTemplate, getForgotPasswordTemplate, getLoginSuccessTemplate, sendEmail } from "../../utils/email.template";
-import { EmailJobData } from "../queues/email.queue";
+import { EmailJobData } from "../../types/index";
+import * as emailTemplate from "../../utils/email.template";
 
 export const emailWorker = new Worker<EmailJobData>(
   "emailQueue",
@@ -19,12 +19,12 @@ export const emailWorker = new Worker<EmailJobData>(
       case "verify_email":
         // otp is guaranteed to exist for this type (TypeScript + runtime check)
         if (!otp) throw new Error("OTP missing for verify_email job");
-        emailHtml = getEmailVerificationTemplate({ name: userName, otp });
+        emailHtml = emailTemplate.getEmailVerificationTemplate({ name: userName, otp });
         break;
 
       case "forgot_password":
         if (!otp) throw new Error("OTP missing for forgot_password job");
-        emailHtml = getForgotPasswordTemplate({ name: userName, otp });
+        emailHtml = emailTemplate.getForgotPasswordTemplate({ name: userName, otp });
         break;
 
       case "login_success": {
@@ -38,7 +38,7 @@ export const emailWorker = new Worker<EmailJobData>(
           minute: "2-digit",
           timeZone: "Asia/Kolkata",
         });
-        emailHtml = getLoginSuccessTemplate({ name: userName, loginTime });
+        emailHtml = emailTemplate.getLoginSuccessTemplate({ name: userName, loginTime });
         break;
       }
 
@@ -46,7 +46,7 @@ export const emailWorker = new Worker<EmailJobData>(
         throw new Error(`Unknown email job type: ${(job.data as any).type}`);
     }
 
-    await sendEmail({ to, subject, html: emailHtml });
+    await emailTemplate.sendEmail({ to, subject, html: emailHtml });
     console.log(`Email delivered [${job.id}] type="${type}" → ${to}`);
   },
   {

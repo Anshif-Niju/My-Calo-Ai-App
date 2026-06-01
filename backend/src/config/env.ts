@@ -1,15 +1,21 @@
 import { z } from "zod";
 
-
 const envSchema = z.object({
-  PORT: z.string().transform((val) => parseInt(val, 10)).default(5000),
+  PORT: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default(5000),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
   MONGODB_URI: z.string().url("MONGODB_URI must be a valid connection string"),
   REDIS_URL: z.string().url("REDIS_URL must be a valid connection string"),
 
   JWT_SECRET: z.string().min(8, "JWT_SECRET must be at least 8 characters long"),
-  REFRESH_SECRET: z.string().min(8, "REFRESH_SECRET must be at least 8 characters long"),
+  JWT_REFRESH_SECRET: z.string().min(8, "REFRESH_SECRET must be at least 8 characters long"),
+  JWT_2FA_TEMP_SECRET: z.string().min(8, "JWT_2FA_TEMP_SECRET must be at least 8 characters long"),
+
+  ADMIN_EMAIL: z.email(),
+  ADMIN_PASSWORD: z.string().min(8, "Admin password must be at least 8 characters"),
 
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
   GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
@@ -17,7 +23,6 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
 
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
-
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
