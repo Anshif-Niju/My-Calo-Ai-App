@@ -3,6 +3,7 @@ import { env } from "./env";
 
 // create a singleton instance of Redis.
 // BullMQ requires maxRetriesPerRequest to be null to handle blocking operations safely.
+
 export const redis = new Redis(env.REDIS_URL || "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });

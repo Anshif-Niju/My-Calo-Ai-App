@@ -15,6 +15,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
 
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
+
+  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
+
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

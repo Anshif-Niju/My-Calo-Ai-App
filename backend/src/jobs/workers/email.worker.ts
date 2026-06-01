@@ -1,47 +1,64 @@
 import { Job, Worker } from "bullmq";
 import { redis } from "../../config/redis";
 import { User } from "../../models/User.model";
-import { getEmailVerificationTemplate, sendEmail } from "../../utils/email.template";
+import { getEmailVerificationTemplate, getForgotPasswordTemplate, getLoginSuccessTemplate, sendEmail } from "../../utils/email.template";
+import { EmailJobData } from "../queues/email.queue";
 
-interface EmailJobBody {
-  to: string;
-  subject: string;
-  otp: string;
-}
-
-// പുതിയ വർക്കർ നിർമ്മിക്കുന്നു
-export const emailWorker = new Worker<EmailJobBody>(
+export const emailWorker = new Worker<EmailJobData>(
   "emailQueue",
-  async (job: Job<EmailJobBody>) => {
-    const { to, subject, otp } = job.data;
-    console.log(`⚙️ Processing background email job: ${job.id} for ${to}`);
+  async (job: Job<EmailJobData>) => {
+    const { type, to, subject, otp } = job.data;
+    console.log(`📧 Processing email job [${job.id}] type="${type}" → ${to}`);
 
-    // 1. ഡാറ്റാബേസിൽ നിന്ന് യൂസറുടെ പേര് കണ്ടുപിടിക്കുന്നു
     const user = await User.findOne({ email: to });
-    const userName = user ? user.name : "Health Enthusiast";
+    const userName = user?.name ?? "Health Enthusiast";
 
-    // 2. നമ്മുടെ ഗ്ലാസ്സ്മോർഫിസം HTML ടെംപ്ലേറ്റ് ജനറേറ്റ് ചെയ്യുന്നു
-    const emailHtml = getEmailVerificationTemplate({
-      name: userName,
-      otp: otp,
-    });
+    let emailHtml: string;
 
-    // 3. റെസെൻഡ് സർവീസ് വഴി ഇമെയിൽ വിടുന്നു
-    await sendEmail({
-      to,
-      subject,
-      html: emailHtml,
-    });
+    switch (type) {
+      case "verify_email":
+        // otp is guaranteed to exist for this type (TypeScript + runtime check)
+        if (!otp) throw new Error("OTP missing for verify_email job");
+        emailHtml = getEmailVerificationTemplate({ name: userName, otp });
+        break;
 
-    console.log(`✅ Email successfully delivered to ${to}`);
+      case "forgot_password":
+        if (!otp) throw new Error("OTP missing for forgot_password job");
+        emailHtml = getForgotPasswordTemplate({ name: userName, otp });
+        break;
+
+      case "login_success": {
+        // Format current date/time nicely for the email body
+        const loginTime = new Date().toLocaleString("en-IN", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Kolkata",
+        });
+        emailHtml = getLoginSuccessTemplate({ name: userName, loginTime });
+        break;
+      }
+
+      default:
+        throw new Error(`Unknown email job type: ${(job.data as any).type}`);
+    }
+
+    await sendEmail({ to, subject, html: emailHtml });
+    console.log(`Email delivered [${job.id}] type="${type}" → ${to}`);
   },
   {
-    connection: redis,
-    concurrency: 5, // ഒരേ സമയം 5 ഇമെയിലുകൾ വരെ പാരലൽ ആയി പ്രൊസസ്സ് ചെയ്യും (High Performance)
-  }
+    connection: redis as any,
+    concurrency: 5,
+  },
 );
 
-// എറർ ട്രാക്കിംഗ് (Production Monitoring)
 emailWorker.on("failed", (job, err) => {
-  console.error(`❌ Job ${job?.id} failed with error: ${err.message}`);
+  console.error(`Email job failed [${job?.id}] type="${job?.data.type}": ${err.message}`);
+});
+
+emailWorker.on("completed", (job) => {
+  console.log(`✅ Email job completed [${job.id}] type="${job.data.type}"`);
 });

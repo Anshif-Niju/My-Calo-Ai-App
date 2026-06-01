@@ -1,15 +1,10 @@
-import * as Express from "express";
-
-export interface AuthUserPayload {
-  userId: string;
-  role: "user" | "doctor" | "subadmin" | "admin";
-  email: string;
-}
+// src/types/express.d.ts
+import { AuthUserPayload } from './index.js';
 
 declare global {
   namespace Express {
     interface Request {
-      user: AuthUserPayload;
+      user?: AuthUserPayload;
     }
   }
 }
