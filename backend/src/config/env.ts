@@ -1,4 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { z } from "zod";
+
 
 const envSchema = z.object({
   PORT: z
@@ -23,6 +27,9 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
 
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
+
+  GMAIL_USER: z.string().email().min(1,"RESEND_API_KEY is mandatory for sending system transactional emails"),
+  GMAIL_APP_PASS: z.string().min(1,"RESEND_API_KEY is mandatory for sending system transactional emails"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

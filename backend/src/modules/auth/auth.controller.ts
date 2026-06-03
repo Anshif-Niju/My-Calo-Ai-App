@@ -10,6 +10,7 @@ import { AuthUserPayload } from "../../types/index.js";
 import { getErrorMessage } from "../../utils/error.util";
 import { generateOTP } from "../../utils/otp.utils";
 import { env } from '../../config/env';
+import type { RegisterInput, LoginInput } from "./auth.validator";
 
 // Token helpers
 const generateAccessToken = (userId: string, role: string, email: string): string => jwt.sign({ userId, role, email }, env.JWT_SECRET , { expiresIn: "15m" });
@@ -31,7 +32,7 @@ const setRefreshCookie = (res: Response, token: string): void => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body as RegisterInput;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -42,7 +43,7 @@ export const register = async (req: Request, res: Response) => {
     await user.save();
 
     const otp = generateOTP();
-    await redis.set(`otp:${email}:email_verify`, otp, "EX", 60);
+    await redis.set(`otp:${email}:email_verify`, otp, "EX", 180);
 
     await emailQueue.add("send-verify-email", {
       type: "verify_email",
@@ -115,7 +116,7 @@ export const resendOtp = async (req: Request, res: Response) => {
     }
 
     const otp = generateOTP();
-    await redis.set(`otp:${email}:${type}`, otp, "EX", 60);
+    await redis.set(`otp:${email}:${type}`, otp, "EX", 180);
 
     const subject = type === "email_verify" ? "Your new MyCalo AI verification code" : "Your new MyCalo AI password reset code";
 
@@ -136,7 +137,7 @@ export const resendOtp = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body as LoginInput;
 
     const user = await User.findOne({ email }).select("+password");
     if (!user || !user.password) {
@@ -187,7 +188,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 
     const otp = generateOTP();
-    await redis.set(`otp:${email}:forgot_password`, otp, "EX", 60);
+    await redis.set(`otp:${email}:forgot_password`, otp, "EX", 180);
 
     await emailQueue.add("forgot-password-otp", {
       type: "forgot_password",
@@ -287,7 +288,7 @@ export const verify2FA = async (req: Request, res: Response) => {
 
     if (tempToken) {
       // Use dedicated 2FA temporary handshake secret
-      const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET as string) as any;
+      const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET as string) as any ;
       userId = decoded.userId;
     }
 

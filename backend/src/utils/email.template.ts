@@ -1,26 +1,35 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { env } from "../config/env";
 import { SendEmailArgs } from "../types/index";
 
-const resend = new Resend(env.RESEND_API_KEY);
+// Transporter
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: env.GMAIL_USER,
+    pass: env.GMAIL_APP_PASS,
+  },
+});
+
+//Send Email
 
 export const sendEmail = async ({ to, subject, html }: SendEmailArgs): Promise<void> => {
   if (env.NODE_ENV === "test") {
-    console.log(`✉️  [Mock Email] To: ${to} | Subject: ${subject}`);
+    console.log(`✉️ [Mock Email] To: ${to} | Subject: ${subject}`);
     return;
   }
 
-  const { error } = await resend.emails.send({
-    from: "MyCalo AI <onboarding@resend.dev>",
-    to: [to],
+  await transporter.sendMail({
+    from: `"MyCalo AI" <${env.GMAIL_USER}>`,
+    to,
     subject,
     html,
+    headers: {
+      "X-Mailer": "MyCalo AI Mailer",
+      "List-Unsubscribe": `<mailto:${env.GMAIL_USER}?subject=unsubscribe>`,
+    },
   });
-
-  if (error) {
-    // Throwing here causes BullMQ to mark the job as failed and retry it
-    throw new Error(`Resend API Error: ${error.message}`);
-  }
 };
 
 //  Template 1: Email Verification OTP
@@ -47,7 +56,7 @@ export const getEmailVerificationTemplate = ({ name, otp }: { name: string; otp:
         </tr>
         <tr>
           <td style="padding:36px 40px;">
-            <h2 style="margin:0 0 12px;color:#ffffff;font-size:24px;font-weight:600;">Welcome, ${name}! 👋</h2>
+            <h2 style="margin:0 0 12px;color:#ffffff;font-size:24px;font-weight:600;">Welcome, ${name}! </h2>
             <p style="margin:0 0 32px;color:rgba(255,255,255,0.6);font-size:15px;line-height:1.7;">
               You're one step away from starting your health journey. Use the verification code below to confirm your email address.
             </p>
@@ -59,7 +68,7 @@ export const getEmailVerificationTemplate = ({ name, otp }: { name: string; otp:
               <tr>
                 <td style="padding:14px 18px;">
                   <p style="margin:0;color:rgba(252,211,77,0.9);font-size:13px;line-height:1.6;">
-                    ⏰ <strong>This code expires in 1 minute.</strong> Do not share it with anyone.
+                    <strong>This code expires in 1 minute.</strong> Do not share it with anyone.
                   </p>
                 </td>
               </tr>
@@ -113,7 +122,7 @@ export const getForgotPasswordTemplate = ({ name, otp }: { name: string; otp: st
               <p style="margin:0;color:#ffffff;font-size:48px;font-weight:800;letter-spacing:14px;">${otp}</p>
             </div>
             <p style="margin:0;color:rgba(255,255,255,0.35);font-size:13px;line-height:1.6;">
-              ⏰ This code expires in <strong style="color:rgba(255,255,255,0.6);">1 minute</strong>.
+              This code expires in <strong style="color:rgba(255,255,255,0.6);">1 minute</strong>.
               If you didn't request this, your account is safe — just ignore this email.
             </p>
           </td>
@@ -161,7 +170,7 @@ export const getLoginSuccessTemplate = ({
         </tr>
         <tr>
           <td style="padding:36px 40px;">
-            <h2 style="margin:0 0 12px;color:#ffffff;font-size:24px;font-weight:600;">New Login Detected ✅</h2>
+            <h2 style="margin:0 0 12px;color:#ffffff;font-size:24px;font-weight:600;">New Login Detected </h2>
             <p style="margin:0 0 28px;color:rgba(255,255,255,0.6);font-size:15px;line-height:1.7;">
               Hi ${name}, we noticed a successful login to your MyCalo AI account.
             </p>
@@ -183,7 +192,7 @@ export const getLoginSuccessTemplate = ({
               </tr>
             </table>
             <p style="margin:0;color:rgba(255,255,255,0.35);font-size:13px;line-height:1.6;">
-              If this was you, no action needed. Stay healthy! 💪
+              If this was you, no action needed. Stay healthy!
             </p>
           </td>
         </tr>
