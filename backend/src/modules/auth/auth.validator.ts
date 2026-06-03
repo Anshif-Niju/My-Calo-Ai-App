@@ -1,21 +1,29 @@
 import { z } from "zod";
 
+const passwordValidation = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Must contain at least one uppercase letter (A-Z)")
+  .regex(/[a-z]/, "Must contain at least one lowercase letter (a-z)")
+  .regex(/[0-9]/, "Must contain at least one number (0-9)")
+  .regex(/[\W_]/, "Must contain at least one special symbol (e.g., @, #, $, !)")
+  .refine(
+    (password) => {
+      // Reject common weak patterns like 12345678, password, qwerty, etc.
+      const weakPatterns = [/12345/i, /abcdef/i, /password/i, /qwerty/i, /00000/i];
+      return !weakPatterns.some((pattern) => pattern.test(password));
+    },
+    {
+      message: "Password is too weak or common. Please use a stronger one.",
+    },
+  );
+
 export const registerSchema = z.object({
-body: z
-    .object({
-      name: z.string().min(2, "Name must be at least 2 characters"),
-      email: z.string().email("Invalid email format"),
-      password: z
-        .string()
-        .min(8, "Password must be at least 8 characters")
-        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-        .regex(/[0-9]/, "Password must contain at least one number"),
-      confirmPassword: z.string().min(1, "Confirm password is required"),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    }),
+  body: z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email format"),
+    password: passwordValidation,
+  }),
 });
 
 export const verifyEmailSchema = z.object({
@@ -24,7 +32,6 @@ export const verifyEmailSchema = z.object({
     otp: z.string().length(6, "OTP must be exactly 6 digits"),
   }),
 });
-
 
 export const resendOtpSchema = z.object({
   body: z.object({
@@ -40,30 +47,18 @@ export const loginSchema = z.object({
   }),
 });
 
-
 export const forgotPasswordSchema = z.object({
   body: z.object({
     email: z.string().email("Invalid email format"),
   }),
 });
 
-
 export const resetPasswordSchema = z.object({
-  body: z
-    .object({
-      email: z.string().email("Invalid email format"),
-      otp: z.string().length(6, "OTP must be exactly 6 digits"),
-      newPassword: z
-        .string()
-        .min(8, "Password must be at least 8 characters")
-        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-        .regex(/[0-9]/, "Password must contain at least one number"),
-      confirmPassword: z.string().min(1, "Confirm password is required"),
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    }),
+  body: z.object({
+    email: z.string().email("Invalid email format"),
+    otp: z.string().length(6, "OTP must be exactly 6 digits"),
+    newPassword: passwordValidation,
+  }),
 });
 
 export const twoFactorVerifySchema = z.object({

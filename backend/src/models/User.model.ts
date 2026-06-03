@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import mongoose, { Schema } from "mongoose";
-import {IUser} from "../types/index";
-
+import { IUser } from "../types/index";
 
 const UserSchema = new Schema<IUser>(
   {
@@ -38,12 +37,14 @@ const UserSchema = new Schema<IUser>(
     },
     fcmToken: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserSchema.pre("save", async function () {
-  if (!this.isModified("password") || !this.password) return ;
+  if (!this.isModified("password") || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
+
+UserSchema.index({ role: 1 });
 
 export const User = mongoose.model<IUser>("User", UserSchema);
