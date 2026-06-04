@@ -7,4 +7,3 @@ export const generateOTP = (): string => {
 };
 
 
-// otp utils

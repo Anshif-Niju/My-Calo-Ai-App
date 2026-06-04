@@ -8,7 +8,10 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, select: false },
     role: { type: String, enum: ["user", "doctor", "subadmin", "admin"], default: "user" },
+    phone: { type: String, trim: true },
+    countryCode: { type: String, trim: true }, // "+91", "+1" etc.
     isEmailVerified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false }, // for doctor verification
     isTwoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String },
     googleId: { type: String, sparse: true, unique: true },

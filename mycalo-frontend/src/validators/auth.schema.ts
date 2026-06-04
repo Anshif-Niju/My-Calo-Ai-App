@@ -9,7 +9,7 @@ const passwordValidation = z
   .regex(/[\W_]/, "Must contain at least one special symbol (e.g., @, #, $, !)")
   .refine(
     (password) => {
-    
+
       const weakPatterns = [/12345/i, /abcdef/i, /password/i, /qwerty/i, /00000/i];
       return !weakPatterns.some((pattern) => pattern.test(password));
     },
@@ -24,18 +24,20 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// 2. Register Schema (FRONTEND - No 'body' wrapper, includes confirmPassword)
-export const registerSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email format"),
-    password: passwordValidation,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+// 2. Register Schema 
+
+export const registerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email format"),
+  password: passwordValidation,
+  confirmPassword: z.string(),
+  role: z.enum(["user", "doctor"]),
+  phone: z.string().min(7, "Invalid phone number").max(15, "Invalid phone number"),
+  countryCode: z.string().min(2).max(5),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 // 3. Forgot Password Schema
 export const forgotPasswordSchema = z.object({

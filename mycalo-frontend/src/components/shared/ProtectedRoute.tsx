@@ -17,32 +17,38 @@ export default function ProtectedRoute({ children, allowedRoles, requireOnboardi
   const { accessToken, user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    // 1. Check if logged in
+    // 1. Not logged in
     if (!accessToken || !user) {
       router.push(`/login?redirect=${pathname}`);
       return;
     }
 
-    // 2. Check RBAC (Role-Based Access Control)
+    // 2. Onboarding not done → role-specific onboarding
+    if (requireOnboarding && !user.onboardingCompleted) {
+      router.push(user.role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
+      return;
+    }
+
+    // 3. RBAC check
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-      // Redirect to their respective home if they try to access an unauthorized route
       if (user.role === "admin") router.push("/admin/dashboard");
-      else if (user.role === "doctor") router.push("/doctor/dashboard");
+      else if (user.role === "doctor") router.push(user.isVerified ? "/doctor/dashboard" : "/doctor/verification");
       else router.push("/home");
       return;
     }
 
-    // 3. Check Onboarding Status
-    if (requireOnboarding && !user.onboardingCompleted) {
-      router.push("/onboarding/role-select");
+    // 4. Doctor not verified — block access to protected doctor routes
+    if (user.role === "doctor" && !user.isVerified && pathname !== "/doctor/verification") {
+      router.push("/doctor/verification");
       return;
     }
   }, [accessToken, user, allowedRoles, requireOnboarding, router, pathname]);
 
-  // Render nothing while redirecting to prevent UI flickering
+  // Render nothing while redirecting
   if (!accessToken || !user) return null;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return null;
   if (requireOnboarding && !user.onboardingCompleted) return null;
+  if (allowedRoles && !allowedRoles.includes(user.role)) return null;
+  if (user.role === "doctor" && !user.isVerified && pathname !== "/doctor/verification") return null;
 
   return <>{children}</>;
 }

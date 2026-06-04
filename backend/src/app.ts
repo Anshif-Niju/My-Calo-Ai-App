@@ -1,24 +1,30 @@
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
+import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
-import {env} from "./config/env"
-
-const app = express();
 dotenv.config();
 
+const app = express();
 
 // 1. Security Middlewares
 
 app.use(helmet());
 app.use(
   cors({
-    origin: env.FRONTEND_URL || "http://localhost:3000",
+    origin: [env.FRONTEND_URL || "http://localhost:3000"],
     credentials: true,
   }),
 );
+
+//Testing
+
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.url} - Body:`, req.body);
+  next();
+});
 
 // 2. req parsing
 app.use(express.json());

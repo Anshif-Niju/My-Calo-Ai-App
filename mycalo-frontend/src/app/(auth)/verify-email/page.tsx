@@ -19,6 +19,7 @@ export default function VerifyEmailPage() {
         <h1 className="text-3xl font-bold text-slate-950 tracking-tight">Check your email</h1>
         <p className="text-sm text-slate-500 font-medium mt-2 max-w-[280px]">
           We've sent a 6-digit verification code to your email address.
+          If it didn't see in you inbox check the spam.
         </p>
       </div>
 

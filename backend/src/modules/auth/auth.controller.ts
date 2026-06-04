@@ -3,21 +3,21 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import qrcode from "qrcode";
 import speakeasy from "speakeasy";
+import { env } from "../../config/env";
 import { redis } from "../../config/redis";
 import { emailQueue } from "../../jobs/queues/email.queue";
 import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index.js";
 import { getErrorMessage } from "../../utils/error.util";
 import { generateOTP } from "../../utils/otp.utils";
-import { env } from '../../config/env';
-import type { RegisterInput, LoginInput } from "./auth.validator";
+import type { LoginInput, RegisterInput } from "./auth.validator";
 
 // Token helpers
-const generateAccessToken = (userId: string, role: string, email: string): string => jwt.sign({ userId, role, email }, env.JWT_SECRET , { expiresIn: "15m" });
+const generateAccessToken = (userId: string, role: string, email: string): string => jwt.sign({ userId, role, email }, env.JWT_SECRET, { expiresIn: "15m" });
 
-const generateRefreshToken = (userId: string): string => jwt.sign({ userId }, env.JWT_REFRESH_SECRET , { expiresIn: "7d" });
+const generateRefreshToken = (userId: string): string => jwt.sign({ userId }, env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
-const generateTemp2FAToken = (userId: string): string => jwt.sign({ userId }, env.JWT_2FA_TEMP_SECRET , { expiresIn: "5m" });
+const generateTemp2FAToken = (userId: string): string => jwt.sign({ userId }, env.JWT_2FA_TEMP_SECRET, { expiresIn: "5m" });
 
 const setRefreshCookie = (res: Response, token: string): void => {
   res.cookie("refreshToken", token, {
@@ -32,17 +32,19 @@ const setRefreshCookie = (res: Response, token: string): void => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body as RegisterInput;
+    console.log("REGISTER BODY:", req.body);
+    const { name, email, password, role, phone, countryCode } = req.body as RegisterInput;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
     }
 
-    const user = new User({ name, email, password });
+    const user = new User({ name, email, password, role, phone, countryCode });
     await user.save();
 
     const otp = generateOTP();
+    console.log(otp);
     await redis.set(`otp:${email}:email_verify`, otp, "EX", 180);
 
     await emailQueue.add("send-verify-email", {
@@ -58,13 +60,13 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// 2. VERIFY EMAIL
+// 2. VERIFY OTP (unified for email_verify + forgot_password)
 
-export const verifyEmail = async (req: Request, res: Response) => {
+export const verifyOtp = async (req: Request, res: Response) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, type } = req.body; // type: "email_verify" | "forgot_password"
 
-    const storedOtp = await redis.get(`otp:${email}:email_verify`);
+    const storedOtp = await redis.get(`otp:${email}:${type}`);
     if (!storedOtp) {
       return res.status(400).json({ message: "OTP expired. Please request a new one." });
     }
@@ -72,16 +74,25 @@ export const verifyEmail = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Incorrect OTP" });
     }
 
-    const user = await User.findOneAndUpdate({ email }, { isEmailVerified: true }, { new: true });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    await redis.del(`otp:${email}:${type}`);
 
-    await redis.del(`otp:${email}:email_verify`);
+    if (type === "email_verify") {
+      const user = await User.findOneAndUpdate({ email }, { isEmailVerified: true }, { new: true });
+      if (!user) return res.status(404).json({ message: "User not found" });
 
-    const accessToken = generateAccessToken(user.id, user.role, user.email);
-    const refreshToken = generateRefreshToken(user.id);
-    setRefreshCookie(res, refreshToken);
+      const accessToken = generateAccessToken(user.id, user.role, user.email);
+      const refreshToken = generateRefreshToken(user.id);
+      setRefreshCookie(res, refreshToken);
 
-    return res.status(200).json({ accessToken, user });
+      return res.status(200).json({ accessToken, user });
+    }
+
+    if (type === "forgot_password") {
+      const resetToken = jwt.sign({ email }, env.JWT_SECRET, { expiresIn: "10m" });
+      return res.status(200).json({ resetToken });
+    }
+
+    return res.status(400).json({ message: "Invalid OTP type" });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
@@ -170,22 +181,26 @@ export const login = async (req: Request, res: Response) => {
       })
       .catch((err) => console.error("Failed to queue login email:", err));
 
-    return res.status(200).json({ accessToken, user });
+    return res.status(200).json({
+      accessToken,
+      user: {
+        ...user.toObject(),
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
 };
 
-// 5. FORGOT PASSWORD
+// 5. FORGOT PASSWORD (Only for send otp)
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(200).json({ message: "If this email is registered, a reset code has been sent." });
-    }
+    if (!user) return res.status(200).json({ message: "If this email is registered, a reset code has been sent." });
 
     const otp = generateOTP();
     await redis.set(`otp:${email}:forgot_password`, otp, "EX", 180);
@@ -196,42 +211,48 @@ export const forgotPassword = async (req: Request, res: Response) => {
       subject: "Reset your MyCalo AI password",
       otp,
     });
-
-    return res.status(200).json({ message: "If this email is registered, a reset code has been sent." });
+    return res.status(200).json({ message: "OTP sent." });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
 };
 
-// 6. RESET PASSWORD
+// 6. VERIFY Reset OTP
+
+export const verifyResetOtp = async (req: Request, res: Response) => {
+  try {
+    const { email, otp } = req.body;
+    const storedOtp = await redis.get(`otp:${email}:forgot_password`);
+
+    if (storedOtp !== otp) return res.status(400).json({ message: "Incorrect or expired OTP" });
+
+    const resetToken = jwt.sign({ email }, env.JWT_SECRET, { expiresIn: "10m" });
+    return res.status(200).json({ resetToken });
+  } catch (error) {
+    return res.status(500).json({ message: getErrorMessage(error) });
+  }
+};
+
+// 7. RESET PASSWORD
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { email, otp, newPassword } = req.body;
+    const { resetToken, newPassword } = req.body;
+    const decoded = jwt.verify(resetToken, env.JWT_SECRET) as { email: string };
 
-    const storedOtp = await redis.get(`otp:${email}:forgot_password`);
-    if (!storedOtp) {
-      return res.status(400).json({ message: "OTP expired. Please request a new reset code." });
-    }
-    if (storedOtp !== otp) {
-      return res.status(400).json({ message: "Incorrect OTP" });
-    }
-
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email: decoded.email }).select("+password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = newPassword;
     await user.save();
 
-    await redis.del(`otp:${email}:forgot_password`);
-
-    return res.status(200).json({ message: "Password reset successfully. Please log in." });
+    return res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
-// 7. REFRESH TOKEN
+// 8. REFRESH TOKEN
 
 export const refresh = async (req: Request, res: Response) => {
   try {
@@ -251,14 +272,14 @@ export const refresh = async (req: Request, res: Response) => {
   }
 };
 
-// 8. LOGOUT
+// 9. LOGOUT
 
 export const logout = (_req: Request, res: Response) => {
   res.clearCookie("refreshToken");
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
-// 9. SETUP 2FA
+// 10. SETUP 2FA
 
 export const setup2FA = async (req: Request, res: Response) => {
   try {
@@ -279,7 +300,7 @@ export const setup2FA = async (req: Request, res: Response) => {
   }
 };
 
-// 10. VERIFY 2FA
+// 11. VERIFY 2FA
 
 export const verify2FA = async (req: Request, res: Response) => {
   try {
@@ -288,7 +309,7 @@ export const verify2FA = async (req: Request, res: Response) => {
 
     if (tempToken) {
       // Use dedicated 2FA temporary handshake secret
-      const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET as string) as any ;
+      const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET as string) as any;
       userId = decoded.userId;
     }
 
@@ -327,7 +348,7 @@ export const verify2FA = async (req: Request, res: Response) => {
   }
 };
 
-// 11. DISABLE 2FA
+// 12. DISABLE 2FA
 
 export const disable2FA = async (req: Request, res: Response) => {
   try {
@@ -357,7 +378,7 @@ export const disable2FA = async (req: Request, res: Response) => {
   }
 };
 
-// 12. GOOGLE CALLBACK
+// 13. GOOGLE CALLBACK
 
 export const googleCallback = async (req: Request, res: Response) => {
   try {
@@ -366,7 +387,6 @@ export const googleCallback = async (req: Request, res: Response) => {
       return res.redirect(`${env.FRONTEND_URL}/login?error=auth_failed`);
     }
 
-    // Direct user to 2FA layout if enabled via OAuth link
     if (user.isTwoFactorEnabled) {
       const tempToken = generateTemp2FAToken(user._id.toString());
       return res.redirect(`${env.FRONTEND_URL}/verify-2fa?tempToken=${tempToken}`);

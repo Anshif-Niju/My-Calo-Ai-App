@@ -4,9 +4,16 @@ export interface User {
   email: string;
   role: "user" | "doctor" | "subadmin" | "admin";
   isEmailVerified: boolean;
-  isTwoFactorEnabled: boolean;
-  profilePhoto?: string;
+  isVerified: boolean;
   onboardingCompleted: boolean;
+  isTwoFactorEnabled: boolean;
+  phone?: string;
+  countryCode?: string;
+  profilePhoto?: string;
+  googleId?: string;
+  fcmToken?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthState {

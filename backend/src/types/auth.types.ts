@@ -1,6 +1,6 @@
-import mongoose , { Document } from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-export type UserRole = 'user' | 'doctor' | 'subadmin' | 'admin';
+export type UserRole = "user" | "doctor" | "subadmin" | "admin";
 
 export interface AuthUserPayload {
   userId: string;
@@ -8,14 +8,16 @@ export interface AuthUserPayload {
   email: string;
 }
 
-
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
   email: string;
   password?: string;
-  role: "user" | "doctor" | "subadmin" | "admin";
+  role: UserRole;
+  phone?: string;
+  countryCode?: string;
   isEmailVerified: boolean;
+  isVerified: boolean; 
   isTwoFactorEnabled: boolean;
   twoFactorSecret?: string;
   googleId?: string;
@@ -46,6 +48,3 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
-
-

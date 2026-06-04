@@ -36,12 +36,36 @@ export default function LoginForm() {
         router.push("/two-factor");
         return;
       }
+
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
-      if (data.user.onboardingCompleted) {
-        router.push("/home");
-      } else {
-        router.push("/onboarding/role-select");
+
+      const { role, isVerified, onboardingCompleted } = data.user;
+
+      if (!onboardingCompleted) {
+        if (role === "doctor") {
+          router.push("/onboarding/doctor");
+        } else {
+          router.push("/onboarding/user");
+        }
+        return;
       }
+
+      if (role === "doctor") {
+        router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+        return;
+      }
+
+      if (role === "subadmin") {
+        router.push("/subadmin/dashboard");
+        return;
+      }
+
+      if (role === "admin") {
+        router.push("/admin/dashboard");
+        return;
+      }
+
+      router.push("/home");
     },
     onError: (error: any) => {
       setServerError(error.response?.data?.message || "Something went wrong. Please try again.");
@@ -67,7 +91,7 @@ export default function LoginForm() {
           <input
             type="email"
             {...register("email")}
-            placeholder="name@example.com"
+            placeholder="Enter your email"
             className="w-full h-14 px-5 rounded-2xl border-none border-slate-500  text-slate-900 font-medium placeholder:text-slate-400 focus:ring-2 focus:ring-slate-950 transition-all outline-none"
           />
           {errors.email && <p className="text-xs font-semibold text-red-500 mt-2 ml-1">{errors.email.message}</p>}

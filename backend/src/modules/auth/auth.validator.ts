@@ -9,13 +9,10 @@ const passwordValidation = z
   .regex(/[\W_]/, "Must contain at least one special symbol (e.g., @, #, $, !)")
   .refine(
     (password) => {
-      // Reject common weak patterns like 12345678, password, qwerty, etc.
       const weakPatterns = [/12345/i, /abcdef/i, /password/i, /qwerty/i, /00000/i];
       return !weakPatterns.some((pattern) => pattern.test(password));
     },
-    {
-      message: "Password is too weak or common. Please use a stronger one.",
-    },
+    { message: "Password is too weak or common. Please use a stronger one." },
   );
 
 export const registerSchema = z.object({
@@ -23,13 +20,17 @@ export const registerSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email format"),
     password: passwordValidation,
+    role: z.enum(["user", "doctor"]).default("user"),
+    phone: z.string().min(7, "Invalid phone number").max(15, "Invalid phone number"),
+    countryCode: z.string().min(2, "Country code required").max(5, "Invalid country code"), // e.g. "+91"
   }),
 });
 
-export const verifyEmailSchema = z.object({
+export const verifyOtpSchema = z.object({
   body: z.object({
     email: z.string().email("Invalid email format"),
     otp: z.string().length(6, "OTP must be exactly 6 digits"),
+    type: z.enum(["email_verify", "forgot_password"]),
   }),
 });
 
@@ -55,8 +56,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email format"),
-    otp: z.string().length(6, "OTP must be exactly 6 digits"),
+    resetToken: z.string().min(1, "Reset token is required"),
     newPassword: passwordValidation,
   }),
 });
@@ -74,9 +74,8 @@ export const disable2FASchema = z.object({
   }),
 });
 
-// Exported types — use these in your controller for type-safe req.body
 export type RegisterInput = z.infer<typeof registerSchema>["body"];
-export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>["body"];
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>["body"];
 export type ResendOtpInput = z.infer<typeof resendOtpSchema>["body"];
 export type LoginInput = z.infer<typeof loginSchema>["body"];
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>["body"];

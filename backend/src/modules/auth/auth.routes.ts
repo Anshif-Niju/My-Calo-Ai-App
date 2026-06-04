@@ -7,10 +7,10 @@ import * as zod from "./auth.validator";
 
 const router = Router();
 
-// Registration & Email Verification
+// Registration & Verification
 router.post("/register", validate(zod.registerSchema), authController.register);
-router.post("/verify-email", validate(zod.verifyEmailSchema), authController.verifyEmail); // BUG FIX: removed double validate()
-router.post("/resend-otp", validate(zod.resendOtpSchema), authController.resendOtp); // was missing entirely
+router.post("/verify-otp", validate(zod.verifyOtpSchema), authController.verifyOtp);
+router.post("/resend-otp", validate(zod.resendOtpSchema), authController.resendOtp);
 
 // Login & Session
 router.post("/login", validate(zod.loginSchema), authController.login);
@@ -24,7 +24,7 @@ router.post("/reset-password", validate(zod.resetPasswordSchema), authController
 // 2FA
 router.post("/setup-2fa", authenticate, authController.setup2FA);
 router.post("/verify-2fa", validate(zod.twoFactorVerifySchema), authController.verify2FA);
-router.post("/disable-2fa", authenticate, validate(zod.disable2FASchema), authController.disable2FA); // was missing
+router.post("/disable-2fa", authenticate, validate(zod.disable2FASchema), authController.disable2FA);
 
 // Google OAuth
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));

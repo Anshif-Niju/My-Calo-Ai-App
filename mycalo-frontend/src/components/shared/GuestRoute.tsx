@@ -8,15 +8,21 @@ import { RootState } from "@/store";
 export default function GuestRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
-
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     if (user) {
-      if (user.role === "admin") {
+      const { role, isVerified, onboardingCompleted } = user;
+
+      if (!onboardingCompleted) {
+        router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
+        return;
+      }
+
+      if (role === "admin") {
         router.push("/admin/dashboard");
-      } else if (user.role === "doctor") {
-        router.push("/doctor/dashboard");
+      } else if (role === "doctor") {
+        router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
       } else {
         router.push("/home");
       }
@@ -25,7 +31,6 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
     }
   }, [user, router]);
 
-  // തിരിച്ചുവിടുന്ന ആ ചെറിയ സമയത്ത് സ്ക്രീൻ വെളുപ്പിച്ചു നിർത്തുന്നു (Flicker ഒഴിവാക്കാൻ)
   if (isChecking || user) {
     return <div className="min-h-screen bg-[#f8fafc]" />;
   }
