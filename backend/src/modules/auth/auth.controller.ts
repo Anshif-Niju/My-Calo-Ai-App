@@ -32,13 +32,15 @@ const setRefreshCookie = (res: Response, token: string): void => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    console.log("REGISTER BODY:", req.body);
     const { name, email, password, role, phone, countryCode } = req.body as RegisterInput;
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email, isEmailVerified: true });
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
     }
+
+    // Delete any previous unverified attempt
+    await User.deleteOne({ email, isEmailVerified: false });
 
     const user = new User({ name, email, password, role, phone, countryCode });
     await user.save();
@@ -64,9 +66,10 @@ export const register = async (req: Request, res: Response) => {
 
 export const verifyOtp = async (req: Request, res: Response) => {
   try {
-    const { email, otp, type } = req.body; // type: "email_verify" | "forgot_password"
+    const { email, otp, type } = req.body;
 
     const storedOtp = await redis.get(`otp:${email}:${type}`);
+
     if (!storedOtp) {
       return res.status(400).json({ message: "OTP expired. Please request a new one." });
     }
@@ -83,6 +86,14 @@ export const verifyOtp = async (req: Request, res: Response) => {
       const accessToken = generateAccessToken(user.id, user.role, user.email);
       const refreshToken = generateRefreshToken(user.id);
       setRefreshCookie(res, refreshToken);
+      
+      emailQueue
+        .add("login-success-notification", {
+          type: "login_success",
+          to: user.email,
+          subject: "New login to your MyCalo AI account",
+        })
+        .catch((err) => console.error("Failed to queue login email:", err));
 
       return res.status(200).json({ accessToken, user });
     }

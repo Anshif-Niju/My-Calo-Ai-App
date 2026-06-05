@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { AuthUserPayload } from "../types/index.js";
+import { AnyZodObject, ZodError } from "zod";
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -32,11 +33,23 @@ export const authorize = (roles: string[]) => {
 
 // Generic validation middleware for Zod schemas
 
-export const validate = (schema: any) => (req: Request, res: Response, next: NextFunction) => {
+export const validate = (schema: AnyZodObject) => (req: Request, res: Response, next: NextFunction) => {
   try {
-    schema.parse({ body: req.body, query: req.query, params: req.params });
+    const parsed = schema.parse({
+      body: req.body,
+      query: req.query,
+      params: req.params,
+    });
+
+    req.body = parsed.body;
     next();
-  }catch (error: any) {
-    return res.status(400).json({ errors: error.errors });
+  } catch (error: any) {
+    if (error instanceof ZodError) {
+      console.log("ZOD VALIDATION ERROR:", JSON.stringify(error.errors, null, 2));
+      return res.status(400).json({ message: "Validation failed", errors: error.errors });
+    }
+
+    console.error("UNKNOWN MIDDLEWARE ERROR:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -30,32 +30,55 @@ export default function VerifyEmailForm() {
 
   const verifyMutation = useMutation({
     mutationFn: async (data: { email: string; otp: string }) => {
-      const response = await api.post("/auth/verify-email", data);
+      const response = await api.post("/auth/verify-otp", {
+        email: data.email,
+        otp: data.otp,
+        type: "email_verify",
+      });
       return response.data;
     },
     onSuccess: (data) => {
-      // Store Redux state globally
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
-      // Redirect to onboarding role selection
-      router.push("/onboarding/role-select");
+
+      const { role, onboardingCompleted, isVerified } = data.user;
+
+      if (onboardingCompleted) {
+        if (role === "doctor") {
+          router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+        } else if (role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/home");
+        }
+        return;
+      }
+
+      if (role === "doctor") {
+        router.push("/onboarding/doctor");
+      } else {
+        router.push("/onboarding/user");
+      }
     },
     onError: (error: any) => {
       setServerError(error.response?.data?.message || "Invalid verification code.");
     },
   });
 
-  // 🚀 Resend OTP Mutation
   const resendMutation = useMutation({
     mutationFn: async (email: string) => {
-      const response = await api.post("/auth/resend-otp", {
+      const response = await api.post("/auth/resend-Otp", {
         email,
         type: "email_verify",
       });
       return response.data;
     },
     onSuccess: () => {
+      // clear all boxes and focus first
+      setOtp(Array(6).fill(""));
+      setActiveInput(0);
+      inputRefs.current[0]?.focus();
       setSuccessMessage("A new code has been sent!");
-      setTimeLeft(60); // Reset timer
+      setTimeLeft(60);
       setServerError(null);
     },
     onError: (error: any) => {
@@ -63,16 +86,14 @@ export default function VerifyEmailForm() {
     },
   });
 
-  // ⌨️ OTP Input Handlers (Auto-advance & Backspace)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const value = e.target.value;
-    if (!/^[0-9]*$/.test(value)) return; // Only allow numbers
+    if (!/^[0-9]*$/.test(value)) return;
 
     const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1); // Take last char if they type fast
+    newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
 
-    // Auto-advance
     if (value && index < 5) {
       setActiveInput(index + 1);
       inputRefs.current[index + 1]?.focus();
@@ -80,10 +101,20 @@ export default function VerifyEmailForm() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      // Move to previous input on backspace if current is empty
-      setActiveInput(index - 1);
-      inputRefs.current[index - 1]?.focus();
+    if (e.key === "Backspace") {
+      if (otp[index]) {
+        // box has value → clear it, stay on same box
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      } else if (index > 0) {
+        // box is empty → move to previous and clear it
+        const newOtp = [...otp];
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
+        setActiveInput(index - 1);
+        inputRefs.current[index - 1]?.focus();
+      }
     }
   };
 
@@ -98,7 +129,6 @@ export default function VerifyEmailForm() {
     });
     setOtp(newOtp);
 
-    // Focus last filled input
     const focusIndex = Math.min(pastedData.length, 5);
     setActiveInput(focusIndex);
     inputRefs.current[focusIndex]?.focus();
@@ -118,7 +148,6 @@ export default function VerifyEmailForm() {
     verifyMutation.mutate({ email: emailParam, otp: otpString });
   };
 
-  // If no email is found in URL, show fallback
   if (!emailParam) {
     return (
       <div className="w-full bg-white p-8 rounded-[32px] text-center border border-slate-100">
@@ -141,7 +170,6 @@ export default function VerifyEmailForm() {
 
         {successMessage && <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-[16px] text-xs font-semibold text-emerald-600 text-center animate-in fade-in zoom-in duration-300">{successMessage}</div>}
 
-        {/* 6-Box OTP Input */}
         <div className="flex justify-between gap-2 sm:gap-3" onPaste={handlePaste}>
           {otp.map((digit, index) => (
             <input
@@ -156,8 +184,7 @@ export default function VerifyEmailForm() {
               onKeyDown={(e) => handleKeyDown(e, index)}
               onFocus={() => setActiveInput(index)}
               className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-black rounded-2xl border transition-all outline-none
-                ${activeInput === index ? "border-slate-950 ring-2 ring-slate-950/20 bg-white" : "border-slate-100 bg-slate-50/70 text-slate-900"}
-              `}
+                ${activeInput === index ? "border-slate-950 ring-2 ring-slate-950/20 bg-white" : "border-slate-100 bg-slate-50/70 text-slate-900"}`}
             />
           ))}
         </div>
@@ -170,7 +197,6 @@ export default function VerifyEmailForm() {
         </button>
       </form>
 
-      {/* Resend Logic */}
       <div className="mt-8 text-center">
         {timeLeft > 0 ? (
           <p className="text-xs font-semibold text-slate-400">

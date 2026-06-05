@@ -19,6 +19,12 @@ app.use(
   }),
 );
 
+// 2. req parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+
 //Testing
 
 app.use((req, res, next) => {
@@ -26,10 +32,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2. req parsing
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 // 3. API Routes
 app.use("/api/auth", authRoutes);

@@ -22,7 +22,7 @@ export const registerSchema = z.object({
     password: passwordValidation,
     role: z.enum(["user", "doctor"]).default("user"),
     phone: z.string().min(7, "Invalid phone number").max(15, "Invalid phone number"),
-    countryCode: z.string().min(2, "Country code required").max(5, "Invalid country code"), // e.g. "+91"
+    countryCode: z.string().min(2, "Country code required").max(5, "Invalid country code"),
   }),
 });
 

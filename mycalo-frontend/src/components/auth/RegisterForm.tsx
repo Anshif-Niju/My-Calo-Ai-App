@@ -55,7 +55,19 @@ export default function RegisterForm() {
       router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Registration failed. Please try again.");
+      const data = error.response?.data;
+
+      if (data?.message) {
+        setServerError(data.message);
+        return;
+      }
+
+      if (Array.isArray(data?.errors) && data.errors.length > 0) {
+        setServerError(data.errors[0]?.message || "Registration failed. Please try again.");
+        return;
+      }
+
+      setServerError("Registration failed. Please try again.");
     },
   });
 
@@ -98,7 +110,7 @@ export default function RegisterForm() {
               <button
                 key={role}
                 type="button"
-                onClick={() => setValue("role", role)}
+                onClick={() => setValue("role", role, { shouldValidate: true })}
                 className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl font-bold text-sm transition-all ${selectedRole === role ? "bg-slate-950 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>
                 {role === "user" ? (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -151,7 +163,7 @@ export default function RegisterForm() {
             <div className="relative">
               <select
                 value={selectedCode}
-                onChange={(e) => setValue("countryCode", e.target.value)}
+                onChange={(e) => setValue("countryCode", e.target.value, { shouldValidate: true })}
                 className="h-14 pl-3 pr-8 rounded-2xl border-none bg-slate-50 text-slate-900 font-bold text-sm appearance-none focus:ring-2 focus:ring-slate-950 transition-all outline-none cursor-pointer">
                 {COUNTRY_CODES.map((c) => (
                   <option key={c.code} value={c.code}>

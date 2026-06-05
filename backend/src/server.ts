@@ -2,7 +2,7 @@ import app from "./app";
 import { connectDB } from "./config/db";
 import { redis } from "./config/redis";
 import { env } from "./config/env";
-import "./jobs/workers/email.worker"; 
+import "./jobs/workers/email.worker";
 
 const PORT = env.PORT;
 
