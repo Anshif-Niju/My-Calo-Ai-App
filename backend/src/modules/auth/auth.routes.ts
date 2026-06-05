@@ -30,4 +30,7 @@ router.post("/disable-2fa", authenticate, validate(zod.disable2FASchema), authCo
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
 router.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login", session: false }), authController.googleCallback);
 
+// User Detail
+router.get("/me", authenticate, authController.getMe);
+
 export default router;

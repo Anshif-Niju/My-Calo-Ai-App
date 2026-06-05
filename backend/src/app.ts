@@ -24,15 +24,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-
-//Testing
-
-app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.url} - Body:`, req.body);
-  next();
-});
-
-
 // 3. API Routes
 app.use("/api/auth", authRoutes);
 

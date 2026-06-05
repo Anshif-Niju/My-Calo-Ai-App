@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
-import GuestRoute from "@/components/shared/GuestRoute"; 
+import GuestRoute from "@/components/shared/GuestRoute";
 
 export const metadata: Metadata = {
   title: "MyCalo AI | Your Health Companion",
@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <GuestRoute>
       <div className="min-h-screen w-full bg-[#f8fafc] flex flex-col items-center justify-center p-4 selection:bg-slate-900 selection:text-white relative overflow-hidden">
 
         <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-emerald-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-50"></div>
@@ -57,6 +56,5 @@ export default function LandingPage() {
           <p className="text-xs font-semibold text-slate-400">© {new Date().getFullYear()} MyCalo AI Platform</p>
         </div>
       </div>
-    </GuestRoute>
   );
 }

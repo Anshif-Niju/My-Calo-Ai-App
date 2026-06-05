@@ -10,11 +10,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
+import { toast } from "sonner";
 
 export default function LoginForm() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -68,12 +68,12 @@ export default function LoginForm() {
       router.push("/home");
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Something went wrong. Please try again.");
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong. Please try again later";
+      toast.error(message);
     },
   });
 
   const onSubmit = (data: LoginFormData) => {
-    setServerError(null);
     loginMutation.mutate(data);
   };
 
@@ -84,8 +84,6 @@ export default function LoginForm() {
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {serverError && <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-sm font-semibold text-red-600">{serverError}</div>}
-
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">Email</label>
           <input

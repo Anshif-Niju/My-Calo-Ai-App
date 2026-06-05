@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import { toast } from "sonner";
 
 export default function VerifyOtpForm() {
   const router = useRouter();
@@ -17,7 +18,6 @@ export default function VerifyOtpForm() {
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [activeInput, setActiveInput] = useState<number>(0);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(60);
 
@@ -37,14 +37,26 @@ export default function VerifyOtpForm() {
     onSuccess: (data) => {
       if (type === "email_verify") {
         dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
-        router.push("/onboarding/role-select");
+
+        const { role, onboardingCompleted, isVerified } = data.user;
+
+        if (onboardingCompleted) {
+          if (role === "doctor") router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+          else if (role === "admin") router.push("/admin/dashboard");
+          else if (role === "subadmin") router.push("/subadmin/dashboard");
+          else router.push("/home");
+          return;
+        }
+
+        router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
       } else {
-        // forgot_password → go to new-password with resetToken
+        // forgot_password
         router.push(`/new-password?resetToken=${encodeURIComponent(data.resetToken)}`);
       }
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Invalid code. Please try again.");
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid code. Please try again.";
+      toast.error(message);
     },
   });
 
@@ -56,10 +68,9 @@ export default function VerifyOtpForm() {
     onSuccess: () => {
       setSuccessMessage("A new code has been sent!");
       setTimeLeft(60);
-      setServerError(null);
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Failed to resend code.");
+      toast.error(error.response?.data?.message || "Failed to resend code.");
     },
   });
 
@@ -87,7 +98,9 @@ export default function VerifyOtpForm() {
     const pastedData = e.clipboardData.getData("text/plain").slice(0, 6).split("");
     if (!/^\d+$/.test(pastedData.join(""))) return;
     const newOtp = [...otp];
-    pastedData.forEach((char, i) => { if (i < 6) newOtp[i] = char; });
+    pastedData.forEach((char, i) => {
+      if (i < 6) newOtp[i] = char;
+    });
     setOtp(newOtp);
     const focusIndex = Math.min(pastedData.length, 5);
     setActiveInput(focusIndex);
@@ -96,11 +109,10 @@ export default function VerifyOtpForm() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError(null);
     setSuccessMessage(null);
     const otpString = otp.join("");
     if (otpString.length !== 6) {
-      setServerError("Please enter all 6 digits.");
+      toast.error("Please enter all 6 digits.");
       return;
     }
     verifyMutation.mutate({ email, otp: otpString, type });
@@ -124,22 +136,15 @@ export default function VerifyOtpForm() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        {serverError && (
-          <div className="p-3 bg-red-50 border border-red-100 rounded-[16px] text-xs font-semibold text-red-600 text-center animate-in fade-in zoom-in duration-300">
-            {serverError}
-          </div>
-        )}
-        {successMessage && (
-          <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-[16px] text-xs font-semibold text-emerald-600 text-center animate-in fade-in zoom-in duration-300">
-            {successMessage}
-          </div>
-        )}
+        {successMessage && <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-[16px] text-xs font-semibold text-emerald-600 text-center animate-in fade-in zoom-in duration-300">{successMessage}</div>}
 
         <div className="flex justify-between gap-2 sm:gap-3" onPaste={handlePaste}>
           {otp.map((digit, index) => (
             <input
               key={index}
-              ref={(el) => { inputRefs.current[index] = el; }}
+              ref={(el) => {
+                inputRefs.current[index] = el;
+              }}
               type="text"
               maxLength={1}
               value={digit}
@@ -147,10 +152,7 @@ export default function VerifyOtpForm() {
               onKeyDown={(e) => handleKeyDown(e, index)}
               onFocus={() => setActiveInput(index)}
               className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-black rounded-2xl border transition-all outline-none
-                ${activeInput === index
-                  ? "border-slate-950 ring-2 ring-slate-950/20 bg-white"
-                  : "border-slate-100 bg-slate-50/70 text-slate-900"
-                }`}
+                ${activeInput === index ? "border-slate-950 ring-2 ring-slate-950/20 bg-white" : "border-slate-100 bg-slate-50/70 text-slate-900"}`}
             />
           ))}
         </div>
@@ -158,13 +160,8 @@ export default function VerifyOtpForm() {
         <button
           type="submit"
           disabled={verifyMutation.isPending || otp.join("").length !== 6}
-          className="w-full h-[60px] bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-[24px] transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center text-sm"
-        >
-          {verifyMutation.isPending ? (
-            <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
-          ) : (
-            "Verify & Continue"
-          )}
+          className="w-full h-[60px] bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-[24px] transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center text-sm">
+          {verifyMutation.isPending ? <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" /> : "Verify & Continue"}
         </button>
       </form>
 
@@ -174,12 +171,7 @@ export default function VerifyOtpForm() {
             Resend code in <span className="text-slate-900 w-8 inline-block">00:{timeLeft.toString().padStart(2, "0")}</span>
           </p>
         ) : (
-          <button
-            type="button"
-            onClick={() => resendMutation.mutate()}
-            disabled={resendMutation.isPending}
-            className="text-sm font-bold text-slate-950 hover:text-slate-700 transition-colors"
-          >
+          <button type="button" onClick={() => resendMutation.mutate()} disabled={resendMutation.isPending} className="text-sm font-bold text-slate-950 hover:text-slate-700 transition-colors">
             {resendMutation.isPending ? "Sending..." : "Resend Code"}
           </button>
         )}

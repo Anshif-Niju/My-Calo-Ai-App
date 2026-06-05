@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const COUNTRY_CODES = [
   { code: "+91", flag: "🇮🇳", name: "IN" },
@@ -24,7 +25,6 @@ const COUNTRY_CODES = [
 
 export default function RegisterForm() {
   const router = useRouter();
-  const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -55,24 +55,12 @@ export default function RegisterForm() {
       router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
     onError: (error: any) => {
-      const data = error.response?.data;
-
-      if (data?.message) {
-        setServerError(data.message);
-        return;
-      }
-
-      if (Array.isArray(data?.errors) && data.errors.length > 0) {
-        setServerError(data.errors[0]?.message || "Registration failed. Please try again.");
-        return;
-      }
-
-      setServerError("Registration failed. Please try again.");
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Registration failed. Please try again.";
+      toast.error(message);
     },
   });
 
   const onSubmit = (data: RegisterFormData) => {
-    setServerError(null);
     registerMutation.mutate(data);
   };
 
@@ -100,7 +88,6 @@ export default function RegisterForm() {
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {serverError && <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-sm font-semibold text-red-600 animate-in fade-in zoom-in duration-300">{serverError}</div>}
 
         {/* Role Toggle */}
         <div>

@@ -4,6 +4,7 @@ import { api } from "@/lib/axios";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function NewPasswordForm() {
   const router = useRouter();
@@ -12,7 +13,6 @@ export default function NewPasswordForm() {
 
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [serverError, setServerError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -23,15 +23,15 @@ export default function NewPasswordForm() {
       router.push("/login?reset=success");
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Something went wrong.");
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong.";
+      toast.error(message);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError(null);
     if (newPassword !== confirm) {
-      setServerError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     mutation.mutate();
@@ -50,7 +50,6 @@ export default function NewPasswordForm() {
 
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20 space-y-6">
-      {serverError && <div className="p-3 bg-red-50 border border-red-100 rounded-[16px] text-xs font-semibold text-red-600 text-center animate-in fade-in zoom-in duration-300">{serverError}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">

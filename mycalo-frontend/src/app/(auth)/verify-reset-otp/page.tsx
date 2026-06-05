@@ -1,4 +1,4 @@
-import VerifyOtpForm from "@/components/auth/VerifyOtpForm";
+import VerifyResetOtpForm from "@/components/auth/VerifyResetOtpForm";
 import { Suspense } from "react";
 
 export default function VerifyResetOtpPage() {
@@ -15,7 +15,7 @@ export default function VerifyResetOtpPage() {
       </div>
 
       <Suspense fallback={<div className="w-full h-[300px] bg-white rounded-[32px] animate-pulse" />}>
-        <VerifyOtpForm />
+        <VerifyResetOtpForm />
       </Suspense>
     </div>
   );

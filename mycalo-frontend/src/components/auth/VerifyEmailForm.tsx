@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import { toast } from "sonner";
 
 export default function VerifyEmailForm() {
   const router = useRouter();
@@ -16,7 +17,6 @@ export default function VerifyEmailForm() {
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [activeInput, setActiveInput] = useState<number>(0);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(60);
 
@@ -60,7 +60,8 @@ export default function VerifyEmailForm() {
       }
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Invalid verification code.");
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid verification code.";
+      toast.error(message);
     },
   });
 
@@ -79,10 +80,9 @@ export default function VerifyEmailForm() {
       inputRefs.current[0]?.focus();
       setSuccessMessage("A new code has been sent!");
       setTimeLeft(60);
-      setServerError(null);
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Failed to resend code.");
+      toast.error(error.response?.data?.message || "Failed to resend code.");
     },
   });
 
@@ -136,12 +136,11 @@ export default function VerifyEmailForm() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError(null);
     setSuccessMessage(null);
 
     const otpString = otp.join("");
     if (otpString.length !== 6) {
-      setServerError("Please enter all 6 digits.");
+      toast.error("Please enter all 6 digits.");
       return;
     }
 
@@ -166,7 +165,6 @@ export default function VerifyEmailForm() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        {serverError && <div className="p-3 bg-red-50 border border-red-100 rounded-[16px] text-xs font-semibold text-red-600 text-center animate-in fade-in zoom-in duration-300">{serverError}</div>}
 
         {successMessage && <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-[16px] text-xs font-semibold text-emerald-600 text-center animate-in fade-in zoom-in duration-300">{successMessage}</div>}
 

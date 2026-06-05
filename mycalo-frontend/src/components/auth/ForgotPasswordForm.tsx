@@ -4,11 +4,11 @@ import { api } from "@/lib/axios";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function ForgotPasswordForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [serverError, setServerError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (email: string) => {
@@ -16,26 +16,21 @@ export default function ForgotPasswordForm() {
       return res.data;
     },
     onSuccess: () => {
-      router.push(`/verify-otp?type=forgot_password&email=${encodeURIComponent(email)}`);
+      router.push(`/verify-reset-otp?type=forgot_password&email=${encodeURIComponent(email)}`);
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.message || "Something went wrong.");
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong.";
+      toast.error(message);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError(null);
     mutation.mutate(email);
   };
 
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20 space-y-6">
-      {serverError && (
-        <div className="p-3 bg-red-50 border border-red-100 rounded-[16px] text-xs font-semibold text-red-600 text-center animate-in fade-in zoom-in duration-300">
-          {serverError}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
@@ -44,7 +39,7 @@ export default function ForgotPasswordForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@email.com"
+            placeholder="enter your email"
             className="w-full px-4 py-3.5 rounded-[16px] border border-slate-100 bg-slate-50/70 text-slate-900 font-medium text-sm focus:border-slate-950 focus:ring-2 focus:ring-slate-950/20 focus:bg-white outline-none transition-all"
           />
         </div>

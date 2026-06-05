@@ -36,10 +36,9 @@ export const register = async (req: Request, res: Response) => {
 
     const existingUser = await User.findOne({ email, isEmailVerified: true });
     if (existingUser) {
-      return res.status(409).json({ message: "Email already registered" });
+      return res.status(409).json({ message: "This email is already registered. Please login instead." });
     }
 
-    // Delete any previous unverified attempt
     await User.deleteOne({ email, isEmailVerified: false });
 
     const user = new User({ name, email, password, role, phone, countryCode });
@@ -86,7 +85,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
       const accessToken = generateAccessToken(user.id, user.role, user.email);
       const refreshToken = generateRefreshToken(user.id);
       setRefreshCookie(res, refreshToken);
-      
+
       emailQueue
         .add("login-success-notification", {
           type: "login_success",
@@ -211,7 +210,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(200).json({ message: "If this email is registered, a reset code has been sent." });
+    if (!user) return res.status(400).json({ message: "This email is not registered" });
 
     const otp = generateOTP();
     await redis.set(`otp:${email}:forgot_password`, otp, "EX", 180);
@@ -415,8 +414,21 @@ export const googleCallback = async (req: Request, res: Response) => {
       })
       .catch((err) => console.error("Failed to queue Google login email:", err));
 
-    return res.redirect(`${env.FRONTEND_URL}/auth-callback?token=${accessToken}`);
+    return res.redirect(`${env.FRONTEND_URL}/google-callback?token=${accessToken}`);
   } catch (error) {
     return res.redirect(`${env.FRONTEND_URL}/login?error=server_error`);
+  }
+};
+
+// 14. getMe (Send user details)
+
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    const authUser = req.user as AuthUserPayload;
+    const user = await User.findById(authUser.userId).select("-password -twoFactorSecret");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    return res.status(200).json({ user });
+  } catch (error) {
+    return res.status(500).json({ message: getErrorMessage(error) });
   }
 };

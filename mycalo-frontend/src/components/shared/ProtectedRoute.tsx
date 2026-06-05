@@ -1,50 +1,46 @@
 "use client";
 
+import { ProtectedRouteProps } from "@/types/protectedRoute.types";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
-
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles?: Array<"user" | "doctor" | "subadmin" | "admin">;
-  requireOnboarding?: boolean;
-}
 
 export default function ProtectedRoute({ children, allowedRoles, requireOnboarding = true }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { accessToken, user } = useSelector((state: RootState) => state.auth);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // 1. Not logged in
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     if (!accessToken || !user) {
       router.push(`/login?redirect=${pathname}`);
       return;
     }
-
-    // 2. Onboarding not done → role-specific onboarding
     if (requireOnboarding && !user.onboardingCompleted) {
       router.push(user.role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
       return;
     }
-
-    // 3. RBAC check
     if (allowedRoles && !allowedRoles.includes(user.role)) {
       if (user.role === "admin") router.push("/admin/dashboard");
+      else if (user.role === "subadmin") router.push("/subadmin/dashboard");
       else if (user.role === "doctor") router.push(user.isVerified ? "/doctor/dashboard" : "/doctor/verification");
       else router.push("/home");
       return;
     }
-
-    // 4. Doctor not verified — block access to protected doctor routes
     if (user.role === "doctor" && !user.isVerified && pathname !== "/doctor/verification") {
       router.push("/doctor/verification");
       return;
     }
-  }, [accessToken, user, allowedRoles, requireOnboarding, router, pathname]);
+  }, [accessToken, user, allowedRoles, requireOnboarding, router, pathname, isMounted]);
 
-  // Render nothing while redirecting
+  if (!isMounted) return <div className="min-h-screen bg-[#f8fafc]" />;
   if (!accessToken || !user) return null;
   if (requireOnboarding && !user.onboardingCompleted) return null;
   if (allowedRoles && !allowedRoles.includes(user.role)) return null;
