@@ -30,23 +30,30 @@ export default function AuthCallbackHandler() {
 
         const { role, onboardingCompleted, isVerified } = res.data.user;
 
+        if (role === "admin") {
+          router.push("/admin/dashboard");
+          return;
+        }
+        if (role === "subadmin") {
+          router.push("/subadmin/dashboard");
+          return;
+        }
+
         if (!onboardingCompleted) {
           router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
           return;
         }
-        if (!isVerified) {
-        if (role === "doctor") {
-          router.push("/onboarding/doctor/profile");
-        } else {
-          router.push("/onboarding/user/profile");
-        }
-        return;
-      }
 
-       if (role === "admin") router.push("/admin/dashboard");
-        else if (role === "subadmin") router.push("/subadmin/dashboard");
-        else if (role === "doctor") router.push("/doctor/dashboard");
-        else router.push("/home");
+        if (!isVerified) {
+          router.push(role === "doctor" ? "/onboarding/doctor/profile" : "/onboarding/user/profile");
+          return;
+        }
+
+        if (role === "doctor") {
+          router.push("/doctor/dashboard");
+          return;
+        }
+        router.push("/home");
       } catch {
         router.push("/login?error=auth_failed");
       }

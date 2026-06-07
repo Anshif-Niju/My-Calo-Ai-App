@@ -3,33 +3,52 @@
 import { api } from "@/lib/axios";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const slides = [
   {
-    image: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780724340/Gemini_Generated_Image_ssf6udssf6udssf6_1_yltev8.png",
+    mobileImage: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780838013/Gemini_Generated_Image_p9cauwp9cauwp9ca_cv0cma.png",
+    desktopImage: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780837962/Gemini_Generated_Image_ob6mp1ob6mp1ob6m_1_bg0dtu.png",
     tag: "Calorie Tracker",
     title: "Effortless calorie tracking",
     sub: "Snap your meal and we'll handle the rest — calorie tracking made simple.",
+    hookText: "Snap it. Track it. Done it",
+    textDisplay: "Food Scan",
   },
   {
-    image: "YOUR_SECOND_IMAGE_URL",
+    mobileImage: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780825071/Gemini_Generated_Image_j1acw4j1acw4j1ac_nesjfr.png",
+    desktopImage: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780837269/Gemini_Generated_Image_tj6ziptj6ziptj6z_jrwcrb.png",
     tag: "Doctor Booking",
     title: "Book a doctor in seconds",
     sub: "50+ verified doctors available 24/7 for video consultation.",
+    hookText: "24/7 Available Doctors in your pocket",
+    textDisplay: "Doctor Booking",
   },
   {
-    image: "YOUR_THIRD_IMAGE_URL",
+    mobileImage: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780838133/Gemini_Generated_Image_hx4zl6hx4zl6hx4z_vteorf.png",
+    desktopImage: "https://res.cloudinary.com/dagoi6mwq/image/upload/q_auto/f_auto/v1780838702/Gemini_Generated_Image_bsgnbgbsgnbgbsgn_wfidv3.png",
     tag: "AI Assistant",
     title: "Meet your AI nutrition coach",
     sub: "Ask anything about food, health, and your goals — powered by Gemini AI.",
+    hookText: "Your AI know what you need",
+    textDisplay: "AI Companion",
   },
 ];
 
 export default function UserIntroSlider() {
   const [current, setCurrent] = useState(0);
   const router = useRouter();
+
+  // Preload all mobile images on mount
+  useEffect(() => {
+    slides.forEach((s) => {
+      const img = new Image();
+      img.src = s.mobileImage;
+      const img2 = new Image();
+      img2.src = s.desktopImage;
+    });
+  }, []);
 
   const introMutation = useMutation({
     mutationFn: async () => {
@@ -53,17 +72,76 @@ export default function UserIntroSlider() {
     }
   };
 
+  const handlePrev = () => {
+    if (current > 0) setCurrent((prev) => prev - 1);
+  };
+
   const slide = slides[current];
   const isLast = current === slides.length - 1;
+  const isFirst = current === 0;
   const isDark = current === 2;
 
+  const dots = (
+    <div className="flex gap-1.5 mb-6">
+      {slides.map((_, i) => (
+        <div
+          key={i}
+          className="h-1.5 rounded-full transition-all duration-300"
+          style={{
+            width: i === current ? "24px" : "6px",
+            background: i === current ? (isDark ? "#fff" : "#0a0a0a") : isDark ? "#333" : "#e5e5e5",
+          }}
+        />
+      ))}
+    </div>
+  );
+
+  const buttons = (
+    <div className="flex gap-3">
+      {!isFirst && (
+        <button onClick={handlePrev} className="h-14 w-14 shrink-0 rounded-2xl font-bold border flex items-center justify-center" style={{ borderColor: isDark ? "#333" : "#e5e5e5", color: isDark ? "#fff" : "#0a0a0a", background: "transparent" }}>
+          ←
+        </button>
+      )}
+      <button
+        onClick={handleNext}
+        disabled={introMutation.isPending}
+        className="flex-1 h-14 rounded-2xl font-bold flex items-center justify-center transition-transform active:scale-[0.98] disabled:opacity-70"
+        style={{ background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#0a0a0a" : "#fff" }}>
+        {introMutation.isPending ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : isLast ? "Get Started" : "Next"}
+      </button>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
-      <div className="relative w-full h-[100dvh] sm:h-[780px] sm:max-w-sm mx-auto  flex flex-col sm:rounded-[32px] overflow-hidden">
-        {/* Image — reduced from 55% to 42% */}
-        <div className="relative w-full shrink-0" style={{ height: "42%" }}>
-          <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+    <div className="fixed inset-0 bg-black">
+      {/* ── MOBILE ── */}
+      <div className="lg:hidden fixed inset-0 flex flex-col overflow-hidden">
+        {/* Image — increased to 55% */}
+        <div className="relative w-full shrink-0" style={{ height: "55%" }}>
+          <picture className="block w-full h-full">
+            <img src={slide.mobileImage} alt={slide.title} className="absolute inset-0 w-full h-full object-cover" />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60" />
+
+          {/* Hook text overlay — mobile */}
+          {slide.hookText && (
+            <>
+              <div className="absolute bottom-15 left-5 right-5 z-10">
+                {/* <div className="w-8 h-[2px] bg-white mb-3 rounded-full" /> */}
+                <p className="text-white font-black leading-[1.1] text-2xl" style={{ fontFamily: "var(--font-head, 'Syne', sans-serif)" }}>
+                  {slide.hookText.split(" ").slice(0, 3).join(" ")}
+                  <br />
+                  <span className="text-white/70 font-semibold text-base">{slide.hookText.split(" ").slice(3).join(" ")}</span>
+                </p>
+                <div className="mt-3 inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-white/90 text-xs font-semibold tracking-wide">{slide.textDisplay}</span>
+                </div>
+              </div>
+            </>
+          )}
+
           <button
             onClick={() => introMutation.mutate()}
             disabled={introMutation.isPending}
@@ -72,10 +150,9 @@ export default function UserIntroSlider() {
           </button>
         </div>
 
-        {/* Bottom Card — flex-1 fills remaining 58%, no scroll */}
+        {/* Bottom card */}
         <div className="relative flex-1 rounded-t-[32px] px-6 pt-7 pb-8 flex flex-col z-10 -mt-8" style={{ background: isDark ? "#111111" : "#ffffff" }}>
-          {/* Content — no overflow-y-auto, just natural flow */}
-          <div >
+          <div>
             <span className="text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block" style={{ background: isDark ? "#222" : "#f0f0f0", color: isDark ? "#aaa" : "#333" }}>
               {slide.tag}
             </span>
@@ -87,30 +164,69 @@ export default function UserIntroSlider() {
             </p>
           </div>
 
-          {/* Dots + Button — always at bottom */}
-          <div className="pt-4 border-t border-slate-100/10">
-            <div className="flex gap-1.5 mb-5">
-              {slides.map((_, i) => (
-                <div
-                  key={i}
-                  className="h-1.5 rounded-full transition-all duration-300"
-                  style={{
-                    width: i === current ? "24px" : "6px",
-                    background: i === current ? (isDark ? "#ffffff" : "#0a0a0a") : isDark ? "#333" : "#e5e5e5",
-                  }}
-                />
-              ))}
-            </div>
-            <button
-              onClick={handleNext}
-              disabled={introMutation.isPending}
-              className="w-full h-14 rounded-2xl text-base font-bold transition-transform active:scale-[0.98] disabled:opacity-70 flex items-center justify-center shadow-lg"
-              style={{
-                background: isDark ? "#ffffff" : "#0a0a0a",
-                color: isDark ? "#0a0a0a" : "#ffffff",
-              }}>
-              {introMutation.isPending ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : isLast ? "Get Started" : "Next"}
-            </button>
+          <div className="pt-4 border-t border-slate-100/10 mt-auto">
+            {dots}
+            {buttons}
+          </div>
+        </div>
+      </div>
+
+      {/* ── DESKTOP ── */}
+      <div className="hidden lg:flex w-full h-full">
+        {/* Left — image */}
+        <div className="relative w-1/2 h-full overflow-hidden">
+          <img src={slide.desktopImage} alt={slide.title} className="w-full h-full object-cover" />
+
+          {/* Base gradient always */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40" />
+
+          {/* Hook text — only doctor slide */}
+          {slide.hookText && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+              <div className="absolute bottom-12 left-10 right-10 z-10">
+                <div className="w-10 h-[3px] bg-white mb-4 rounded-full" />
+
+                <p className="text-white font-black leading-[1.1]" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", fontFamily: "var(--font-head, 'Syne', sans-serif)" }}>
+                  {slide.hookText.split(" ").slice(0, 3).join(" ")}
+                  <br />
+                  <span className="text-white/70 font-semibold" style={{ fontSize: "clamp(1.2rem, 2vw, 1.6rem)" }}>
+                    {slide.hookText.split(" ").slice(3).join(" ")}
+                  </span>
+                </p>
+
+                {/* Subtle badge */}
+                <div className="mt-4 inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-white/90 text-xs font-semibold tracking-wide">{slide.textDisplay}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Right — content */}
+        <div className="w-1/2 flex flex-col justify-between px-16 py-12" style={{ background: isDark ? "#111111" : "#ffffff" }}>
+          <button onClick={() => introMutation.mutate()} disabled={introMutation.isPending} className="self-end text-sm font-bold px-4 py-1.5 rounded-full" style={{ background: isDark ? "#222" : "#f0f0f0", color: isDark ? "#aaa" : "#333" }}>
+            Skip
+          </button>
+
+          <div>
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block" style={{ background: isDark ? "#222" : "#f0f0f0", color: isDark ? "#aaa" : "#333" }}>
+              {slide.tag}
+            </span>
+            <h2 className="text-5xl font-bold leading-snug mb-4 mt-3" style={{ color: isDark ? "#f0f0f0" : "#0a0a0a" }}>
+              {slide.title}
+            </h2>
+            <p className="text-lg leading-relaxed" style={{ color: isDark ? "#666" : "#888" }}>
+              {slide.sub}
+            </p>
+          </div>
+
+          <div>
+            {dots}
+            {buttons}
           </div>
         </div>
       </div>

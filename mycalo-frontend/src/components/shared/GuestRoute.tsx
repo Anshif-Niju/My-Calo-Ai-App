@@ -10,7 +10,7 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
   const { user } = useSelector((state: RootState) => state.auth);
   const [isChecking, setIsChecking] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-
+ 
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -20,13 +20,27 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
 
     if (user) {
       const { role, isVerified, onboardingCompleted } = user;
+
+      if (role === "admin") {
+        router.push("/admin/dashboard");
+        return;
+      }
+      if (role === "subadmin") {
+        router.push("/subadmin/dashboard");
+        return;
+      }
+
       if (!onboardingCompleted) {
         router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
         return;
       }
-      if (role === "admin") router.push("/admin/dashboard");
-      else if (role === "subadmin") router.push("/subadmin/dashboard");
-      else if (role === "doctor") router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+
+      if (!isVerified) {
+        router.push(role === "doctor" ? "/onboarding/doctor/profile" : "/onboarding/user/profile");
+        return;
+      }
+
+      if (role === "doctor") router.push("/doctor/dashboard");
       else router.push("/home");
     } else {
       setIsChecking(false);

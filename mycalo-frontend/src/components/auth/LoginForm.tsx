@@ -16,7 +16,7 @@ export default function LoginForm() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
-
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const {
     register,
     handleSubmit,
@@ -32,14 +32,25 @@ export default function LoginForm() {
     },
     onSuccess: (data) => {
       if (data.requiresTwoFactor) {
+        setIsRedirecting(true);
         dispatch(setTwoFactorRequired({ tempToken: data.tempToken }));
         router.push("/two-factor");
         return;
       }
 
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
-
+      setIsRedirecting(true);
       const { role, isVerified, onboardingCompleted } = data.user;
+
+      if (role === "admin") {
+        router.push("/admin/dashboard");
+        return;
+      }
+
+      if (role === "subadmin") {
+        router.push("/subadmin/dashboard");
+        return;
+      }
 
       if (!onboardingCompleted) {
         if (role === "doctor") {
@@ -60,16 +71,6 @@ export default function LoginForm() {
 
       if (role === "doctor") {
         router.push("/doctor/dashboard");
-        return;
-      }
-
-      if (role === "subadmin") {
-        router.push("/subadmin/dashboard");
-        return;
-      }
-
-      if (role === "admin") {
-        router.push("/admin/dashboard");
         return;
       }
 
@@ -143,9 +144,9 @@ export default function LoginForm() {
 
         <button
           type="submit"
-          disabled={loginMutation.isPending}
-          className="w-full h-14 mt-4 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-2xl transition-all shadow-md active:scale-[0.98] disabled:opacity-70 flex items-center justify-center">
-          {loginMutation.isPending ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Log In"}
+          disabled={loginMutation.isPending || isRedirecting}
+          className="w-full h-14 mt-6 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-2xl transition-all shadow-md active:scale-[0.98] disabled:opacity-70 flex items-center justify-center">
+          {loginMutation.isPending || isRedirecting ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Login"}
         </button>
       </form>
 

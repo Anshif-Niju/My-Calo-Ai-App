@@ -46,7 +46,7 @@ export const validate = (schema: AnyZodObject) => (req: Request, res: Response, 
   } catch (error: any) {
     if (error instanceof ZodError) {
       console.log("ZOD VALIDATION ERROR:", JSON.stringify(error.errors, null, 2));
-      return res.status(400).json({ message: "Validation failed", errors: error.errors });
+      return res.status(400).json({ message: "Validation failed", errors: error.issues });
     }
 
     console.error("UNKNOWN MIDDLEWARE ERROR:", error);

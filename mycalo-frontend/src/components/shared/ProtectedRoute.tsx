@@ -23,14 +23,26 @@ export default function ProtectedRoute({ children, allowedRoles, requireOnboardi
       router.push(`/login?redirect=${pathname}`);
       return;
     }
+
+    // ✅ admin/subadmin — skip all verification checks
+    
+    if (user.role === "admin" || user.role === "subadmin") {
+      if (allowedRoles && !allowedRoles.includes(user.role)) {
+        router.push(user.role === "admin" ? "/admin/dashboard" : "/subadmin/dashboard");
+        return;
+      }
+      return;
+    }
+
     if (requireOnboarding && !user.onboardingCompleted) {
       router.push(user.role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
       return;
     }
+
+    if (!user.isVerified && pathname === "/onboarding/user/profile") return;
+    if (!user.isVerified && pathname === "/onboarding/doctor/profile") return;
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-      if (user.role === "admin") router.push("/admin/dashboard");
-      else if (user.role === "subadmin") router.push("/subadmin/dashboard");
-      else if (user.role === "doctor") router.push(user.isVerified ? "/doctor/dashboard" : "/doctor/verification");
+      if (user.role === "doctor") router.push(user.isVerified ? "/doctor/dashboard" : "/doctor/verification");
       else router.push("/home");
       return;
     }
