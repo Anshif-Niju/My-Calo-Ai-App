@@ -5,6 +5,7 @@ import express from "express";
 import helmet from "helmet";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
+import onboardingRoutes from "./modules/onboarding/onboarding.routes";
 dotenv.config();
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(cookieParser());
 
 // 3. API Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/onboarding", onboardingRoutes);
 
 // 4. Health Check Endpoint
 app.get("/health", (req, res) => {

@@ -6,6 +6,7 @@ import speakeasy from "speakeasy";
 import { env } from "../../config/env";
 import { redis } from "../../config/redis";
 import { emailQueue } from "../../jobs/queues/email.queue";
+import { Doctor } from "../../models/Doctor.model";
 import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index.js";
 import { getErrorMessage } from "../../utils/error.util";
@@ -44,16 +45,23 @@ export const register = async (req: Request, res: Response) => {
     const user = new User({ name, email, password, role, phone, countryCode });
     await user.save();
 
+    if (role === "doctor") {
+      await Doctor.findOneAndDelete({ userId: user._id }); 
+      await new Doctor({ userId: user._id }).save();
+    }
+
     const otp = generateOTP();
     console.log(otp);
     await redis.set(`otp:${email}:email_verify`, otp, "EX", 180);
 
-    await emailQueue.add("send-verify-email", {
-      type: "verify_email",
-      to: email,
-      subject: "Verify your MyCalo AI account",
-      otp,
-    });
+    await emailQueue
+      .add("send-verify-email", {
+        type: "verify_email",
+        to: email,
+        subject: "Verify your MyCalo AI account",
+        otp,
+      })
+      .catch((err) => console.error("Failed to queue login email:", err));
 
     return res.status(201).json({ message: "OTP sent to your email" });
   } catch (error) {

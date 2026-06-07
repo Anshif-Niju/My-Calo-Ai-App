@@ -49,9 +49,17 @@ export default function LoginForm() {
         }
         return;
       }
+      if (!isVerified) {
+        if (role === "doctor") {
+          router.push("/onboarding/doctor/profile");
+        } else {
+          router.push("/onboarding/user/profile");
+        }
+        return;
+      }
 
       if (role === "doctor") {
-        router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+        router.push("/doctor/dashboard");
         return;
       }
 
@@ -90,7 +98,7 @@ export default function LoginForm() {
             type="email"
             {...register("email")}
             placeholder="Enter your email"
-            className="w-full h-14 px-5 rounded-2xl border-none border-slate-500  text-slate-900 font-medium placeholder:text-slate-400 focus:ring-2 focus:ring-slate-950 transition-all outline-none"
+            className="w-full h-14 px-5 rounded-2xl border-none bg-slate-50 border-slate-500  text-slate-900 font-medium placeholder:text-slate-400 focus:ring-2 focus:ring-slate-950 transition-all outline-none"
           />
           {errors.email && <p className="text-xs font-semibold text-red-500 mt-2 ml-1">{errors.email.message}</p>}
         </div>
