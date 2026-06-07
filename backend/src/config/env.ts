@@ -26,6 +26,8 @@ const envSchema = z.object({
 
   GMAIL_USER: z.string().email().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
   GMAIL_APP_PASS: z.string().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
+  BREVO_API_KEY: z.string().min(1,"BREVO_API_KEY is required"),
+  BREVO_SENDER_EMAIL: z.string().email(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

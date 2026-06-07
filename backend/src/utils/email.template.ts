@@ -1,35 +1,37 @@
-import nodemailer from "nodemailer";
 import { env } from "../config/env";
 import { SendEmailArgs } from "../types/index";
-
-// Transporter
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: env.GMAIL_USER,
-    pass: env.GMAIL_APP_PASS,
-  },
-});
-
-//Send Email
 
 export const sendEmail = async ({ to, subject, html }: SendEmailArgs): Promise<void> => {
   if (env.NODE_ENV === "test") {
     console.log(`✉️ [Mock Email] To: ${to} | Subject: ${subject}`);
     return;
   }
+  try {
+    // Brevo SDK-ക്ക് പകരം നേരിട്ട് API Call ചെയ്യുന്നു
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "api-key": env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: "MyCalo AI", email: env.BREVO_SENDER_EMAIL },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html,
+      }),
+    });
 
-  await transporter.sendMail({
-    from: `"MyCalo AI" <${env.GMAIL_USER}>`,
-    to,
-    subject,
-    html,
-    headers: {
-      "X-Mailer": "MyCalo AI Mailer",
-      "List-Unsubscribe": `<mailto:${env.GMAIL_USER}?subject=unsubscribe>`,
-    },
-  });
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Brevo API Error:", errorData);
+      throw new Error("Failed to send email via Brevo");
+    }
+  } catch (error) {
+    console.error("Email Sending Error:", error);
+    throw error;
+  }
 };
 
 //  Template 1: Email Verification OTP
