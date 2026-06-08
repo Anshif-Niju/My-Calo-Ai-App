@@ -1,6 +1,5 @@
 "use client";
 
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { useEffect } from "react";
 
 export default function DoctorOnboardingLayout({ children }: { children: React.ReactNode }) {
@@ -13,9 +12,5 @@ export default function DoctorOnboardingLayout({ children }: { children: React.R
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  return (
-    <ProtectedRoute requireOnboarding={false}> 
-      {children}
-    </ProtectedRoute>
-  );
+  return <>{children}</>;
 }

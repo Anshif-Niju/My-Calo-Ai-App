@@ -22,12 +22,13 @@ const envSchema = z.object({
 
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
 
-  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
-
-  GMAIL_USER: z.string().email().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
-  GMAIL_APP_PASS: z.string().min(1, "RESEND_API_KEY is mandatory for sending system transactional emails"),
-  BREVO_API_KEY: z.string().min(1,"BREVO_API_KEY is required"),
+  BREVO_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
   BREVO_SENDER_EMAIL: z.string().email(),
+
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
+  CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
+  CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

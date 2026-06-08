@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { authenticate, validate } from "../../middlewares/authenticate";
+import { uploadDoctorDocs } from "../../middlewares/upload.middleware";
 import { completeDoctorIntro, completeDoctorVerification } from "./doctor.onboarding.controller";
 import { doctorVerificationSchema, userProfileSchema } from "./onboarding.validator";
 import { completeIntro, completeUserverifiaction } from "./user.onboarding.controller";
@@ -22,6 +23,15 @@ router.post(
 
 //Doctor Onboarding
 router.post("/doctor-intro-complete", authenticate, completeDoctorIntro);
-router.post("/doctor-verification", authenticate, validate(doctorVerificationSchema), completeDoctorVerification);
-
+router.post(
+  "/doctor-verification",
+  authenticate,
+  uploadDoctorDocs, // ← multer first
+  validate(
+    z.object({
+      body: doctorVerificationSchema,
+    }),
+  ),
+  completeDoctorVerification,
+);
 export default router;

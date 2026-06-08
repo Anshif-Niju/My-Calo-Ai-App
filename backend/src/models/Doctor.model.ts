@@ -7,7 +7,7 @@ const DoctorSchema = new Schema<IDoctor>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true
+      unique: true,
     },
 
     specialization: { type: String },
@@ -17,8 +17,8 @@ const DoctorSchema = new Schema<IDoctor>(
     registrationYear: { type: Number },
     verificationStatus: {
       type: String,
-      enum: ["not_submitted", "pending", "under_review", "approved", "rejected"],
-      default: "not_submitted",
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
     rejectionReason: { type: String },
     documents: {
@@ -28,7 +28,7 @@ const DoctorSchema = new Schema<IDoctor>(
       clinicProof: { type: String },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 DoctorSchema.index({ verificationStatus: 1 });

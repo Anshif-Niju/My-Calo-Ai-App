@@ -46,7 +46,7 @@ export const register = async (req: Request, res: Response) => {
     await user.save();
 
     if (role === "doctor") {
-      await Doctor.findOneAndDelete({ userId: user._id }); 
+      await Doctor.findOneAndDelete({ userId: user._id });
       await new Doctor({ userId: user._id }).save();
     }
 
@@ -435,7 +435,19 @@ export const getMe = async (req: Request, res: Response) => {
     const authUser = req.user as AuthUserPayload;
     const user = await User.findById(authUser.userId).select("-password -twoFactorSecret");
     if (!user) return res.status(404).json({ message: "User not found" });
-    return res.status(200).json({ user });
+
+    let verificationStatus: string | undefined;
+    if (user.role === "doctor") {
+      const doc = await Doctor.findOne({ userId: user._id }).select("verificationStatus");
+      verificationStatus = doc?.verificationStatus;
+    }
+
+    return res.status(200).json({
+      user: {
+        ...user.toObject(),
+        ...(user.role === "doctor" && { verificationStatus }),
+      },
+    });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }

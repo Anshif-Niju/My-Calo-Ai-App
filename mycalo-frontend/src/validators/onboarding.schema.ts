@@ -43,3 +43,39 @@ export const goalSchema = z
       path: ["targetWeight"],
     },
   );
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+
+const fileSchema = (requiredMessage: string) =>
+  z
+    .instanceof(File, { message: requiredMessage })
+    .refine((file) => file.size <= MAX_FILE_SIZE, "File size must be less than 5MB")
+    .refine((file) => ACCEPTED_TYPES.includes(file.type), "Only JPG, PNG, or PDF files are allowed");
+
+export const doctorVerificationSchema = z.object({
+  specialization: z.string().min(1, "Please select specialization"),
+
+  experience: z.coerce.number().min(0, "Experience cannot be negative").max(70, "Invalid experience"),
+
+  registrationNumber: z.string().min(3, "Invalid registration number"),
+
+  registrationCouncil: z.string().min(2, "Invalid council name"),
+
+  registrationYear: z.coerce.number().min(1950, "Invalid year").max(new Date().getFullYear(), "Year cannot be in the future"),
+
+  mcuCertificate: fileSchema("MCU Certificate is required"),
+
+  degreeCertificate: fileSchema("Degree Certificate is required"),
+
+  governmentId: fileSchema("Government ID is required"),
+
+  clinicProof: z
+    .instanceof(File)
+    .refine((file) => file.size <= MAX_FILE_SIZE, "File size must be less than 5MB")
+    .refine((file) => ACCEPTED_TYPES.includes(file.type), "Only JPG, PNG, or PDF files are allowed")
+    .optional(),
+});
+
+export type DoctorVerificationInput = z.infer<typeof doctorVerificationSchema>;

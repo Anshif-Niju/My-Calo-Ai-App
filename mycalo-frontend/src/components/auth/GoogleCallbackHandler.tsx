@@ -27,7 +27,7 @@ export default function AuthCallbackHandler() {
         });
 
         dispatch(setCredentials({ accessToken: token, user: res.data.user }));
-
+        console.log(res.data.user);
         const { role, onboardingCompleted, isVerified } = res.data.user;
 
         if (role === "admin") {

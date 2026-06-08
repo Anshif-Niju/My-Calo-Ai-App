@@ -29,25 +29,14 @@ export const userProfileSchema = z.object({
 //  DOCTOR VERIFICATION
 
 export const doctorVerificationSchema = z.object({
-  specialization: z.string({ required_error: "Specialization is required" }).min(2, "Specialization too short").max(100),
-
-  experience: z.number({ required_error: "Experience is required" }).min(0, "Experience cannot be negative").max(70, "Experience seems invalid"),
-
-  registrationNumber: z.string({ required_error: "Registration number is required" }).min(3, "Invalid registration number"),
-
-  registrationCouncil: z.string({ required_error: "Registration council is required" }).min(2, "Invalid council name"),
-
-  registrationYear: z.number({ required_error: "Registration year is required" }).min(1950, "Invalid year").max(new Date().getFullYear(), "Year cannot be in the future"),
-
-  // S3 URLs — frontend upload ചെയ്‌ത ശേഷം URL അയക്കും
-  mcuCertificate: z.string({ required_error: "MCU certificate is required" }).url("Invalid file URL"),
-
-  degreeCertificate: z.string({ required_error: "Degree certificate is required" }).url("Invalid file URL"),
-
-  governmentId: z.string({ required_error: "Government ID is required" }).url("Invalid file URL"),
-
-  clinicProof: z.string().url("Invalid file URL").optional(),
+  specialization: z.string().min(2, "Specialization too short").max(100),
+  experience: z.coerce.number().min(0).max(70),
+  registrationNumber: z.string().min(3, "Invalid registration number"),
+  registrationCouncil: z.string().min(2, "Invalid council name"),
+  registrationYear: z.coerce.number().min(1950).max(new Date().getFullYear()),
+  // other document multer will handle
 });
+
 
 //  Types
 
