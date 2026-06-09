@@ -28,7 +28,7 @@ export default function AuthCallbackHandler() {
         });
 
         dispatch(setCredentials({ accessToken: token, user: res.data.user }));
-        getRedirectPath(res.data.user);
+        router.push(getRedirectPath(res.data.user));
       } catch {
         router.push("/login?error=auth_failed");
       }

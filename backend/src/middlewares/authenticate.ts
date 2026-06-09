@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { AuthUserPayload } from "../types/index.js";
 import { AnyZodObject, ZodError } from "zod";
+import { AuthUserPayload } from "../types/index.js";
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   try {

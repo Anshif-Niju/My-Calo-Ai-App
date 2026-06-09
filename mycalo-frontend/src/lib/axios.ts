@@ -11,6 +11,7 @@ export const api = axios.create({
 });
 
 // Request Interceptor: Attach access token
+
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = store.getState().auth.accessToken;
@@ -23,6 +24,7 @@ api.interceptors.request.use(
 );
 
 // Response Interceptor: Handle 401 logic
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

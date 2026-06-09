@@ -41,7 +41,7 @@ export default function LoginForm() {
 
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
       setIsRedirecting(true);
-      getRedirectPath(data.user);
+      router.push(getRedirectPath(data.user));
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong. Please try again later";

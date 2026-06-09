@@ -20,7 +20,7 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
     if (!isMounted) return;
 
     if (user) {
-      getRedirectPath(user);
+      router.push(getRedirectPath(user));
     } else {
       setIsChecking(false);
     }

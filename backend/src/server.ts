@@ -3,6 +3,8 @@ import { connectDB } from "./config/db";
 import { redis } from "./config/redis";
 import { env } from "./config/env";
 import "./jobs/workers/email.worker";
+import "./jobs/workers/foodScan.worker";
+import "./jobs/workers/mealPlan.worker";
 
 const PORT = env.PORT;
 

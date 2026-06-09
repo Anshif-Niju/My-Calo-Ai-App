@@ -1,3 +1,10 @@
-export default function UserHomeLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+import BottomNavbar from "@/components/shared/BottomNavbar";
+
+export default function UserLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      {children}
+      <BottomNavbar />
+    </>
+  );
 }

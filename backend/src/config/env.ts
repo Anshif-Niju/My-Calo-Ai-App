@@ -25,6 +25,8 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
   BREVO_SENDER_EMAIL: z.string().email(),
 
+  GEMINI_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
+
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
   CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
