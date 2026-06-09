@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/axios";
 import { setCredentials, setTwoFactorRequired } from "@/store/slices/auth.slice";
+import { getRedirectPath } from "@/utils/getRedirectPath";
 import { LoginFormData, loginSchema } from "@/validators/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -40,41 +41,7 @@ export default function LoginForm() {
 
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
       setIsRedirecting(true);
-      const { role, isVerified, onboardingCompleted } = data.user;
-
-      if (role === "admin") {
-        router.push("/admin/dashboard");
-        return;
-      }
-
-      if (role === "subadmin") {
-        router.push("/subadmin/dashboard");
-        return;
-      }
-
-      if (!onboardingCompleted) {
-        if (role === "doctor") {
-          router.push("/onboarding/doctor");
-        } else {
-          router.push("/onboarding/user");
-        }
-        return;
-      }
-      if (!isVerified) {
-        if (role === "doctor") {
-          router.push("/onboarding/doctor/profile");
-        } else {
-          router.push("/onboarding/user/profile");
-        }
-        return;
-      }
-
-      if (role === "doctor") {
-        router.push("/doctor/dashboard");
-        return;
-      }
-
-      router.push("/home");
+      getRedirectPath(data.user);
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong. Please try again later";

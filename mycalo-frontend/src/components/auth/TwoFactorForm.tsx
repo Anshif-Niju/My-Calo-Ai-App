@@ -29,20 +29,17 @@ export default function TwoFactorForm() {
     },
     onSuccess: (data) => {
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
-      const { role, isVerified, onboardingCompleted } = data.user;
+      const { role } = data.user;
 
-      if (!onboardingCompleted) {
-        router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
-        return;
-      }
-      if (role === "doctor") router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+      if (role === "doctor") router.push("/doctor/dashboard");
       else if (role === "admin") router.push("/admin/dashboard");
       else if (role === "subadmin") router.push("/subadmin/dashboard");
       else router.push("/home");
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid Code. Try again";
-      toast.error(message);    },
+      toast.error(message);
+    },
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -107,7 +104,7 @@ export default function TwoFactorForm() {
       <p className="text-center text-xs font-bold text-slate-400 mb-6 tracking-wide">
         OPEN YOUR <span className="text-slate-900">AUTHENTICATOR APP</span>
       </p>
-      
+
       <div className="flex justify-between gap-2 sm:gap-3" onPaste={handlePaste}>
         {otp.map((digit, index) => (
           <input

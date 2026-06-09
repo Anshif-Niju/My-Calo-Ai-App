@@ -1,6 +1,7 @@
 "use client";
 
 import { RootState } from "@/store";
+import { getRedirectPath } from "@/utils/getRedirectPath";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -10,7 +11,7 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
   const { user } = useSelector((state: RootState) => state.auth);
   const [isChecking, setIsChecking] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
- 
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -19,29 +20,7 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
     if (!isMounted) return;
 
     if (user) {
-      const { role, isVerified, onboardingCompleted } = user;
-
-      if (role === "admin") {
-        router.push("/admin/dashboard");
-        return;
-      }
-      if (role === "subadmin") {
-        router.push("/subadmin/dashboard");
-        return;
-      }
-
-      if (!onboardingCompleted) {
-        router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
-        return;
-      }
-
-      if (!isVerified) {
-        router.push(role === "doctor" ? "/onboarding/doctor/profile" : "/onboarding/user/profile");
-        return;
-      }
-
-      if (role === "doctor") router.push("/doctor/dashboard");
-      else router.push("/home");
+      getRedirectPath(user);
     } else {
       setIsChecking(false);
     }

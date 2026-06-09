@@ -199,12 +199,24 @@ export const login = async (req: Request, res: Response) => {
       })
       .catch((err) => console.error("Failed to queue login email:", err));
 
+    let verificationStatus: string | undefined;
+    if (user.role === "doctor") {
+      const doctorProfile = await Doctor.findOne({ userId: user._id }).select("verificationStatus");
+      verificationStatus = doctorProfile?.verificationStatus;
+    }
+
     return res.status(200).json({
       accessToken,
       user: {
-        ...user.toObject(),
+        _id: user._id,
+        name: user.name,
+        email: user.email,
         role: user.role,
         isVerified: user.isVerified,
+        isEmailVerified: user.isEmailVerified,
+        onboardingCompleted: user.onboardingCompleted,
+        isTwoFactorEnabled: user.isTwoFactorEnabled,
+        ...(user.role === "doctor" && { verificationStatus }),
       },
     });
   } catch (error) {

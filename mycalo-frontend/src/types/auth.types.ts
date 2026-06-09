@@ -6,6 +6,7 @@ export interface User {
   isEmailVerified: boolean;
   isVerified: boolean;
   onboardingCompleted: boolean;
+  verificationStatus?: string;
   isTwoFactorEnabled: boolean;
   phone?: string;
   countryCode?: string;

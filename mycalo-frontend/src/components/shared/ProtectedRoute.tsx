@@ -25,7 +25,7 @@ export default function ProtectedRoute({ children, allowedRoles, requireOnboardi
     }
 
     // ✅ admin/subadmin — skip all verification checks
-    
+
     if (user.role === "admin" || user.role === "subadmin") {
       if (allowedRoles && !allowedRoles.includes(user.role)) {
         router.push(user.role === "admin" ? "/admin/dashboard" : "/subadmin/dashboard");
@@ -42,13 +42,20 @@ export default function ProtectedRoute({ children, allowedRoles, requireOnboardi
     if (!user.isVerified && pathname === "/onboarding/user/profile") return;
     if (!user.isVerified && pathname === "/onboarding/doctor/profile") return;
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-      if (user.role === "doctor") router.push(user.isVerified ? "/doctor/dashboard" : "/doctor/verification");
-      else router.push("/home");
+      if (user.role === "doctor") {
+        router.push(user.verificationStatus === "approved" ? "/doctor/dashboard" : "/onboarding/doctor/verification");
+      } else {
+        router.push("/home");
+      }
       return;
     }
-    if (user.role === "doctor" && !user.isVerified && pathname !== "/doctor/verification") {
-      router.push("/doctor/verification");
-      return;
+    if (user.role === "doctor") {
+      if (user.verificationStatus !== "approved") {
+        if (pathname !== "/onboarding/doctor/verification") {
+          router.push("/onboarding/doctor/verification");
+        }
+        return;
+      }
     }
   }, [accessToken, user, allowedRoles, requireOnboarding, router, pathname, isMounted]);
 
@@ -56,7 +63,6 @@ export default function ProtectedRoute({ children, allowedRoles, requireOnboardi
   if (!accessToken || !user) return null;
   if (requireOnboarding && !user.onboardingCompleted) return null;
   if (allowedRoles && !allowedRoles.includes(user.role)) return null;
-  if (user.role === "doctor" && !user.isVerified && pathname !== "/doctor/verification") return null;
-
+  if (user.role === "doctor" && user.verificationStatus !== "approved" && pathname !== "/onboarding/doctor/verification") return null;
   return <>{children}</>;
 }

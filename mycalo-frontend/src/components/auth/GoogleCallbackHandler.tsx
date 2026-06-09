@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/axios";
 import { setCredentials } from "@/store/slices/auth.slice";
+import { getRedirectPath } from "@/utils/getRedirectPath";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -27,33 +28,7 @@ export default function AuthCallbackHandler() {
         });
 
         dispatch(setCredentials({ accessToken: token, user: res.data.user }));
-        console.log(res.data.user);
-        const { role, onboardingCompleted, isVerified } = res.data.user;
-
-        if (role === "admin") {
-          router.push("/admin/dashboard");
-          return;
-        }
-        if (role === "subadmin") {
-          router.push("/subadmin/dashboard");
-          return;
-        }
-
-        if (!onboardingCompleted) {
-          router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
-          return;
-        }
-
-        if (!isVerified) {
-          router.push(role === "doctor" ? "/onboarding/doctor/profile" : "/onboarding/user/profile");
-          return;
-        }
-
-        if (role === "doctor") {
-          router.push("/doctor/dashboard");
-          return;
-        }
-        router.push("/home");
+        getRedirectPath(res.data.user);
       } catch {
         router.push("/login?error=auth_failed");
       }
