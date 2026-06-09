@@ -6,16 +6,14 @@ const initialState: AuthState = {
   accessToken: null,
   requiresTwoFactor: false,
   tempToken: null,
+  authInitialized: false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ accessToken: string; user?: User }>
-    ) => {
+    setCredentials: (state, action: PayloadAction<{ accessToken: string; user?: User }>) => {
       state.accessToken = action.payload.accessToken;
       if (action.payload.user) {
         state.user = action.payload.user;
@@ -23,10 +21,7 @@ const authSlice = createSlice({
       state.requiresTwoFactor = false;
       state.tempToken = null;
     },
-    setTwoFactorRequired: (
-      state,
-      action: PayloadAction<{ tempToken: string }>
-    ) => {
+    setTwoFactorRequired: (state, action: PayloadAction<{ tempToken: string }>) => {
       state.requiresTwoFactor = true;
       state.tempToken = action.payload.tempToken;
     },
@@ -36,8 +31,11 @@ const authSlice = createSlice({
       state.requiresTwoFactor = false;
       state.tempToken = null;
     },
+    setAuthInitialized: (state) => {
+      state.authInitialized = true;
+    },
   },
 });
 
-export const { setCredentials, setTwoFactorRequired, logoutAction } = authSlice.actions;
+export const { setCredentials, setTwoFactorRequired, logoutAction, setAuthInitialized } = authSlice.actions;
 export default authSlice.reducer;

@@ -4,9 +4,10 @@ interface CalorieRingProps {
   consumed: number;
   target: number;
   size?: number;
+  isOver?: boolean;
 }
 
-export default function CalorieRing({ consumed, target, size = 120 }: CalorieRingProps) {
+export default function CalorieRing({ consumed, target, size = 120 ,}: CalorieRingProps) {
   const progress = Math.min(100, Math.round((consumed / target) * 100));
   const radius = (size - 16) / 2;
   const circumference = 2 * Math.PI * radius;

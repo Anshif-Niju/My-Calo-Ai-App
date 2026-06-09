@@ -208,3 +208,87 @@ export const getLoginSuccessTemplate = ({
   </table>
 </body>
 </html>`.trim();
+
+export const getMorningReminderTemplate = ({ name, yesterdayMissed, todayTarget }: {
+  name: string; yesterdayMissed: boolean; todayTarget: number;
+}) => `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:48px 16px;background:#0f0f1a;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,rgba(198,241,53,0.12),rgba(198,241,53,0.05));border:1px solid rgba(198,241,53,0.3);border-radius:20px;overflow:hidden;">
+        <tr><td style="padding:36px 40px 28px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:inline-block;background:#0a0a0f;border-radius:16px;padding:12px 24px;">
+            <span style="color:#fff;font-size:22px;font-weight:700;">🥗 MyCalo AI</span>
+          </div>
+        </td></tr>
+        <tr><td style="padding:36px 40px;">
+          <h2 style="color:#fff;font-size:24px;margin:0 0 12px;">Good morning, ${name}! 🌅</h2>
+          ${yesterdayMissed ? `<p style="color:rgba(255,255,255,0.6);font-size:15px;">You didn't log your meals yesterday. Today is a fresh start!</p>` : `<p style="color:rgba(255,255,255,0.6);font-size:15px;">Start your day right by tracking your meals.</p>`}
+          <div style="background:rgba(198,241,53,0.15);border:1px solid rgba(198,241,53,0.4);border-radius:12px;padding:16px;margin:24px 0;">
+            <p style="color:#c6f135;margin:0;font-weight:700;">Today's target: ${todayTarget} kcal</p>
+          </div>
+          <p style="color:rgba(255,255,255,0.4);font-size:13px;">Open MyCalo AI and scan your breakfast to get started.</p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+          <p style="color:rgba(255,255,255,0.25);font-size:12px;">© ${new Date().getFullYear()} MyCalo AI</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+
+export const getGoalHitTemplate = ({ name, calories }: { name: string; calories: number }) => `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:48px 16px;background:#0f0f1a;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.05));border:1px solid rgba(16,185,129,0.3);border-radius:20px;overflow:hidden;">
+        <tr><td style="padding:36px 40px 28px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:inline-block;background:#0a0a0f;border-radius:16px;padding:12px 24px;">
+            <span style="color:#fff;font-size:22px;font-weight:700;">🥗 MyCalo AI</span>
+          </div>
+        </td></tr>
+        <tr><td style="padding:36px 40px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;">🎉</div>
+          <h2 style="color:#fff;font-size:24px;margin:0 0 12px;">Goal Achieved, ${name}!</h2>
+          <p style="color:rgba(255,255,255,0.6);">You've hit your daily calorie target of <strong style="color:#4eff9f;">${calories} kcal</strong>. Keep it up!</p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+          <p style="color:rgba(255,255,255,0.25);font-size:12px;">© ${new Date().getFullYear()} MyCalo AI</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+
+export const getGoalOverTemplate = ({ name, consumed, target }: { name: string; consumed: number; target: number }) => `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:48px 16px;background:#0f0f1a;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,rgba(220,38,38,0.12),rgba(239,68,68,0.05));border:1px solid rgba(220,38,38,0.3);border-radius:20px;overflow:hidden;">
+        <tr><td style="padding:36px 40px 28px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:inline-block;background:#0a0a0f;border-radius:16px;padding:12px 24px;">
+            <span style="color:#fff;font-size:22px;font-weight:700;">🥗 MyCalo AI</span>
+          </div>
+        </td></tr>
+        <tr><td style="padding:36px 40px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+          <h2 style="color:#fff;font-size:24px;margin:0 0 12px;">Calorie Limit Exceeded</h2>
+          <p style="color:rgba(255,255,255,0.6);">Hi ${name}, you consumed <strong style="color:#ff4e6a;">${consumed} kcal</strong> today — ${consumed - target} kcal over your ${target} kcal target.</p>
+          <p style="color:rgba(255,255,255,0.4);font-size:13px;">Consider lighter meals for the rest of the day.</p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+          <p style="color:rgba(255,255,255,0.25);font-size:12px;">© ${new Date().getFullYear()} MyCalo AI</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();

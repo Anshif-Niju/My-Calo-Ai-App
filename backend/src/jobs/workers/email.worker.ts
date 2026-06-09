@@ -3,6 +3,7 @@ import { redis } from "../../config/redis";
 import { User } from "../../models/User.model";
 import { EmailJobData } from "../../types/index";
 import * as emailTemplate from "../../utils/email.template";
+import { logger } from "../../utils/logger";
 
 export const emailWorker = new Worker<EmailJobData>(
   "emailQueue",
@@ -47,7 +48,7 @@ export const emailWorker = new Worker<EmailJobData>(
     }
 
     await emailTemplate.sendEmail({ to, subject, html: emailHtml });
-    console.log(`Email delivered [${job.id}] type="${type}" → ${to}`);
+    logger.info(`Email delivered [${job.id}] type="${type}" → ${to}`);
   },
   {
     connection: redis as any,

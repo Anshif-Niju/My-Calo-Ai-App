@@ -1,73 +1,60 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-export interface IDailyLog extends Document {
+export interface IDailyLog {
   userId: mongoose.Types.ObjectId;
   date: string; // "YYYY-MM-DD"
-
-  // Aggregated nutrition for the day (recomputed on every meal add/remove)
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  totalFiber: number;
-
-  // Goals (copied from user's NutritionPlan or defaults)
-  goalCalories: number;
-  goalProtein: number;
-  goalCarbs: number;
-  goalFat: number;
-
-  // Water tracking (ml)
-  waterIntake: number; // actual ml consumed
-  waterGoal: number; // daily goal ml (default 2500)
-
-  // Burned calories (manual entry or from wearable sync later)
-  caloriesBurned: number;
-
-  // Meal references (populated from MealLog)
-  meals: mongoose.Types.ObjectId[];
-
-  // Streak helper
-  isComplete: boolean; // true if calorie goal met (≥90%)
+  consumed: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+  };
+  targets: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  status: "under" | "hit" | "over";
+  mealCount: number;
+  emailSent: {
+    morning: boolean;   // 6 AM reminder
+    completed: boolean; // goal hit notification
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const DailyLogSchema = new Schema<IDailyLog>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    date: { type: String, required: true }, // "2025-06-08"
-
-    totalCalories: { type: Number, default: 0 },
-    totalProtein: { type: Number, default: 0 },
-    totalCarbs: { type: Number, default: 0 },
-    totalFat: { type: Number, default: 0 },
-    totalFiber: { type: Number, default: 0 },
-
-    goalCalories: { type: Number, default: 2000 },
-    goalProtein: { type: Number, default: 150 },
-    goalCarbs: { type: Number, default: 250 },
-    goalFat: { type: Number, default: 65 },
-
-    waterIntake: { type: Number, default: 0 },
-    waterGoal: { type: Number, default: 2500 },
-
-    caloriesBurned: { type: Number, default: 0 },
-
-    meals: [{ type: Schema.Types.ObjectId, ref: "MealLog" }],
-
-    isComplete: { type: Boolean, default: false },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    date: { type: String, required: true },
+    consumed: {
+      calories: { type: Number, default: 0 },
+      protein: { type: Number, default: 0 },
+      carbs: { type: Number, default: 0 },
+      fat: { type: Number, default: 0 },
+      fiber: { type: Number, default: 0 },
+    },
+    targets: {
+      calories: { type: Number, required: true },
+      protein: { type: Number, required: true },
+      carbs: { type: Number, required: true },
+      fat: { type: Number, required: true },
+    },
+    status: { type: String, enum: ["under", "hit", "over"], default: "under" },
+    mealCount: { type: Number, default: 0 },
+    emailSent: {
+      morning: { type: Boolean, default: false },
+      completed: { type: Boolean, default: false },
+    },
+    // Auto-delete after 3 days
+    createdAt: { type: Date, default: Date.now, expires: 259200 },
   },
   { timestamps: true },
 );
 
-// One daily log per user per day
 DailyLogSchema.index({ userId: 1, date: 1 }, { unique: true });
-
-// Auto-mark complete
-DailyLogSchema.pre("save", function (next) {
-  if (this.goalCalories > 0) {
-    this.isComplete = this.totalCalories >= this.goalCalories * 0.9;
-  }
-
-});
 
 export const DailyLog = mongoose.model<IDailyLog>("DailyLog", DailyLogSchema);

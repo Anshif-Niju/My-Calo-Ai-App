@@ -6,26 +6,29 @@ import { logger } from "../../utils/logger";
 export const foodScanWorker = new Worker(
   "food-scan",
   async (job) => {
-    const { jobId, imageBase64, mimeType } = job.data;
-    logger.info(`🔍 Processing food scan job [${job.id}]`);
+    const { jobId, imageBase64, mimeType, imageUrl } = job.data;
+    logger.info(`🔍 Processing food scan [${job.id}]`);
 
     const result = await scanFoodWithAI(imageBase64, mimeType);
 
-    await redis.set(`scan-result:${jobId}`, JSON.stringify(result), "EX", 300);
+    // Attach imageUrl to result
+    const finalResult = { ...result, imageUrl };
 
-    logger.info(`✅ Food scan complete [${job.id}]: ${result.foodName}`);
-    return result;
+    await redis.set(`scan-result:${jobId}`, JSON.stringify(finalResult), "EX", 300);
+    logger.info(`✅ Scan complete [${job.id}]: ${result.isFood ? result.foodName : "not food"}`);
+    return finalResult;
   },
   {
     connection: redis as any,
-    concurrency: 5, // max 5 Gemini calls at once → no rate limit issues
-    limiter: {
-      max: 10, // max 10 jobs per duration
-      duration: 1000, // per 1 second
-    },
+    concurrency: 5,
+    limiter: { max: 10, duration: 1000 },
   },
 );
 
-foodScanWorker.on("failed", (job, err) => {
-  logger.error(`❌ Food scan job failed [${job?.id}]: ${err.message}`);
+foodScanWorker.on("failed", async (job, err) => {
+  logger.error(`❌ Food scan failed [${job?.id}]`, err);
+
+  if (job && job.attemptsMade >= 3) {
+    await redis.set(`scan-result:${job.data.jobId}`, JSON.stringify({ error: true, message: "Food could not be identified. Please upload a clearer photo." }), "EX", 300);
+  }
 });

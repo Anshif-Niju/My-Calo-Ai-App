@@ -29,14 +29,14 @@ export const userProfileSchema = z.object({
 //  DOCTOR VERIFICATION
 
 export const doctorVerificationSchema = z.object({
-  specialization: z.string().min(2, "Specialization too short").max(100),
-  experience: z.coerce.number().min(0).max(70),
-  registrationNumber: z.string().min(3, "Invalid registration number"),
-  registrationCouncil: z.string().min(2, "Invalid council name"),
-  registrationYear: z.coerce.number().min(1950).max(new Date().getFullYear()),
-  // other document multer will handle
+  body: z.object({
+    specialization: z.string().min(2, "Specialization is required"),
+    experience: z.coerce.number().min(0, "Experience must be a valid number"),
+    registrationNumber: z.string().min(1, "Registration number is required"),
+    registrationCouncil: z.string().min(1, "Registration council is required"),
+    registrationYear: z.coerce.number().min(1900, "Valid registration year required"),
+  })
 });
-
 
 //  Types
 

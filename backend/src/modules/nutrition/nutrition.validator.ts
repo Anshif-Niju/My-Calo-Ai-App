@@ -1,33 +1,35 @@
 import { z } from "zod";
 
 export const logMealSchema = z.object({
-  mealType: z.enum(["breakfast", "lunch", "dinner", "custom"], {
-    errorMap: () => ({ message: "Invalid meal type" }),
+  body: z.object({                          // ← wrap in body:
+    foodName: z.string().trim().min(1, "Meal name is required").max(100),
+    mealType: z.enum(["breakfast", "lunch", "dinner", "custom"], {
+      message: "Invalid meal type",
+    }),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+    calories: z.number().min(0).max(10000),
+    protein: z.number().min(0).max(1000),
+    carbs: z.number().min(0).max(1000),
+    fat: z.number().min(0).max(1000),
+    fiber: z.number().min(0).max(500).default(0),
+    imageUrl: z.string().url().optional().or(z.literal("")),
+    quantity: z.number().optional(),
+    unit: z.string().optional(),
+    grams: z.number().optional(),
+    source: z.string().optional(),
+    scanData: z.any().optional(),
   }),
-  foodName: z.string().min(1, "Food name required").max(100),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1").max(5000),
-  unit: z.string().min(1).max(20).default("g"),
-  calories: z.coerce.number().min(0).max(10000),
-  protein: z.coerce.number().min(0).max(1000),
-  carbs: z.coerce.number().min(0).max(1000),
-  fat: z.coerce.number().min(0).max(1000),
-  fiber: z.coerce.number().min(0).max(200).default(0),
-  imageUrl: z.string().url().optional(),
-  source: z.enum(["scan", "search", "manual"]).default("manual"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-});
-
-export const scanFoodSchema = z.object({
-  mealType: z.enum(["breakfast", "lunch", "dinner", "custom"], {
-    errorMap: () => ({ message: "Invalid meal type" }),
-  }),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  query: z.object({}).passthrough().optional(),
+  params: z.object({}).passthrough().optional(),
 });
 
 export const generateMealPlanSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-  forceRegenerate: z.boolean().default(false),
+  body: z.object({                          // ← wrap in body:
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+    forceRegenerate: z.boolean().default(false),
+  }),
+  query: z.object({}).passthrough().optional(),
+  params: z.object({}).passthrough().optional(),
 });
 
-export type LogMealInput = z.infer<typeof logMealSchema>;
-export type ScanFoodInput = z.infer<typeof scanFoodSchema>;
+export type LogMealInput = z.infer<typeof logMealSchema>["body"];
