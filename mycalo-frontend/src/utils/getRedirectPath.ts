@@ -1,36 +1,61 @@
-export const getRedirectPath = (user: any): string => {
-  const {
-    role,
-    isVerified,
-    onboardingCompleted,
-    verificationStatus,
-  } = user;
+export const getRedirectPath = (user: any) => {
+  if (!user) return "/login";
 
-  if (role === "admin") {
+  
+  // Admins
+
+
+  if (user.role === "admin") {
     return "/admin/dashboard";
   }
 
-  if (role === "subadmin") {
+  if (user.role === "subadmin") {
     return "/subadmin/dashboard";
   }
 
-  if (!onboardingCompleted) {
-    return role === "doctor"
-      ? "/onboarding/doctor"
-      : "/onboarding/user";
+
+  // Normal User
+
+
+  if (user.role === "user") {
+    if (!user.onboardingCompleted) {
+      return "/onboarding/user";
+    }
+
+    if (!user.isVerified) {
+      return "/onboarding/user/profile";
+    }
+
+    return "/home";
   }
 
-  if (!isVerified) {
-    return role === "doctor"
-      ? "/onboarding/doctor/profile"
-      : "/onboarding/user/profile";
+
+   // Doctor
+
+
+  if (user.role === "doctor") {
+    if (!user.onboardingCompleted) {
+      return "/onboarding/doctor";
+    }
+
+    if (!user.isVerified) {
+      return "/onboarding/doctor/profile";
+    }
+
+    switch (user.verificationStatus) {
+      case "approved":
+        return "/doctor/dashboard";
+
+      case "pending":
+      case "under_review":
+        return "/onboarding/doctor/verification";
+
+      case "rejected":
+      case "not_submitted":
+      default:
+        return "/onboarding/doctor/profile";
+    }
   }
 
-  if (role === "doctor") {
-    return verificationStatus === "approved"
-      ? "/doctor/dashboard"
-      : "/onboarding/doctor/verification";
-  }
-
-  return "/home";
+  return "/login";
 };

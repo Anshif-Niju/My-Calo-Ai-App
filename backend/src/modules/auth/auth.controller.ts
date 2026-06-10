@@ -30,42 +30,68 @@ const setRefreshCookie = (res: Response, token: string): void => {
 };
 
 // 1. REGISTER
-
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role, phone, countryCode } = req.body as RegisterInput;
 
-    const existingUser = await User.findOne({ email, isEmailVerified: true });
+    // Check verified users only
+    const existingUser = await User.exists({
+      email,
+      isEmailVerified: true,
+    });
+
     if (existingUser) {
-      return res.status(409).json({ message: "This email is already registered. Please login instead." });
+      return res.status(409).json({
+        message: "This email is already registered. Please login instead.",
+      });
     }
 
-    await User.deleteOne({ email, isEmailVerified: false });
+    // Remove stale unverified accounts
+    await User.findOneAndDelete({
+      email,
+      isEmailVerified: false,
+    });
 
-    const user = new User({ name, email, password, role, phone, countryCode });
-    await user.save();
+    // Explicit password hashing
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      phone,
+      countryCode,
+    });
+
+    // Create doctor profile if needed
     if (role === "doctor") {
-      await Doctor.findOneAndDelete({ userId: user._id });
-      await new Doctor({ userId: user._id }).save();
+      await Doctor.create({
+        userId: user._id,
+      });
     }
 
+    // OTP
     const otp = generateOTP();
-    console.log(otp);
+
     await redis.set(`otp:${email}:email_verify`, otp, "EX", 180);
 
-    await emailQueue
-      .add("send-verify-email", {
-        type: "verify_email",
-        to: email,
-        subject: "Verify your MyCalo AI account",
-        otp,
-      })
-      .catch((err) => console.error("Failed to queue login email:", err));
+    // Queue email
+    emailQueue.add("send-verify-email", {
+      type: "verify_email",
+      to: email,
+      subject: "Verify your MyCalo AI account",
+      otp,
+    });
 
-    return res.status(201).json({ message: "OTP sent to your email" });
+    return res.status(201).json({
+      message: "OTP sent to your email",
+    });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({
+      message: getErrorMessage(error),
+    });
   }
 };
 

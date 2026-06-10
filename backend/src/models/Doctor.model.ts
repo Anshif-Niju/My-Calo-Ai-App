@@ -17,7 +17,7 @@ const DoctorSchema = new Schema<IDoctor>(
     registrationYear: { type: Number },
     verificationStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["not_submitted", "pending", "under_review", "approved", "rejected"],
       default: "pending",
     },
     rejectionReason: { type: String },
@@ -31,6 +31,9 @@ const DoctorSchema = new Schema<IDoctor>(
   { timestamps: true },
 );
 
+DoctorSchema.index({
+  userId: 1,
+});
 DoctorSchema.index({ verificationStatus: 1 });
 
 export const Doctor = mongoose.model<IDoctor>("Doctor", DoctorSchema);

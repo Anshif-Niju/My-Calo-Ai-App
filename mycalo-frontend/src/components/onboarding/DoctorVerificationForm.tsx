@@ -64,9 +64,7 @@ export default function DoctorVerificationForm() {
       if (files.governmentId) formData.append("governmentId", files.governmentId);
       if (files.clinicProof) formData.append("clinicProof", files.clinicProof);
 
-      const response = await api.post("/onboarding/doctor-verification", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await api.post("/onboarding/doctor-verification", formData);
       return response.data;
     },
     onSuccess: () => {

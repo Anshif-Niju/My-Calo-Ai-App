@@ -1,13 +1,10 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
 import { store } from "../store";
-import { setCredentials, logoutAction } from "../store/slices/auth.slice";
+import { logoutAction, setCredentials } from "../store/slices/auth.slice";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
   withCredentials: true, // Crucial for sending the httpOnly refresh cookie
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Request Interceptor: Attach access token
@@ -20,7 +17,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response Interceptor: Handle 401 logic
@@ -34,11 +31,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Attempt to refresh token
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/refresh`, {}, { withCredentials: true });
 
         const { accessToken } = res.data;
 
@@ -58,5 +51,5 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );

@@ -28,3 +28,14 @@ export interface IDoctor extends Document {
 export interface IPopulatedDoctor extends Omit<IDoctor, "userId"> {
   userId: IUser;
 }
+
+export interface DoctorVerificationJobData {
+  doctorId: string;
+
+  mcuPath: string;
+  degreePath: string;
+  governmentIdPath: string;
+
+  clinicProofPath?: string;
+}
+

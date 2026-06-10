@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import mongoose, { Schema } from "mongoose";
 import { IUser } from "../types/index";
 
@@ -43,11 +42,10 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true },
 );
 
-UserSchema.pre("save", async function () {
-  if (!this.isModified("password") || !this.password) return;
-  this.password = await bcrypt.hash(this.password, 10);
+UserSchema.index({
+  email: 1,
+  isEmailVerified: 1,
 });
-
 UserSchema.index({ role: 1 });
 
 export const User = mongoose.model<IUser>("User", UserSchema);

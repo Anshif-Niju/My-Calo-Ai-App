@@ -3,32 +3,27 @@
 import { RootState } from "@/store";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
-export default function GuestRoute({ children }: { children: React.ReactNode }) {
+export default function GuestRoute({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.auth);
-  const [isChecking, setIsChecking] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
+
+  const { user } = useSelector(
+    (state: RootState) => state.auth
+  );
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
     if (user) {
-      router.push(getRedirectPath(user));
-    } else {
-      setIsChecking(false);
+      router.replace(getRedirectPath(user));
     }
-  }, [user, router, isMounted]);
+  }, [user, router]);
 
-  if (!isMounted || isChecking || user) {
-    return <div className="min-h-screen bg-[#f8fafc]" />;
-  }
+  if (user) return null;
 
   return <>{children}</>;
 }

@@ -1,5 +1,6 @@
 // controllers/doctor.controller.ts
 import { Request, Response } from "express";
+import { doctorVerificationQueue } from "../../jobs/queues/doctorVerification.queue";
 import { Doctor } from "../../models/Doctor.model";
 import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index";
@@ -14,57 +15,86 @@ export const completeDoctorIntro = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: getErrorMessage(error) });
   }
 };
-
 export const completeDoctorVerification = async (req: Request, res: Response) => {
   try {
     const authUser = req.user as AuthUserPayload;
 
-    // Typecast req.files for Multer fields
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
 
-    // Extract Cloudinary URLs instantly (No buffers, no RAM bloat!)
-    const mcuCertificate = files?.mcuCertificate?.[0]?.path;
-    const degreeCertificate = files?.degreeCertificate?.[0]?.path;
-    const governmentId = files?.governmentId?.[0]?.path;
-    const clinicProof = files?.clinicProof?.[0]?.path; // Optional
+    const mcuPath = files?.mcuCertificate?.[0]?.path;
+    const degreePath = files?.degreeCertificate?.[0]?.path;
+    const governmentIdPath = files?.governmentId?.[0]?.path;
+    const clinicProofPath = files?.clinicProof?.[0]?.path;
 
-    if (!mcuCertificate || !degreeCertificate || !governmentId) {
+    if (!mcuPath || !degreePath || !governmentIdPath) {
       return res.status(400).json({
         success: false,
-        message: "Required documents (MCU, Degree, Govt ID) are missing"
+        message: "Required documents (MCU, Degree, Govt ID) are missing",
       });
     }
 
-    const {
-      specialization,
-      experience,
-      registrationNumber,
-      registrationCouncil,
-      registrationYear
-    } = req.body;
+    const { specialization, experience, registrationNumber, registrationCouncil, registrationYear } = req.body;
 
-    const doctorProfile = await Doctor.findOne({ userId: authUser.userId });
+    const doctorProfile = await Doctor.findOne({
+      userId: authUser.userId,
+    });
+
     if (!doctorProfile) {
-        return res.status(404).json({ success: false, message: "Doctor profile not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Doctor profile not found",
+      });
     }
 
-    // Update profile
+    /*
+     * Save doctor details immediately
+     */
+
     doctorProfile.specialization = specialization;
-    doctorProfile.experience = experience;
+    doctorProfile.experience = Number(experience);
     doctorProfile.registrationNumber = registrationNumber;
     doctorProfile.registrationCouncil = registrationCouncil;
-    doctorProfile.registrationYear = registrationYear;
-    doctorProfile.documents = { mcuCertificate, degreeCertificate, governmentId, clinicProof };
+    doctorProfile.registrationYear = Number(registrationYear);
+
     doctorProfile.verificationStatus = "pending";
+
+    /*
+     * Cloudinary URLs will be filled by worker later
+     */
+
+    doctorProfile.documents = {
+      mcuCertificate: "",
+      degreeCertificate: "",
+      governmentId: "",
+      clinicProof: "",
+    };
 
     await doctorProfile.save();
 
-    return res.status(200).json({
+    /*
+     * Queue background upload job
+     */
+
+    await doctorVerificationQueue.add("upload-documents", {
+      doctorId: doctorProfile._id.toString(),
+
+      mcuPath,
+      degreePath,
+      governmentIdPath,
+      clinicProofPath,
+    });
+
+    return res.status(202).json({
       success: true,
       message: "Verification submitted successfully. Admin will review your profile.",
       verificationStatus: "pending",
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: getErrorMessage(error) });
+    return res.status(500).json({
+      success: false,
+      message: getErrorMessage(error),
+    });
   }
 };

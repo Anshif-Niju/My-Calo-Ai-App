@@ -5,45 +5,53 @@ import { redis } from "../../config/redis";
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
 export const scanFoodWithAI = async (imageBase64: string, mimeType: string) => {
-  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+  try {
+    // 1. Gemini മോഡൽ ഇനിഷ്യലൈസ് ചെയ്യുക
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
-  const prompt = `
-Analyze this food image. Identify what food is shown.
+    // 2. കൃത്യമായ JSON ഔട്ട്പുട്ട് ലഭിക്കാനുള്ള പ്രോംപ്റ്റ്
+    const prompt = `
+You are an expert nutritionist. Analyze this food image and estimate its nutritional facts.
+If the image does not contain any food items, set "isFood" to false.
 
-If it is NOT food, respond with: {"isFood": false, "message": "This doesn't appear to be food"}
-
-If it IS food, respond ONLY with valid JSON (no markdown, no extra text):
+Respond ONLY with valid JSON, no markdown and no extra text:
 {
-  "isFood": true,
-  "foodName": "exact food name (e.g. Appam, White Rice, Sambar)",
-  "type": "countable OR weighable (countable = items like appam/idli/egg, weighable = rice/curry/salad)",
-  "defaultQuantity": 1,
-  "defaultUnit": "piece OR serving OR bowl",
-  "defaultGrams": estimated grams for 1 piece/serving (e.g. appam=80, rice 1 serving=150),
-  "nutritionPerUnit": {
-    "calories": per 1 piece/serving,
-    "protein": grams,
-    "carbs": grams,
-    "fat": grams,
-    "fiber": grams
-  },
+  "isFood": boolean,
+  "foodName": "string",
+  "confidence": "high" | "medium" | "low",
   "nutritionPer100g": {
-    "calories": per 100g,
-    "protein": grams,
-    "carbs": grams,
-    "fat": grams,
-    "fiber": grams
+    "calories": number,
+    "protein": number,
+    "carbs": number,
+    "fat": number,
+    "fiber": number
   },
-  "confidence": "high OR medium OR low"
-}
+  "imageUrl": null
+}`;
 
-Be accurate with Indian/common foods. For rice always use 100g as base.`;
+    // 3. ബേസ്64 ഇമേജ് ഡാറ്റയും പ്രോംപ്റ്റും ചേർത്ത് Gemini-ലേക്ക് അയക്കുന്നു
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: imageBase64,
+          mimeType: mimeType,
+        },
+      },
+    ]);
 
-  const result = await model.generateContent([prompt, { inlineData: { mimeType, data: imageBase64 } }]);
+    const cleanText = result.response
+      .text()
+      .replace(/```json|```/g, "")
+      .trim();
 
-  const text = result.response.text();
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
+    const parsedData = JSON.parse(cleanText);
+    return parsedData;
+
+  } catch (error) {
+    console.error("🚨 Gemini Food Scan Error:", error);
+    throw error;
+  }
 };
 
 export const generateDailyMealPlan = async (userProfile: { name: string; calories: number; protein: number; carbs: number; fat: number; goalType: string; diseases: string[]; activityLevel: string }) => {

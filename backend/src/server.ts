@@ -6,6 +6,7 @@ import "./jobs/workers/email.worker";
 import "./jobs/workers/foodScan.worker";
 import "./jobs/workers/mealPlan.worker";
 import "./jobs/workers/emailNotification.worker";
+import "./jobs/workers/doctorVerification.worker";
 import { startDailyEmailScheduler } from "./jobs/schedulers/dailyEmail.scheduler";
 
 // Start scheduler

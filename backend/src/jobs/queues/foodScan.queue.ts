@@ -5,7 +5,7 @@ export const foodScanQueue = new Queue("food-scan", {
   connection: redis as any,
   defaultJobOptions: {
     attempts: 3,
-    backoff: { type: "exponential", delay: 2000 },
+    backoff: { type: "exponential", delay: 1000 },
     removeOnComplete: 100,
     removeOnFail: 50,
   },

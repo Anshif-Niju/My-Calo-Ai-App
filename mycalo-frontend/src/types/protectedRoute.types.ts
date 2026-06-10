@@ -3,3 +3,4 @@ export interface ProtectedRouteProps {
   allowedRoles?: Array<"user" | "doctor" | "subadmin" | "admin">;
   requireOnboarding?: boolean;
 }
+

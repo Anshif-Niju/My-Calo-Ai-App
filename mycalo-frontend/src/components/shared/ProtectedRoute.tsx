@@ -1,68 +1,51 @@
 "use client";
 
-import { ProtectedRouteProps } from "@/types/protectedRoute.types";
+import { RootState } from "@/store";
+import { getRedirectPath } from "@/utils/getRedirectPath";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../store";
+import { ProtectedRouteProps } from "../../types/protectedRoute.types";
 
-export default function ProtectedRoute({ children, allowedRoles, requireOnboarding = true }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
+
   const { accessToken, user } = useSelector((state: RootState) => state.auth);
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
+    // Not authenticated
 
     if (!accessToken || !user) {
-      router.push(`/login?redirect=${pathname}`);
+      router.replace(`/login?redirect=${pathname}`);
       return;
     }
 
-    // ✅ admin/subadmin — skip all verification checks
+    //Role check
 
-    if (user.role === "admin" || user.role === "subadmin") {
-      if (allowedRoles && !allowedRoles.includes(user.role)) {
-        router.push(user.role === "admin" ? "/admin/dashboard" : "/subadmin/dashboard");
-        return;
-      }
-      return;
-    }
-
-    if (requireOnboarding && !user.onboardingCompleted) {
-      router.push(user.role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
-      return;
-    }
-
-    if (!user.isVerified && pathname === "/onboarding/user/profile") return;
-    if (!user.isVerified && pathname === "/onboarding/doctor/profile") return;
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-      if (user.role === "doctor") {
-        router.push(user.verificationStatus === "approved" ? "/doctor/dashboard" : "/onboarding/doctor/verification");
-      } else {
-        router.push("/home");
-      }
+      router.replace(getRedirectPath(user));
       return;
     }
-    if (user.role === "doctor") {
-      if (user.verificationStatus !== "approved") {
-        if (pathname !== "/onboarding/doctor/verification") {
-          router.push("/onboarding/doctor/verification");
-        }
-        return;
+
+    // Correct page check
+
+    const correctPath = getRedirectPath(user);
+
+    if (pathname !== correctPath) {
+      // Allow nested pages under dashboard/home
+
+      const allowed = pathname.startsWith(correctPath);
+
+      if (!allowed) {
+        router.replace(correctPath);
       }
     }
-  }, [accessToken, user, allowedRoles, requireOnboarding, router, pathname, isMounted]);
+  }, [accessToken, user, pathname, router, allowedRoles]);
 
-  if (!isMounted) return <div className="min-h-screen bg-[#f8fafc]" />;
-  if (!accessToken || !user) return null;
-  if (requireOnboarding && !user.onboardingCompleted) return null;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return null;
-  if (user.role === "doctor" && user.verificationStatus !== "approved" && pathname !== "/onboarding/doctor/verification") return null;
+  if (!accessToken || !user) {
+    return null;
+  }
+
   return <>{children}</>;
 }
