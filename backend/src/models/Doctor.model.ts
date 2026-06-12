@@ -31,9 +31,6 @@ const DoctorSchema = new Schema<IDoctor>(
   { timestamps: true },
 );
 
-DoctorSchema.index({
-  userId: 1,
-});
 DoctorSchema.index({ verificationStatus: 1 });
 
 export const Doctor = mongoose.model<IDoctor>("Doctor", DoctorSchema);

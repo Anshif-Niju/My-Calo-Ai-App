@@ -48,21 +48,22 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
       });
     }
 
-    /*
-     * Save doctor details immediately
-     */
+    // Save doctor details immediately
 
     doctorProfile.specialization = specialization;
     doctorProfile.experience = Number(experience);
     doctorProfile.registrationNumber = registrationNumber;
     doctorProfile.registrationCouncil = registrationCouncil;
     doctorProfile.registrationYear = Number(registrationYear);
-
     doctorProfile.verificationStatus = "pending";
 
-    /*
-     * Cloudinary URLs will be filled by worker later
-     */
+    //Save chnage that doctor upload documents
+
+    await User.findByIdAndUpdate(authUser.userId, {
+      hasSubmittedVerification: true,
+    });
+
+    // Cloudinary URLs will be filled by worker later
 
     doctorProfile.documents = {
       mcuCertificate: "",
@@ -73,9 +74,9 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
 
     await doctorProfile.save();
 
-    /*
-     * Queue background upload job
-     */
+    
+    // Queue background upload job
+
 
     await doctorVerificationQueue.add("upload-documents", {
       doctorId: doctorProfile._id.toString(),

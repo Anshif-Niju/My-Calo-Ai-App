@@ -1,9 +1,7 @@
 export const getRedirectPath = (user: any) => {
   if (!user) return "/login";
 
-  
   // Admins
-
 
   if (user.role === "admin") {
     return "/admin/dashboard";
@@ -13,32 +11,28 @@ export const getRedirectPath = (user: any) => {
     return "/subadmin/dashboard";
   }
 
-
   // Normal User
-
 
   if (user.role === "user") {
     if (!user.onboardingCompleted) {
       return "/onboarding/user";
     }
 
-    if (!user.isVerified) {
+    if (!user.hasSubmittedVerification) {
       return "/onboarding/user/profile";
     }
 
     return "/home";
   }
 
-
-   // Doctor
-
+  // Doctor
 
   if (user.role === "doctor") {
     if (!user.onboardingCompleted) {
       return "/onboarding/doctor";
     }
 
-    if (!user.isVerified) {
+    if (!user.hasSubmittedVerification) {
       return "/onboarding/doctor/profile";
     }
 

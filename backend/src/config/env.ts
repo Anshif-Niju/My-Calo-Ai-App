@@ -26,6 +26,7 @@ const envSchema = z.object({
   BREVO_SENDER_EMAIL: z.string().email(),
 
   GEMINI_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
+  GROQ_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
 
   LOGMEAL_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
 

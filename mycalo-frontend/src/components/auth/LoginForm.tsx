@@ -35,13 +35,13 @@ export default function LoginForm() {
       if (data.requiresTwoFactor) {
         setIsRedirecting(true);
         dispatch(setTwoFactorRequired({ tempToken: data.tempToken }));
-        router.push("/two-factor");
+        router.replace("/two-factor");
         return;
       }
 
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
       setIsRedirecting(true);
-      router.push(getRedirectPath(data.user));
+      router.replace(getRedirectPath(data.user));
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong. Please try again later";

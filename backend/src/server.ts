@@ -1,13 +1,12 @@
 import app from "./app";
 import { connectDB } from "./config/db";
-import { redis } from "./config/redis";
 import { env } from "./config/env";
-import "./jobs/workers/email.worker";
-import "./jobs/workers/foodScan.worker";
-import "./jobs/workers/mealPlan.worker";
-import "./jobs/workers/emailNotification.worker";
-import "./jobs/workers/doctorVerification.worker";
+import { redis } from "./config/redis";
 import { startDailyEmailScheduler } from "./jobs/schedulers/dailyEmail.scheduler";
+import "./jobs/workers/doctorVerification.worker";
+import "./jobs/workers/email.worker";
+import "./jobs/workers/emailNotification.worker";
+import "./jobs/workers/foodScan.worker";
 
 // Start scheduler
 startDailyEmailScheduler();

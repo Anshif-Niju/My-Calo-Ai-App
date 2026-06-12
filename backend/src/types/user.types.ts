@@ -17,7 +17,7 @@ export interface IUser extends Document {
   phone?: string;
   countryCode?: string;
   isEmailVerified: boolean;
-  isVerified: boolean; 
+  hasSubmittedVerification: boolean;
   isTwoFactorEnabled: boolean;
   twoFactorSecret?: string;
   googleId?: string;

@@ -2,7 +2,8 @@
 
 import { api } from "@/lib/axios";
 import { RootState } from "@/store";
-import { setCredentials } from "@/store/slices/auth.slice";
+import { updateUser } from "@/store/slices/auth.slice";
+import { getRedirectPath } from "@/utils/getRedirectPath";
 import { goalSchema } from "@/validators/onboarding.schema";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -45,19 +46,23 @@ export default function GoalSelectionForm() {
       });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       sessionStorage.removeItem("healthProfile");
-      if (user) {
-        dispatch(
-          setCredentials({
-            accessToken: accessToken!,
-            user: { ...user, isVerified: true },
-          }),
-        );
+
+      try {
+        // Get latest user from backend
+        const res = await api.get("/auth/me");
+
+        dispatch(updateUser(res.data.user));
+
+        toast.success("Profile setup complete! 🎉");
+
+        setIsRedirecting(true);
+
+        router.replace(getRedirectPath(res.data.user));
+      } catch (error) {
+        toast.error("Failed to sync profile.");
       }
-      toast.success("Profile setup complete! 🎉");
-      setIsRedirecting(true);
-      router.push("/home");
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Something went wrong");

@@ -91,12 +91,12 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const { jobId, imageUrl } = res.data;
+      const { scanId } = res.data;
 
       // Poll for result every 2s
       pollIntervalRef.current = setInterval(async () => {
         try {
-          const result = await api.get(`/nutrition/scan-result/${jobId}`);
+          const result = await api.get(`/nutrition/scan-result/${scanId}`);
           const { status, data } = result.data;
 
           if (status === "done") {
@@ -119,13 +119,14 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             }
 
             // ── Success ──────────────────────────────────────────────────
-            setScanResult({ ...data, imageUrl });
+            setScanResult({ ...data });
             setQuantity(data.defaultQuantity || 1);
             setGrams(data.defaultGrams || 100);
             stepRef.current = "result";
             setStep("result");
           }
         } catch {
+
           // Poll request failed — keep trying until timeout
         }
       }, 2000);
@@ -138,7 +139,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
           setStep("error");
           setErrorMessage("Scan timed out. Please try again with a clearer photo.");
         }
-      }, 30000);
+      }, 50000);
     } catch {
       toast.error("Upload failed. Try again.");
       stepRef.current = "upload";

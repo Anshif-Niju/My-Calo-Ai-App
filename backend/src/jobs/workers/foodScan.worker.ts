@@ -1,34 +1,74 @@
 import { Worker } from "bullmq";
 import { redis } from "../../config/redis";
-import { scanFoodWithAI } from "../../modules/nutrition/nutrition.service";
+
+import { scanFoodWithGemini25 } from "../../service/ai/gemini25.service";
+import { scanFoodWithGemini35 } from "../../service/ai/gemini35.service";
+import { scanFoodWithGroq } from "../../service/ai/groq.service";
+
+import { compressImage } from "../../service/imageCompression.service";
+import { deleteTempImage } from "../../service/tempFile.service";
+
 import { logger } from "../../utils/logger";
 
 export const foodScanWorker = new Worker(
   "food-scan",
   async (job) => {
-    const { jobId, imageBase64, mimeType, imageUrl } = job.data;
-    logger.info(`🔍 Processing food scan [${job.id}]`);
+    const { scanId, tempPath, mimeType } = job.data;
 
-    const result = await scanFoodWithAI(imageBase64, mimeType);
+    logger.info(`🔍 Processing food scan [${scanId}]`);
 
-    // Attach imageUrl to result
-    const finalResult = { ...result, imageUrl };
+    try {
+      // Compress image ONCE
 
-    await redis.set(`scan-result:${jobId}`, JSON.stringify(finalResult), "EX", 300);
-    logger.info(`✅ Scan complete [${job.id}]: ${result.isFood ? result.foodName : "not food"}`);
-    return finalResult;
+      const compressedBuffer = await compressImage(tempPath);
+
+      // Convert to base64 ONCE
+
+      const imageBase64 = compressedBuffer.toString("base64");
+
+      // First successful result wins.
+
+      const result = await Promise.any([scanFoodWithGemini25(imageBase64, mimeType), scanFoodWithGemini35(imageBase64, mimeType), scanFoodWithGroq(imageBase64, mimeType)]);
+
+      // Store result for polling / Socket.IO
+
+      await redis.set(`scan-result:${scanId}`, JSON.stringify(result), "EX", 300);
+
+      logger.info(`✅ Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);
+
+      return result;
+    } finally {
+      // Delete temp file once processing ends
+
+      await deleteTempImage(tempPath);
+    }
   },
   {
     connection: redis as any,
+
     concurrency: 5,
-    limiter: { max: 10, duration: 1000 },
+
+    limiter: {
+      max: 10,
+      duration: 1000,
+    },
   },
 );
 
 foodScanWorker.on("failed", async (job, err) => {
   logger.error(`❌ Food scan failed [${job?.id}]`, err);
 
-  if (job && job.attemptsMade >= 3) {
-    await redis.set(`scan-result:${job.data.jobId}`, JSON.stringify({ error: true, message: "Food could not be identified. Please upload a clearer photo." }), "EX", 300);
+  // Promise.any failed only if ALL providers failed.
+
+  if (job) {
+    await redis.set(
+      `scan-result:${job.data.scanId}`,
+      JSON.stringify({
+        error: true,
+        message: "All AI providers failed. Please try again.",
+      }),
+      "EX",
+      300,
+    );
   }
 });

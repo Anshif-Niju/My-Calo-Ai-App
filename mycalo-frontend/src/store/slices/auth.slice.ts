@@ -7,6 +7,7 @@ const initialState: AuthState = {
   requiresTwoFactor: false,
   tempToken: null,
   authInitialized: false,
+  isAuthLoading:true
 };
 
 const authSlice = createSlice({
@@ -34,8 +35,11 @@ const authSlice = createSlice({
     setAuthInitialized: (state) => {
       state.authInitialized = true;
     },
+    updateUser: (state, action) => {
+      state.user = action.payload;
+    },
   },
 });
 
-export const { setCredentials, setTwoFactorRequired, logoutAction, setAuthInitialized } = authSlice.actions;
+export const { setCredentials, setTwoFactorRequired, logoutAction, setAuthInitialized, updateUser } = authSlice.actions;
 export default authSlice.reducer;

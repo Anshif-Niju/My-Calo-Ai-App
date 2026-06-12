@@ -38,10 +38,10 @@ export default function VerifyOtpForm() {
       if (type === "email_verify") {
         dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
 
-        const { role, onboardingCompleted, isVerified } = data.user;
+        const { role, onboardingCompleted, hasSubmittedVerification } = data.user;
 
         if (onboardingCompleted) {
-          if (role === "doctor") router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+          if (role === "doctor") router.push(hasSubmittedVerification ? "/doctor/dashboard" : "/doctor/verification");
           else if (role === "admin") router.push("/admin/dashboard");
           else if (role === "subadmin") router.push("/subadmin/dashboard");
           else router.push("/home");

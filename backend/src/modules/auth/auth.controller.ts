@@ -30,6 +30,7 @@ const setRefreshCookie = (res: Response, token: string): void => {
 };
 
 // 1. REGISTER
+
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role, phone, countryCode } = req.body as RegisterInput;
@@ -195,27 +196,53 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body as LoginInput;
 
     const user = await User.findOne({ email }).select("+password");
+
     if (!user || !user.password) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
     }
 
     if (!user.isEmailVerified) {
-      return res.status(400).json({ message: "Please verify your email before logging in." });
+      return res.status(400).json({
+        message: "Please verify your email before logging in.",
+      });
     }
+
+    /*
+     * Two Factor Authentication
+     */
 
     if (user.isTwoFactorEnabled) {
       const tempToken = generateTemp2FAToken(user.id);
-      return res.status(200).json({ requiresTwoFactor: true, tempToken });
+
+      return res.status(200).json({
+        requiresTwoFactor: true,
+        tempToken,
+      });
     }
 
+
+    // Generate tokens
+
+
     const accessToken = generateAccessToken(user.id, user.role, user.email);
+
     const refreshToken = generateRefreshToken(user.id);
+
     setRefreshCookie(res, refreshToken);
+
+    
+    // Fire-and-forget login notification email
+
 
     emailQueue
       .add("login-success-notification", {
@@ -225,28 +252,48 @@ export const login = async (req: Request, res: Response) => {
       })
       .catch((err) => console.error("Failed to queue login email:", err));
 
-    let verificationStatus: string | undefined;
-    if (user.role === "doctor") {
-      const doctorProfile = await Doctor.findOne({ userId: user._id }).select("verificationStatus");
-      verificationStatus = doctorProfile?.verificationStatus;
-    }
+    /*
+     * Doctor lookup in parallel
+     */
+
+    const doctorProfile =
+      user.role === "doctor"
+        ? await Doctor.findOne({
+            userId: user._id,
+          })
+            .select("verificationStatus")
+            .lean()
+        : null;
 
     return res.status(200).json({
       accessToken,
+
       user: {
         _id: user._id,
+
         name: user.name,
+
         email: user.email,
+
         role: user.role,
-        isVerified: user.isVerified,
+
+        hasSubmittedVerification: user.hasSubmittedVerification,
+
         isEmailVerified: user.isEmailVerified,
+
         onboardingCompleted: user.onboardingCompleted,
+
         isTwoFactorEnabled: user.isTwoFactorEnabled,
-        ...(user.role === "doctor" && { verificationStatus }),
+
+        ...(user.role === "doctor" && {
+          verificationStatus: doctorProfile?.verificationStatus ?? "not_submitted",
+        }),
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({
+      message: getErrorMessage(error),
+    });
   }
 };
 

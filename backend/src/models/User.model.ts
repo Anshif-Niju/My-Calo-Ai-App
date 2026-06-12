@@ -10,7 +10,7 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String, trim: true },
     countryCode: { type: String, trim: true }, // "+91", "+1" etc.
     isEmailVerified: { type: Boolean, default: false },
-    isVerified: { type: Boolean, default: false }, // for doctor verification
+    hasSubmittedVerification: { type: Boolean, default: false }, // for doctor verification
     isTwoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String },
     googleId: { type: String, sparse: true, unique: true },

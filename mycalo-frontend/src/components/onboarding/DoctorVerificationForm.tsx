@@ -1,10 +1,12 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { updateUser } from "@/store/slices/auth.slice";
 import { doctorVerificationSchema } from "@/validators/onboarding.schema";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 
 const SPECIALIZATIONS = ["General Physician", "Cardiologist", "Dermatologist", "Neurologist", "Orthopedic", "Pediatrician", "Psychiatrist", "Gynecologist", "Endocrinologist", "Nutritionist", "Other"];
@@ -18,6 +20,7 @@ const DOC_FIELDS = [
 
 export default function DoctorVerificationForm() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [form, setForm] = useState({
     specialization: "",
@@ -67,10 +70,25 @@ export default function DoctorVerificationForm() {
       const response = await api.post("/onboarding/doctor-verification", formData);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Application submitted! Awaiting admin review.");
+
       setIsRedirecting(true);
-      router.push("/onboarding/doctor/verification");
+
+      try {
+        // Get latest user data
+        const res = await api.get("/auth/me");
+
+        // Update Redux
+        dispatch(updateUser(res.data.user));
+
+        // Replace instead of push
+        router.replace("/onboarding/doctor/verification");
+      } catch (error) {
+        console.error(error);
+
+        router.replace("/onboarding/doctor/verification");
+      }
     },
     onError: (error: any) => {
       const msg = error.message || error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong";

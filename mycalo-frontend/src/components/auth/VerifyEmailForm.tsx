@@ -40,11 +40,11 @@ export default function VerifyEmailForm() {
     onSuccess: (data) => {
       dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
 
-      const { role, onboardingCompleted, isVerified } = data.user;
+      const { role, onboardingCompleted, hasSubmittedVerification } = data.user;
 
       if (onboardingCompleted) {
         if (role === "doctor") {
-          router.push(isVerified ? "/doctor/dashboard" : "/doctor/verification");
+          router.push(hasSubmittedVerification ? "/doctor/dashboard" : "/doctor/verification");
         } else if (role === "admin") {
           router.push("/admin/dashboard");
         } else {

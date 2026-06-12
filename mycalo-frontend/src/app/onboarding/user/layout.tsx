@@ -1,8 +1,9 @@
 "use client";
-import { useEffect } from "react";
 import ProtectedRoute from "../../../components/shared/ProtectedRoute";
 
-export default function DoctorOnboardingLayout({ children }: { children: React.ReactNode }) {
+import { useEffect } from "react";
+
+export default function UserOnboardingLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     window.history.pushState(null, "", window.location.href);
     const handlePopState = () => {
@@ -14,7 +15,7 @@ export default function DoctorOnboardingLayout({ children }: { children: React.R
 
   return (
     <>
-      <ProtectedRoute allowedRoles={["doctor"]}>{children}</ProtectedRoute>
+      <ProtectedRoute allowedRoles={["user"]}>{children}</ProtectedRoute>
     </>
   );
 }

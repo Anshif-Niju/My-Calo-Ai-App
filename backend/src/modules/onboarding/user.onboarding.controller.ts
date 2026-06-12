@@ -43,7 +43,7 @@ export const completeUserverifiaction = async (req: Request, res: Response) => {
     user.healthProfile = { height, weight, age, gender, diseases, bmi, bmr, activityLevel };
     user.goal = { type: goalType, targetWeight };
     user.dailyTargets = { calories: targetCalories, protein, carbs, fat, fiber: 25 };
-    user.isVerified = true;
+    user.hasSubmittedVerification = true;
 
     await user.save();
 

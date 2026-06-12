@@ -4,7 +4,7 @@ export interface User {
   email: string;
   role: "user" | "doctor" | "subadmin" | "admin";
   isEmailVerified: boolean;
-  isVerified: boolean;
+  hasSubmittedVerification: boolean;
   onboardingCompleted: boolean;
   verificationStatus?: string;
   isTwoFactorEnabled: boolean;
@@ -23,4 +23,5 @@ export interface AuthState {
   requiresTwoFactor: boolean;
   tempToken: string | null;
   authInitialized: boolean;
+  isAuthLoading:boolean
 }

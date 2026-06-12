@@ -1,12 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import { authenticate, validate } from "../../middlewares/authenticate";
-import {
-  deleteMeal, generateMealPlan, getDashboard,
-  getLastDay, getMealPlanResult, getScanResult,
-  logMeal, scanFood,
-} from "./nutrition.controller";
-import { generateMealPlanSchema, logMealSchema } from "./nutrition.validator";
+import { deleteMeal, getDashboard, getLastDay, getScanResult, logMeal, scanFood } from "./nutrition.controller";
+import { logMealSchema } from "./nutrition.validator";
 
 const router = Router();
 
@@ -25,7 +21,5 @@ router.post("/log-meal", authenticate, validate(logMealSchema), logMeal);
 router.delete("/meal/:id", authenticate, deleteMeal);
 router.post("/scan-food", authenticate, upload.single("image"), scanFood);
 router.get("/scan-result/:jobId", authenticate, getScanResult);
-router.post("/generate-meal-plan", authenticate, validate(generateMealPlanSchema), generateMealPlan);
-router.get("/meal-plan-result/:jobId", authenticate, getMealPlanResult);
 
 export default router;

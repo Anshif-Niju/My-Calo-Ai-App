@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
+import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import cloudinary from "../../config/cloudinary";
 import { redis } from "../../config/redis";
 import { foodScanQueue } from "../../jobs/queues/foodScan.queue";
-import { mealPlanQueue } from "../../jobs/queues/mealPlan.queue";
 import { DailyLog } from "../../models/DailyLog.model";
 import { MealLog } from "../../models/Meal.model";
 import { User } from "../../models/User.model";
+import { saveTempImage } from "../../service/tempFile.service";
 import { AuthUserPayload } from "../../types/index";
 import { getErrorMessage } from "../../utils/error.util";
-import { cacheDailySummary, getCachedDailySummary, getCachedMealPlan, invalidateDailySummary } from "./nutrition.service";
+import { cacheDailySummary, getCachedDailySummary, invalidateDailySummary } from "./nutrition.service";
 
 const getToday = () => new Date().toISOString().split("T")[0];
 
@@ -97,10 +97,13 @@ export const getDashboard = async (req: Request, res: Response) => {
       user: { name: user.name, dailyTargets: targets, goal: user.goal },
       consumed,
       remaining: {
-        calories: Math.max(0, (targets.calories || 2000) - consumed.calories),
-        protein: Math.max(0, (targets.protein || 150) - consumed.protein),
-        carbs: Math.max(0, (targets.carbs || 200) - consumed.carbs),
-        fat: Math.max(0, (targets.fat || 65) - consumed.fat),
+        calories: Math.max(0, targets.calories - consumed.calories),
+
+        protein: Number(Math.max(0, targets.protein - consumed.protein).toFixed(1)),
+
+        carbs: Number(Math.max(0, targets.carbs - consumed.carbs).toFixed(1)),
+
+        fat: Number(Math.max(0, targets.fat - consumed.fat).toFixed(1)),
       },
       overflow: {
         calories: Math.max(0, consumed.calories - (targets.calories || 2000)),
@@ -195,32 +198,39 @@ export const deleteMeal = async (req: Request, res: Response) => {
 export const scanFood = async (req: Request, res: Response) => {
   try {
     const file = req.file;
-    if (!file) return res.status(400).json({ message: "Image required" });
 
-    const jobId = uuidv4();
-    const imageBase64 = file.buffer.toString("base64");
+    if (!file) {
+      return res.status(400).json({
+        message: "Image required",
+      });
+    }
 
-    // Upload to Cloudinary in background
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream({ folder: "mycalo/food-scans", quality: "auto" }, (err, result) => (err ? reject(err) : resolve(result)));
-      stream.end(file.buffer);
-    });
+    const scanId = uuidv4();
 
-    // Queue Gemini scan
+    const ext = path.extname(file.originalname) || ".jpg";
+
+    const tempPath = await saveTempImage(file.buffer, ext);
+
     await foodScanQueue.add(
       "scan",
       {
-        jobId,
-        imageBase64,
+        scanId,
+        tempPath,
         mimeType: file.mimetype,
-        imageUrl: uploadResult.secure_url,
       },
-      { jobId },
+      {
+        jobId: scanId,
+      },
     );
 
-    return res.status(202).json({ jobId, imageUrl: uploadResult.secure_url });
+    return res.status(202).json({
+      scanId,
+      status: "processing",
+    });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({
+      message: getErrorMessage(error),
+    });
   }
 };
 
@@ -230,51 +240,6 @@ export const getScanResult = async (req: Request, res: Response) => {
     const result = await redis.get(`scan-result:${req.params.jobId}`);
     if (!result) return res.status(202).json({ status: "processing" });
     return res.status(200).json({ status: "done", data: JSON.parse(result) });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-// ── POST /nutrition/generate-meal-plan ────────────────────────────────────────
-export const generateMealPlan = async (req: Request, res: Response) => {
-  try {
-    const authUser = req.user as AuthUserPayload;
-    const { date, forceRegenerate } = req.body;
-
-    if (!forceRegenerate) {
-      const cached = await getCachedMealPlan(authUser.userId, date);
-      if (cached) return res.status(200).json({ status: "done", plan: cached, fromCache: true });
-    }
-
-    const user = await User.findById(authUser.userId).select("name dailyTargets healthProfile goal");
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const job = await mealPlanQueue.add("generate", {
-      userId: authUser.userId,
-      date,
-      userProfile: {
-        name: user.name,
-        calories: user.dailyTargets?.calories || 2000,
-        protein: user.dailyTargets?.protein || 150,
-        carbs: user.dailyTargets?.carbs || 200,
-        fat: user.dailyTargets?.fat || 65,
-        goalType: user.goal?.type || "maintain",
-        diseases: user.healthProfile?.diseases || [],
-        activityLevel: user.healthProfile?.activityLevel || "moderate",
-      },
-    });
-
-    return res.status(202).json({ jobId: job.id });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-export const getMealPlanResult = async (req: Request, res: Response) => {
-  try {
-    const result = await redis.get(`mealplan-job:${req.params.jobId}`);
-    if (!result) return res.status(202).json({ status: "processing" });
-    return res.status(200).json({ status: "done", plan: JSON.parse(result) });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
