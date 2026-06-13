@@ -6,8 +6,8 @@ const initialState: AuthState = {
   accessToken: null,
   requiresTwoFactor: false,
   tempToken: null,
-  authInitialized: false,
-  isAuthLoading:true
+  isAuthInitialized: false,
+  // isAuthLoading:true
 };
 
 const authSlice = createSlice({
@@ -31,9 +31,10 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.requiresTwoFactor = false;
       state.tempToken = null;
+      state.isAuthInitialized = true;
     },
     setAuthInitialized: (state) => {
-      state.authInitialized = true;
+      state.isAuthInitialized = true;
     },
     updateUser: (state, action) => {
       state.user = action.payload;

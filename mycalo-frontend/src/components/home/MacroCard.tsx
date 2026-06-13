@@ -1,18 +1,12 @@
 "use client";
-
-interface MacroCardProps {
-  label: string;
-  consumed: number;
-  target: number;
-  unit: string;
-  color: string;
-  icon: string;
-}
-
+import { MacroCardProps } from "@/types/home.types";
 export default function MacroCard({ label, consumed, target, unit, color, icon }: MacroCardProps) {
   const progress = Math.min(100, Math.round((consumed / target) * 100));
-  const remaining = Math.max(0, target - consumed);
+
+  const remaining = Number(Math.max(0, target - consumed).toFixed(1));
+
   const isOver = consumed > target;
+
   const radius = 22;
   const circumference = 2 * Math.PI * radius;
   const strokeDash = (progress / 100) * circumference;
@@ -25,6 +19,7 @@ export default function MacroCard({ label, consumed, target, unit, color, icon }
           <circle cx={28} cy={28} r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={6} />
           <circle cx={28} cy={28} r={radius} fill="none" stroke={isOver ? "#ff4e6a" : color} strokeWidth={6} strokeLinecap="round" strokeDasharray={`${strokeDash} ${circumference}`} style={{ transition: "stroke-dasharray 0.8s ease" }} />
         </svg>
+
         <div className="absolute inset-0 flex items-center justify-center text-base">{icon}</div>
       </div>
 
@@ -33,6 +28,7 @@ export default function MacroCard({ label, consumed, target, unit, color, icon }
           {remaining}
           {unit}
         </p>
+
         <p className="text-[10px] font-semibold mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>
           {label} {isOver ? "over" : "left"}
         </p>

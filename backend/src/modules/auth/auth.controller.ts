@@ -230,9 +230,7 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-
     // Generate tokens
-
 
     const accessToken = generateAccessToken(user.id, user.role, user.email);
 
@@ -240,9 +238,7 @@ export const login = async (req: Request, res: Response) => {
 
     setRefreshCookie(res, refreshToken);
 
-    
     // Fire-and-forget login notification email
-
 
     emailQueue
       .add("login-success-notification", {
@@ -360,18 +356,35 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const refresh = async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies.refreshToken;
+
     if (!refreshToken) {
-      return res.status(401).json({ message: "No refresh token provided" });
+      return res.status(401).json({
+        message: "No refresh token provided",
+      });
     }
 
-    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET as string) as any;
-    const user = await User.findById(decoded.userId);
-    if (!user) return res.status(401).json({ message: "User not found" });
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+      userId: string;
+    };
 
-    const accessToken = generateAccessToken(user.id, user.role, user.email);
-    return res.status(200).json({ accessToken });
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired refresh token" });
+    const user = await User.findById(decoded.userId).select("_id name email role phone countryCode isEmailVerified hasSubmittedVerification isTwoFactorEnabled profilePhoto onboardingCompleted healthProfile goal dailyTargets").lean();
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found",
+      });
+    }
+
+    const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
+
+    return res.status(200).json({
+      accessToken,
+      user,
+    });
+  } catch {
+    return res.status(401).json({
+      message: "Invalid or expired refresh token",
+    });
   }
 };
 

@@ -55,7 +55,7 @@ export default function DoctorIntroSlider() {
       const response = await api.post("/onboarding/doctor-intro-complete");
       return response.data;
     },
-    onSuccess: () => router.push("/onboarding/doctor/profile"),
+    onSuccess: () => router.replace("/onboarding/doctor/profile"),
     onError: (error: any) => {
       const msg = error.response?.data?.message;
       toast.error(typeof msg === "string" ? msg : "Something went wrong.");

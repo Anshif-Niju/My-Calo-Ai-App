@@ -56,7 +56,7 @@ export default function UserIntroSlider() {
       return response.data;
     },
     onSuccess: () => {
-      router.push("/onboarding/user/profile");
+      router.replace("/onboarding/user/profile");
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || "Something went wrong.";

@@ -6,22 +6,22 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
-export default function GuestRoute({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function GuestRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
-  const { user } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { user, isAuthInitialized } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
+    if (!isAuthInitialized) return;
+
     if (user) {
       router.replace(getRedirectPath(user));
     }
-  }, [user, router]);
+  }, [user, router, isAuthInitialized]);
+
+  if (!isAuthInitialized) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
 
   if (user) return null;
 

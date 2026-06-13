@@ -33,8 +33,14 @@ api.interceptors.response.use(
         // Attempt to refresh token
         const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/refresh`, {}, { withCredentials: true });
 
-        const { accessToken } = res.data;
+        const { accessToken, user } = res.data;
 
+        store.dispatch(
+          setCredentials({
+            accessToken,
+            user,
+          }),
+        );
         // Update the login context globally
         store.dispatch(setCredentials({ accessToken }));
 

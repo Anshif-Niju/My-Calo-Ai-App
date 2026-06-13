@@ -53,7 +53,7 @@ export default function HealthProfileForm() {
       return;
     }
     sessionStorage.setItem("healthProfile", JSON.stringify(form));
-    router.push("/onboarding/user/goal");
+    router.replace("/onboarding/user/goal");
   };
 
   return (

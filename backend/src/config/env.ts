@@ -17,18 +17,23 @@ const envSchema = z.object({
   ADMIN_EMAIL: z.string(),
   ADMIN_PASSWORD: z.string().min(8, "Admin password must be at least 8 characters"),
 
+  // Google Api
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
   GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
 
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
 
+  // Email APi
   BREVO_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
   BREVO_SENDER_EMAIL: z.string().email(),
 
-  GEMINI_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
+  // Ai Apis
+  GEMINI_API_KEY1: z.string().min(1, "BREVO_API_KEY is required"),
+  GEMINI_API_KEY2: z.string().min(1, "BREVO_API_KEY is required"),
+  GEMINI_API_KEY3: z.string().min(1, "BREVO_API_KEY is required"),
+  GEMINI_API_KEY4: z.string().min(1, "BREVO_API_KEY is required"),
+  GEMINI_API_KEY5: z.string().min(1, "BREVO_API_KEY is required"),
   GROQ_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
-
-  LOGMEAL_API_KEY: z.string().min(1, "BREVO_API_KEY is required"),
 
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),

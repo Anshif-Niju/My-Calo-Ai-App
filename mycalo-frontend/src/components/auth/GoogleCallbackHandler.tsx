@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { setCredentials } from "@/store/slices/auth.slice";
+import { setAuthInitialized, setCredentials } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -27,10 +27,18 @@ export default function AuthCallbackHandler() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        dispatch(setCredentials({ accessToken: token, user: res.data.user }));
-        router.push(getRedirectPath(res.data.user));
+        dispatch(
+          setCredentials({
+            accessToken: token,
+            user: res.data.user,
+          }),
+        );
+
+        dispatch(setAuthInitialized());
+
+        router.replace(getRedirectPath(res.data.user));
       } catch {
-        router.push("/login?error=auth_failed");
+        router.replace("/login?error=auth_failed");
       }
     };
 

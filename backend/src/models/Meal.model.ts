@@ -5,8 +5,8 @@ export interface IMealLog {
   mealType: "breakfast" | "lunch" | "dinner" | "custom";
   foodName: string;
   quantity: number;
-  unit: string;       // "piece", "serving", "g"
-  grams: number;      // actual grams consumed
+  unit: string; // "piece", "serving", "g"
+  grams: number; // actual grams consumed
   calories: number;
   protein: number;
   carbs: number;
@@ -44,10 +44,18 @@ const MealLogSchema = new Schema<IMealLog>(
     scanData: {
       type: { type: String, enum: ["countable", "weighable"] },
       nutritionPer100g: {
-        calories: Number, protein: Number, carbs: Number, fat: Number, fiber: Number,
+        calories: Number,
+        protein: Number,
+        carbs: Number,
+        fat: Number,
+        fiber: Number,
       },
       nutritionPerUnit: {
-        calories: Number, protein: Number, carbs: Number, fat: Number, fiber: Number,
+        calories: Number,
+        protein: Number,
+        carbs: Number,
+        fat: Number,
+        fiber: Number,
       },
       confidence: String,
     },

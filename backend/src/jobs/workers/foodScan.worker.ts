@@ -26,9 +26,22 @@ export const foodScanWorker = new Worker(
 
       const imageBase64 = compressedBuffer.toString("base64");
 
-      // First successful result wins.
+      // Ai Worker
+      const runWithFallback = async (imageBase64: string, mimeType: string) => {
+        // Step 1: Groq alone try
+        try {
+          const result = await scanFoodWithGroq(imageBase64, mimeType);
+          console.log("✅ Groq won — skipping Gemini");
+          return result;
+        } catch (groqError) {
+          console.warn("⚠️ Groq failed, trying Gemini fallback...");
+        }
 
-      const result = await Promise.any([scanFoodWithGemini25(imageBase64, mimeType), scanFoodWithGemini35(imageBase64, mimeType), scanFoodWithGroq(imageBase64, mimeType)]);
+        // Step 2: Groq failed — now Gemini both parallel
+        return Promise.any([scanFoodWithGemini25(imageBase64, mimeType), scanFoodWithGemini35(imageBase64, mimeType)]);
+      };
+
+      const result = await runWithFallback(imageBase64, mimeType);
 
       // Store result for polling / Socket.IO
 

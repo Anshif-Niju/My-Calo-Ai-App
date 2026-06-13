@@ -22,6 +22,6 @@ export interface AuthState {
   accessToken: string | null;
   requiresTwoFactor: boolean;
   tempToken: string | null;
-  authInitialized: boolean;
-  isAuthLoading:boolean
+  isAuthInitialized:boolean
+  // isAuthLoading:boolean
 }
