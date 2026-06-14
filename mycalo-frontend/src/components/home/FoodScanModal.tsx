@@ -3,27 +3,7 @@
 import { api } from "@/lib/axios";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-
-interface ScanResult {
-  isFood: boolean;
-  foodName: string;
-  type: "countable" | "weighable";
-  defaultQuantity: number;
-  defaultUnit: string;
-  defaultGrams: number;
-  nutritionPerUnit: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
-  nutritionPer100g: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
-  confidence: string;
-  imageUrl: string;
-  message?: string;
-}
-
-interface Props {
-  mealType: "breakfast" | "lunch" | "dinner" | "custom";
-  date: string;
-  onClose: () => void;
-  onAdded: () => void;
-}
+import { Props, ScanResult } from "../../types/nutrients.types";
 
 export default function FoodScanModal({ mealType, date, onClose, onAdded }: Props) {
   const [step, setStep] = useState<"upload" | "scanning" | "result" | "adding" | "error">("upload");
@@ -126,7 +106,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             setStep("result");
           }
         } catch {
-
           // Poll request failed — keep trying until timeout
         }
       }, 2000);

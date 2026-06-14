@@ -31,9 +31,5 @@ app.use("/api/auth", authRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 
-// 4. Health Check Endpoint
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "UP", timestamp: new Date() });
-});
 
 export default app;

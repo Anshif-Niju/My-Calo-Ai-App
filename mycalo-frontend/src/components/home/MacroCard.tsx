@@ -1,5 +1,5 @@
 "use client";
-import { MacroCardProps } from "@/types/home.types";
+import { MacroCardProps } from "@/types/nutrients.types";
 export default function MacroCard({ label, consumed, target, unit, color, icon }: MacroCardProps) {
   const progress = Math.min(100, Math.round((consumed / target) * 100));
 

@@ -82,7 +82,6 @@ export default function DoctorVerificationForm() {
         // Update Redux
         dispatch(updateUser(res.data.user));
 
-        // Replace instead of push
         router.replace("/onboarding/doctor/verification");
       } catch (error) {
         console.error(error);

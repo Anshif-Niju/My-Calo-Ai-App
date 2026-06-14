@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/axios";
 import { RootState } from "@/store";
-import { setCredentials } from "@/store/slices/auth.slice";
+import { setUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useRef, useState } from "react";
@@ -28,7 +28,7 @@ export default function TwoFactorForm() {
       return res.data;
     },
     onSuccess: (data) => {
-      dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
+      dispatch(setUser({ user: data.user }));
       const { role } = data.user;
 
       if (role === "doctor") router.push("/doctor/dashboard");

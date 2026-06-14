@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { redis } from "../../config/redis";
 import { foodScanQueue } from "../../jobs/queues/foodScan.queue";
 import { DailyLog } from "../../models/DailyLog.model";
 import { MealLog } from "../../models/Meal.model";
 import { User } from "../../models/User.model";
-import { saveTempImage } from "../../service/tempFile.service";
 import { AuthUserPayload } from "../../types/index";
 import { getErrorMessage } from "../../utils/error.util";
 import { cacheDailySummary, getCachedDailySummary, invalidateDailySummary } from "./nutrition.service";
@@ -276,17 +274,14 @@ export const scanFood = async (req: Request, res: Response) => {
     if (!file) return res.status(400).json({ message: "Image required" });
 
     const scanId = uuidv4();
-    const ext = path.extname(file.originalname) || ".jpg";
-    const tempPath = await saveTempImage(file.buffer, ext);
 
-    await foodScanQueue.add("scan", { scanId, tempPath, mimeType: file.mimetype }, { jobId: scanId });
+    await foodScanQueue.add("scan", { scanId, tempPath: file.path, mimeType: file.mimetype }, { jobId: scanId });
 
     return res.status(202).json({ scanId, status: "processing" });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
 };
-
 //  GET /nutrition/scan-result/:jobId
 
 export const getScanResult = async (req: Request, res: Response) => {

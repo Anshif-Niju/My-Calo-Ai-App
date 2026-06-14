@@ -29,6 +29,15 @@ const setRefreshCookie = (res: Response, token: string): void => {
   });
 };
 
+const setAccessTokenCookie = (res: Response, token: string): void => {
+  res.cookie("accessToken", token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000, // 15m, matches access token JWT expiry
+  });
+};
+
 // 1. REGISTER
 
 export const register = async (req: Request, res: Response) => {
@@ -120,6 +129,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
       const accessToken = generateAccessToken(user.id, user.role, user.email);
       const refreshToken = generateRefreshToken(user.id);
       setRefreshCookie(res, refreshToken);
+      setAccessTokenCookie(res, accessToken);
 
       emailQueue
         .add("login-success-notification", {
@@ -129,7 +139,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
         })
         .catch((err) => console.error("Failed to queue login email:", err));
 
-      return res.status(200).json({ accessToken, user });
+      return res.status(200).json({ user });
     }
 
     if (type === "forgot_password") {
@@ -237,6 +247,7 @@ export const login = async (req: Request, res: Response) => {
     const refreshToken = generateRefreshToken(user.id);
 
     setRefreshCookie(res, refreshToken);
+    setAccessTokenCookie(res, accessToken);
 
     // Fire-and-forget login notification email
 
@@ -262,8 +273,6 @@ export const login = async (req: Request, res: Response) => {
         : null;
 
     return res.status(200).json({
-      accessToken,
-
       user: {
         _id: user._id,
 
@@ -377,8 +386,9 @@ export const refresh = async (req: Request, res: Response) => {
 
     const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
 
+    setAccessTokenCookie(res, accessToken);
+
     return res.status(200).json({
-      accessToken,
       user,
     });
   } catch {
@@ -392,6 +402,7 @@ export const refresh = async (req: Request, res: Response) => {
 
 export const logout = (_req: Request, res: Response) => {
   res.clearCookie("refreshToken");
+  res.clearCookie("accessToken");
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
@@ -457,8 +468,9 @@ export const verify2FA = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user.id, user.role, user.email);
     const refreshToken = generateRefreshToken(user.id);
     setRefreshCookie(res, refreshToken);
+    setAccessTokenCookie(res, accessToken);
 
-    return res.status(200).json({ accessToken, user });
+    return res.status(200).json({ user });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
@@ -511,6 +523,7 @@ export const googleCallback = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
     const refreshToken = generateRefreshToken(user._id.toString());
     setRefreshCookie(res, refreshToken);
+    setAccessTokenCookie(res, accessToken);
 
     emailQueue
       .add("google-login-notification", {
@@ -520,33 +533,46 @@ export const googleCallback = async (req: Request, res: Response) => {
       })
       .catch((err) => console.error("Failed to queue Google login email:", err));
 
-    return res.redirect(`${env.FRONTEND_URL}/google-callback?token=${accessToken}`);
+    return res.redirect(`${env.FRONTEND_URL}/google-callback`);
   } catch (error) {
     return res.redirect(`${env.FRONTEND_URL}/login?error=server_error`);
   }
 };
 
 // 14. getMe (Send user details)
-
 export const getMe = async (req: Request, res: Response) => {
   try {
     const authUser = req.user as AuthUserPayload;
-    const user = await User.findById(authUser.userId).select("-password -twoFactorSecret");
-    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const user = await User.findById(authUser.userId).select("-password -twoFactorSecret").lean();
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
 
     let verificationStatus: string | undefined;
+
     if (user.role === "doctor") {
-      const doc = await Doctor.findOne({ userId: user._id }).select("verificationStatus");
+      const doc = await Doctor.findOne({
+        userId: user._id,
+      }).select("verificationStatus");
+
       verificationStatus = doc?.verificationStatus;
     }
 
     return res.status(200).json({
       user: {
-        ...user.toObject(),
-        ...(user.role === "doctor" && { verificationStatus }),
+        ...user,
+        ...(user.role === "doctor" && {
+          verificationStatus,
+        }),
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({
+      message: getErrorMessage(error),
+    });
   }
 };

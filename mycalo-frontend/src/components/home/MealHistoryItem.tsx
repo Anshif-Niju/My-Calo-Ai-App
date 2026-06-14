@@ -1,16 +1,5 @@
 "use client";
-
-interface MealHistoryItemProps {
-  foodName: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  imageUrl?: string;
-  mealType: string;
-  createdAt: string;
-  onDelete?: () => void;
-}
+import { MealHistoryItemProps } from "../../types/nutrients.types";
 
 export default function MealHistoryItem({ foodName, calories, protein, carbs, fat, imageUrl, mealType, createdAt, onDelete }: MealHistoryItemProps) {
   const time = new Date(createdAt).toLocaleTimeString("en-US", {

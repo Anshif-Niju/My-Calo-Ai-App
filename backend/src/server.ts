@@ -3,7 +3,7 @@ import { connectDB } from "./config/db";
 import { env } from "./config/env";
 import { redis } from "./config/redis";
 import { startDailyEmailScheduler } from "./jobs/schedulers/dailyEmail.scheduler";
-import "./jobs/workers/doctorVerification.worker";
+import "./jobs/workers/cloudinary.worker";
 import "./jobs/workers/email.worker";
 import "./jobs/workers/emailNotification.worker";
 import "./jobs/workers/foodScan.worker";

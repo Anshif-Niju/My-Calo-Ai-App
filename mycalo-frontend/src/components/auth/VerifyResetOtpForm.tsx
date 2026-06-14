@@ -1,12 +1,13 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { setCredentials } from "@/store/slices/auth.slice";
+import { setUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
+import { getRedirectPath } from "../../utils/getRedirectPath";
 
 export default function VerifyOtpForm() {
   const router = useRouter();
@@ -36,21 +37,9 @@ export default function VerifyOtpForm() {
     },
     onSuccess: (data) => {
       if (type === "email_verify") {
-        dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
-
-        const { role, onboardingCompleted, hasSubmittedVerification } = data.user;
-
-        if (onboardingCompleted) {
-          if (role === "doctor") router.push(hasSubmittedVerification ? "/doctor/dashboard" : "/doctor/verification");
-          else if (role === "admin") router.push("/admin/dashboard");
-          else if (role === "subadmin") router.push("/subadmin/dashboard");
-          else router.push("/home");
-          return;
-        }
-
-        router.push(role === "doctor" ? "/onboarding/doctor" : "/onboarding/user");
+        dispatch(setUser({ user: data.user }));
+        router.push(getRedirectPath(data.user));
       } else {
-        // forgot_password
         router.push(`/new-password?resetToken=${encodeURIComponent(data.resetToken)}`);
       }
     },

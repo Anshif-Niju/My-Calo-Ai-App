@@ -1,9 +1,8 @@
-// controllers/doctor.controller.ts
 import { Request, Response } from "express";
-import { doctorVerificationQueue } from "../../jobs/queues/doctorVerification.queue";
+import { cloudinaryUploadQueue } from "../../jobs/queues/cloudinaryUpload.queue";
 import { Doctor } from "../../models/Doctor.model";
 import { User } from "../../models/User.model";
-import { AuthUserPayload } from "../../types/index";
+import { AuthUserPayload, CloudinaryUploadFile } from "../../types/index";
 import { getErrorMessage } from "../../utils/error.util";
 
 export const completeDoctorIntro = async (req: Request, res: Response) => {
@@ -15,6 +14,7 @@ export const completeDoctorIntro = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: getErrorMessage(error) });
   }
 };
+
 export const completeDoctorVerification = async (req: Request, res: Response) => {
   try {
     const authUser = req.user as AuthUserPayload;
@@ -57,7 +57,7 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
     doctorProfile.registrationYear = Number(registrationYear);
     doctorProfile.verificationStatus = "pending";
 
-    //Save chnage that doctor upload documents
+    // Save change that doctor uploaded documents
 
     await User.findByIdAndUpdate(authUser.userId, {
       hasSubmittedVerification: true,
@@ -74,17 +74,20 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
 
     await doctorProfile.save();
 
-    
-    // Queue background upload job
+    // Queue background upload job (generic cloudinary worker)
 
+    const uploadFiles: CloudinaryUploadFile[] = [
+      { fieldName: "mcuCertificate", path: mcuPath },
+      { fieldName: "degreeCertificate", path: degreePath },
+      { fieldName: "governmentId", path: governmentIdPath },
+      ...(clinicProofPath ? [{ fieldName: "clinicProof", path: clinicProofPath }] : []),
+    ];
 
-    await doctorVerificationQueue.add("upload-documents", {
-      doctorId: doctorProfile._id.toString(),
-
-      mcuPath,
-      degreePath,
-      governmentIdPath,
-      clinicProofPath,
+    await cloudinaryUploadQueue.add("upload-documents", {
+      entityType: "doctor-verification",
+      entityId: doctorProfile._id.toString(),
+      folder: "MyCalo AI/Doctor/Verification",
+      files: uploadFiles,
     });
 
     return res.status(202).json({

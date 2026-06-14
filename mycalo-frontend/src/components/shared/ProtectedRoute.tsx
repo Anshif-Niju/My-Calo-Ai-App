@@ -7,59 +7,43 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { ProtectedRouteProps } from "../../types/protectedRoute.types";
 
-export default function ProtectedRoute({
-  children,
-  allowedRoles,
-}: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const {
-    accessToken,
-    user,
-    isAuthInitialized,
-  } = useSelector((state: RootState) => state.auth);
+  const { user, isInitialized } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    // Wait until AuthInitializer finishes
-    if (!isAuthInitialized) return;
+    if (!isInitialized) return;
 
-    // Not authenticated
-    if (!accessToken || !user) {
+    if (!user) {
       router.replace(`/login?redirect=${pathname}`);
       return;
     }
 
-    // Role check
-    if (
-      allowedRoles &&
-      !allowedRoles.includes(user.role)
-    ) {
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
       router.replace(getRedirectPath(user));
-      return;
     }
-  }, [
-    accessToken,
-    user,
-    pathname,
-    router,
-    allowedRoles,
-    isAuthInitialized,
-  ]);
+  }, [isInitialized, user, pathname, router, allowedRoles]);
 
-  // Show loader only while checking refresh token
-  if (!isAuthInitialized) {
+  if (!isInitialized) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black text-white">
-        Loading...
+      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-start sm:justify-center py-12 px-4 relative overflow-x-hidden">
+        <div className=" bg-[#f8fafc] text-center pb-6 shrink-0">
+          <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
+        </div>
       </div>
     );
   }
 
-  // Redirect effect will handle this
-  if (!accessToken || !user) {
-    return null;
-  }
+  if (!user)
+    return (
+      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-start sm:justify-center py-12 px-4 relative overflow-x-hidden">
+        <div className=" bg-[#f8fafc] text-center pb-6 shrink-0">
+          <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
+        </div>
+      </div>
+    );
 
   return <>{children}</>;
 }

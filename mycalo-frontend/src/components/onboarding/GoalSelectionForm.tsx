@@ -1,14 +1,13 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { RootState } from "@/store";
 import { updateUser } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { goalSchema } from "@/validators/onboarding.schema";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 
 const GOALS = [
@@ -20,7 +19,6 @@ const GOALS = [
 export default function GoalSelectionForm() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { user, accessToken } = useSelector((state: RootState) => state.auth);
   const [goalType, setGoalType] = useState("maintain");
   const [targetWeight, setTargetWeight] = useState("");
   const [isRedirecting, setIsRedirecting] = useState(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { setCredentials } from "@/store/slices/auth.slice";
+import { setUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -38,13 +38,13 @@ export default function VerifyEmailForm() {
       return response.data;
     },
     onSuccess: (data) => {
-      dispatch(setCredentials({ accessToken: data.accessToken, user: data.user }));
+      dispatch(setUser({ user: data.user }));
 
       const { role, onboardingCompleted, hasSubmittedVerification } = data.user;
 
       if (onboardingCompleted) {
         if (role === "doctor") {
-          router.push(hasSubmittedVerification ? "/doctor/dashboard" : "/doctor/verification");
+          router.push(hasSubmittedVerification ? "/onboarding/doctor/verification" : "/onboarding/doctor/profile");
         } else if (role === "admin") {
           router.push("/admin/dashboard");
         } else {
@@ -165,7 +165,6 @@ export default function VerifyEmailForm() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
-
         {successMessage && <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-[16px] text-xs font-semibold text-emerald-600 text-center animate-in fade-in zoom-in duration-300">{successMessage}</div>}
 
         <div className="flex justify-between gap-2 sm:gap-3" onPaste={handlePaste}>

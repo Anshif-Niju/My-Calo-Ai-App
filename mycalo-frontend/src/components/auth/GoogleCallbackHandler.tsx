@@ -1,40 +1,28 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { setAuthInitialized, setCredentials } from "@/store/slices/auth.slice";
+import { setUser } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 export default function AuthCallbackHandler() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const token = searchParams.get("token");
-
-    if (!token) {
-      router.push("/login?error=auth_failed");
-      return;
-    }
-
-    // Fetch user info using the token
+    // The backend has already set the accessToken/refreshToken as httpOnly
+    // cookies and redirected here. We just need to fetch the user.
     const fetchUser = async () => {
       try {
-        const res = await api.get("/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get("/auth/me");
 
         dispatch(
-          setCredentials({
-            accessToken: token,
+          setUser({
             user: res.data.user,
           }),
         );
-
-        dispatch(setAuthInitialized());
 
         router.replace(getRedirectPath(res.data.user));
       } catch {

@@ -36,8 +36,9 @@ export default function HomeScreen() {
       const res = await api.get(`/nutrition/dashboard?date=${today}`);
       return res.data;
     },
-    refetchInterval: 60000,
-    staleTime: 30000,
+    staleTime: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Last day data
@@ -45,7 +46,6 @@ export default function HomeScreen() {
     queryKey: ["lastday"],
     queryFn: async () => {
       const res = await api.get("/nutrition/last-day");
-      console.log("lastDayData response:", res.data);
       return res.data;
     },
     staleTime: 300000,

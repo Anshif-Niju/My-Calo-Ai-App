@@ -2,12 +2,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuid } from "uuid";
 
-const TEMP_DIR = path.join(
-  process.cwd(),
-  "uploads",
-  "temp",
-  "food-scanning"
-);
+const TEMP_DIR = path.join(process.cwd(), "uploads", "temp", "food-scanning");
 
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, {
@@ -15,32 +10,19 @@ if (!fs.existsSync(TEMP_DIR)) {
   });
 }
 
-export const saveTempImage = async (
-  buffer: Buffer,
-  ext: string
-) => {
+export const saveTempImage = async (buffer: Buffer, ext: string) => {
   const filename = `${uuid()}${ext}`;
 
-  const filepath = path.join(
-    TEMP_DIR,
-    filename
-  );
+  const filepath = path.join(TEMP_DIR, filename);
 
-  await fs.promises.writeFile(
-    filepath,
-    buffer
-  );
+  await fs.promises.writeFile(filepath, buffer);
 
-  console.log(
-    `✅ Temporary file created: ${filename}`
-  );
+  console.log(`✅ Temporary file created: ${filename}`);
 
   return filepath;
 };
 
-export const deleteTempImage = async (
-  filepath: string
-) => {
+export const deleteTempImage = async (filepath: string) => {
   try {
     const exists = fs.existsSync(filepath);
 
@@ -48,13 +30,8 @@ export const deleteTempImage = async (
 
     await fs.promises.unlink(filepath);
 
-    console.log(
-      `🗑️ Deleted temp file: ${path.basename(filepath)}`
-    );
+    console.log(`\n 🗑️ Deleted temp file: ${path.basename(filepath)}`);
   } catch (error) {
-    console.error(
-      "Temp file deletion failed:",
-      error
-    );
+    console.error("\n Temp file deletion failed:", error);
   }
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { setAuthInitialized, setCredentials, setTwoFactorRequired } from "@/store/slices/auth.slice";
+import { setTwoFactorRequired, setUser } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { LoginFormData, loginSchema } from "@/validators/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,15 +44,11 @@ export default function LoginForm() {
         router.replace("/two-factor");
         return;
       }
-
       dispatch(
-        setCredentials({
-          accessToken: data.accessToken,
+        setUser({
           user: data.user,
         }),
       );
-
-      dispatch(setAuthInitialized());
 
       setIsRedirecting(true);
 

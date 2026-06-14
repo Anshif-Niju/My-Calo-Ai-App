@@ -19,9 +19,7 @@ export interface User {
 
 export interface AuthState {
   user: User | null;
-  accessToken: string | null;
   requiresTwoFactor: boolean;
   tempToken: string | null;
-  isAuthInitialized:boolean
-  // isAuthLoading:boolean
+  isInitialized: boolean;
 }

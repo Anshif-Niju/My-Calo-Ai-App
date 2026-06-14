@@ -18,7 +18,7 @@ const DoctorSchema = new Schema<IDoctor>(
     verificationStatus: {
       type: String,
       enum: ["not_submitted", "pending", "under_review", "approved", "rejected"],
-      default: "pending",
+      default: "not_submitted",
     },
     rejectionReason: { type: String },
     documents: {
