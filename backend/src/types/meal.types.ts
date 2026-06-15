@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 export interface IMealLog {
   userId: mongoose.Types.ObjectId;
@@ -15,4 +15,30 @@ export interface IMealLog {
   source: "scan" | "search" | "manual";
   date: string; // "2025-06-07"
   createdAt: Date;
+}
+
+export interface IDailyLog {
+  userId: mongoose.Types.ObjectId;
+  date: string; // "YYYY-MM-DD"
+  consumed: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+  };
+  targets: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  status: "under" | "hit" | "over";
+  mealCount: number;
+  emailSent: {
+    morning: boolean;
+    completed: boolean;
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }

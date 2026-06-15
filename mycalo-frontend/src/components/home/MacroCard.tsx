@@ -4,8 +4,6 @@ import { MacroCardProps } from "@/types/nutrients.types";
 
 export default function MacroCard({ label, consumed, target, unit }: MacroCardProps) {
   const progress = Math.min(100, Math.round((consumed / target) * 100));
-
-  // ഓരോ മാക്രോകൾക്കും വേണ്ടിയുള്ള സോഫ്റ്റ് കളർ തീമുകൾ (Meally AI Style)
   const getTheme = (macroLabel: string) => {
     switch (macroLabel.toLowerCase()) {
       case "protein":
@@ -24,7 +22,6 @@ export default function MacroCard({ label, consumed, target, unit }: MacroCardPr
 
   return (
     <div className={`p-4 rounded-[24px] border ${theme.bg} ${theme.border} shadow-sm transition-transform hover:-translate-y-1 duration-300`}>
-      {/* Percentage Badge (പഴയ സർക്കിൾ റിങ്ങിന് പകരം) */}
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white mb-3 shadow-[0_2px_8px_rgb(0,0,0,0.04)]">
         <span className={`text-xs font-black ${theme.text}`}>{progress}%</span>
       </div>

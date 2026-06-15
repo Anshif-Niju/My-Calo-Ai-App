@@ -59,8 +59,7 @@ const MealLogSchema = new Schema<IMealLog>(
       },
       confidence: String,
     },
-    // TTL: auto-delete after 3 days (259200 seconds)
-    createdAt: { type: Date, default: Date.now, expires: 259200 },
+    createdAt: { type: Date, default: Date.now, expires: 864000},
   },
   { timestamps: true },
 );

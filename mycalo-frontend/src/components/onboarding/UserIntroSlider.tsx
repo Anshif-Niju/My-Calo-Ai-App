@@ -39,6 +39,7 @@ const slides = [
 export default function UserIntroSlider() {
   const [current, setCurrent] = useState(0);
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Preload all mobile images on mount
   useEffect(() => {
@@ -55,12 +56,18 @@ export default function UserIntroSlider() {
       const response = await api.post("/onboarding/intro-complete");
       return response.data;
     },
+
     onSuccess: () => {
+      setIsRedirecting(true);
       router.replace("/onboarding/user/profile");
     },
+
     onError: (error: any) => {
       const message = error.response?.data?.message || "Something went wrong.";
+
       toast.error(message);
+
+      setIsRedirecting(false);
     },
   });
 
@@ -105,10 +112,13 @@ export default function UserIntroSlider() {
       )}
       <button
         onClick={handleNext}
-        disabled={introMutation.isPending}
+        disabled={introMutation.isPending || isRedirecting}
         className="flex-1 h-14 rounded-2xl font-bold flex items-center justify-center transition-transform active:scale-[0.98] disabled:opacity-70"
-        style={{ background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#0a0a0a" : "#fff" }}>
-        {introMutation.isPending ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : isLast ? "Get Started" : "Next"}
+        style={{
+          background: isDark ? "#fff" : "#0a0a0a",
+          color: isDark ? "#0a0a0a" : "#fff",
+        }}>
+        {introMutation.isPending || isRedirecting ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : isLast ? "Get Started" : "Next"}
       </button>
     </div>
   );
@@ -144,7 +154,7 @@ export default function UserIntroSlider() {
 
           <button
             onClick={() => introMutation.mutate()}
-            disabled={introMutation.isPending}
+            disabled={introMutation.isPending || isRedirecting}
             className="absolute top-6 right-6 text-white text-sm bg-white/20 hover:bg-white/30 transition-colors rounded-full px-4 py-1.5 backdrop-blur-sm disabled:opacity-50 z-20">
             Skip
           </button>
@@ -208,8 +218,14 @@ export default function UserIntroSlider() {
 
         {/* Right — content */}
         <div className="w-1/2 flex flex-col justify-between px-16 py-12" style={{ background: isDark ? "#111111" : "#ffffff" }}>
-          <button onClick={() => introMutation.mutate()} disabled={introMutation.isPending} className="self-end text-sm font-bold px-4 py-1.5 rounded-full" style={{ background: isDark ? "#222" : "#f0f0f0", color: isDark ? "#aaa" : "#333" }}>
-            Skip
+          <button
+            onClick={() => introMutation.mutate()}
+            disabled={introMutation.isPending || isRedirecting}
+             className={`absolute top-6 right-6 text-sm transition-colors rounded-full px-4 py-1.5 backdrop-blur-sm disabled:opacity-50 z-20 ${
+    isDark
+      ? "bg-white text-black hover:bg-gray-100"
+      : "bg-[#111111] text-white hover:bg-[#222222]"
+  }`}>Skip
           </button>
 
           <div>

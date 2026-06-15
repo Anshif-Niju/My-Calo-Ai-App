@@ -20,7 +20,7 @@ export default function MealHistoryItem({ foodName, calories, protein, carbs, fa
         <div className="flex-1 flex flex-col justify-center">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-bold text-slate-900 text-[15px] leading-tight">{foodName}</h3>
+              <h3 className="font-medium text-slate-900 text-[15px] leading-tight">{foodName}</h3>
               <p className="text-[11px] font-medium text-slate-400 mt-0.5 uppercase tracking-wider">
                 {mealType} • {time}
               </p>

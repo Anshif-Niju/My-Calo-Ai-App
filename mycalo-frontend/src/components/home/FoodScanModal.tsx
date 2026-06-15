@@ -173,8 +173,8 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-black text-slate-900 capitalize">Add to {mealType}</h2>
-            <p className="text-[13px] font-medium text-slate-500 mt-1">{step === "upload" ? "Upload a food photo" : step === "scanning" ? "AI analyzing..." : step === "result" ? "Adjust & confirm" : step === "error" ? "Scan failed" : "Adding..."}</p>
+            <h2 className="text-xl font-medium text-slate-900 capitalize">Add to {mealType}</h2>
+            <p className="text-[13px] font-medium text-slate-500 mt-1">{step === "upload" ? "Upload a food photo" : step === "scanning" ? "AI analyzing..." : step === "result" ? "" : step === "error" ? "Scan failed" : "Adding..."}</p>
           </div>
           <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
             ✕
@@ -231,7 +231,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
                 {scanResult.imageUrl ? <img src={scanResult.imageUrl} className="w-full h-full object-cover rounded-[14px]" alt={scanResult.foodName} /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
               </div>
               <div>
-                <p className="text-slate-900 font-black text-lg leading-tight">{scanResult.foodName}</p>
+                <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <div className={`w-2 h-2 rounded-full ${scanResult.confidence === "high" ? "bg-emerald-400" : scanResult.confidence === "medium" ? "bg-amber-400" : "bg-red-400"}`} />
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{scanResult.confidence} confidence</span>
@@ -316,7 +316,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             {/* Add button */}
             <button
               onClick={handleAddFood}
-              className="w-full h-14 mt-2 rounded-[20px] font-bold text-[15px] flex items-center justify-center transition-all bg-[#f97316] text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(249,115,22,0.3)] active:scale-[0.98]">
+              className="w-full h-14 mt-2 rounded-[20px] font-medium text-[15px] flex items-center justify-center transition-all bg-[#f97316] text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(249,115,22,0.3)] active:scale-[0.98]">
               Add {scanResult.foodName} • {calculatedNutrition.calories} kcal
             </button>
           </div>

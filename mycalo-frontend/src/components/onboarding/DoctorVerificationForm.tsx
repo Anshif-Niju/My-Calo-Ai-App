@@ -113,7 +113,7 @@ export default function DoctorVerificationForm() {
         <div className="mb-6">
           <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500">Doctor Verification</span>
           <h1 className="text-3xl font-black text-slate-950 mt-4 mb-1">Verify Your Profile</h1>
-          <p className="text-sm font-medium text-slate-400">Submit your credentials for admin review. Usually takes 24–48 hours.</p>
+          {/* <p className="text-sm font-medium text-slate-400">Submit your credentials for admin review. Usually takes 24–48 hours.</p> */}
         </div>
 
         <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 sm:p-8 space-y-5">

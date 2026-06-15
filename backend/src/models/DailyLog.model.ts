@@ -1,30 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-
-export interface IDailyLog {
-  userId: mongoose.Types.ObjectId;
-  date: string; // "YYYY-MM-DD"
-  consumed: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-  };
-  targets: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-  status: "under" | "hit" | "over";
-  mealCount: number;
-  emailSent: {
-    morning: boolean;   // 6 AM reminder
-    completed: boolean; // goal hit notification
-  };
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { IDailyLog } from "../types/index";
 
 const DailyLogSchema = new Schema<IDailyLog>(
   {
@@ -50,7 +25,7 @@ const DailyLogSchema = new Schema<IDailyLog>(
       completed: { type: Boolean, default: false },
     },
     // Auto-delete after 3 days
-    createdAt: { type: Date, default: Date.now, expires: 259200 },
+    createdAt: { type: Date, default: Date.now, expires: 864000 },
   },
   { timestamps: true },
 );
