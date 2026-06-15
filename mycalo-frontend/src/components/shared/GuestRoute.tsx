@@ -20,11 +20,13 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
   }, [user, isInitialized, router]);
 
   if (!isInitialized) {
-    <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-start sm:justify-center py-12 px-4 relative overflow-x-hidden">
-      <div className=" bg-[#f8fafc] text-center pb-6 shrink-0">
-        <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
+    return (
+      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-start sm:justify-center py-12 px-4 relative overflow-x-hidden">
+        <div className=" bg-[#f8fafc] text-center pb-6 shrink-0">
+          <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   if (user) {

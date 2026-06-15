@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// NAV_ITEMS പഴയതുപോലെ തന്നെ (Icons use currentColor)
 const NAV_ITEMS = [
   {
     href: "/home",
@@ -56,25 +57,32 @@ export default function BottomNavbar() {
 
   return (
     <>
-      {/* Desktop top navbar */}
-      <nav className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 border-b items-center px-8 justify-between" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
-        <div className="flex items-center gap-2">
+      {/* 🖥️ Desktop top navbar (Updated to B&W) */}
+      <nav
+        className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center px-8 justify-between border-b"
+        style={{ background: "#ffffff", borderColor: "#e2e8f0" }} // White bg, Slate-200 border
+      >
+        <div className="flex items-center gap-3">
           <span className="text-xl">🥗</span>
-          <span className="font-black text-lg" style={{ color: "var(--text)", fontFamily: "var(--font-head)" }}>
+          <span
+            className="font-black text-xl leading-none"
+            style={{ color: "#0f172a", fontFamily: "var(--font-head)" }} // Slate-900 logo
+          >
             MyCalo AI
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-[18px] border border-slate-100 shadow-inner">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                className="flex items-center gap-2.5 px-5 py-2.5 rounded-[14px] text-[13px] font-bold transition-all duration-300"
                 style={{
-                  background: active ? "var(--surface)" : "transparent",
-                  color: active ? "var(--lime)" : "var(--text2)",
+                  // Active box is dark with white text (Premium Look)
+                  background: active ? "#0f172a" : "transparent", // Slate-900 active bg
+                  color: active ? "#ffffff" : "#64748b", // White active text, Slate-500 inactive text
                 }}>
                 {item.icon(active)}
                 {item.label}
@@ -84,15 +92,24 @@ export default function BottomNavbar() {
         </div>
       </nav>
 
-      {/* Mobile bottom navbar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-        <div className="flex items-center justify-around h-16 px-2">
+      {/* 📱 Mobile bottom navbar (Updated to B&W) */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-sm"
+        style={{ background: "rgba(255, 255, 255, 0.9)", borderColor: "#e2e8f0" }} // Translucent white bg, Slate-200 border
+      >
+        <div className="flex items-center justify-around h-16 px-3">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all" style={{ color: active ? "var(--lime)" : "var(--text3)" }}>
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex flex-col items-center gap-1.5 px-4 py-2 rounded-xl transition-all"
+                style={{
+                  color: active ? "#0f172a" : "#94a3b8", // Slate-900 active icon, Slate-400 inactive icon
+                }}>
                 {item.icon(active)}
-                <span className="text-[10px] font-bold">{item.label}</span>
+                <span className={`text-[10px] font-bold ${active ? "font-black" : ""}`}>{item.label}</span>
               </Link>
             );
           })}

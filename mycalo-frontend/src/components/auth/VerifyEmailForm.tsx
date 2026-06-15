@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/axios";
 import { setUser } from "@/store/slices/auth.slice";
+import {getRedirectPath} from "@/utils/getRedirectPath";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -39,25 +40,7 @@ export default function VerifyEmailForm() {
     },
     onSuccess: (data) => {
       dispatch(setUser({ user: data.user }));
-
-      const { role, onboardingCompleted, hasSubmittedVerification } = data.user;
-
-      if (onboardingCompleted) {
-        if (role === "doctor") {
-          router.push(hasSubmittedVerification ? "/onboarding/doctor/verification" : "/onboarding/doctor/profile");
-        } else if (role === "admin") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/home");
-        }
-        return;
-      }
-
-      if (role === "doctor") {
-        router.push("/onboarding/doctor");
-      } else {
-        router.push("/onboarding/user");
-      }
+      router.replace(getRedirectPath(data.user));
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid verification code.";

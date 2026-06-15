@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { updateUser } from "@/store/slices/auth.slice";
+import { logoutAction, updateUser } from "@/store/slices/auth.slice";
 import { doctorVerificationSchema } from "@/validators/onboarding.schema";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -94,6 +94,18 @@ export default function DoctorVerificationForm() {
       toast.error(msg);
     },
   });
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+
+      dispatch(logoutAction());
+
+      router.replace("/login");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-10">
@@ -206,6 +218,9 @@ export default function DoctorVerificationForm() {
             disabled={mutation.isPending || isRedirecting}
             className="w-full h-14 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-2xl transition-all shadow-md active:scale-[0.98] disabled:opacity-70 flex items-center justify-center">
             {mutation.isPending || isRedirecting ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Submit Application →"}
+          </button>
+          <button onClick={handleLogout} className="w-full h-12 text-slate-400 font-semibold text-sm hover:text-slate-600 transition-colors">
+            Logout & Come Back Later
           </button>
         </div>
       </div>

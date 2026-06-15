@@ -13,7 +13,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
   const [grams, setGrams] = useState(100);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  // useRef to avoid stale closure in setTimeout
   const fileRef = useRef<HTMLInputElement>(null);
   const stepRef = useRef<string>("upload");
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -54,7 +53,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Preview
     const reader = new FileReader();
     reader.onload = (ev) => setImagePreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -73,7 +71,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
 
       const { scanId } = res.data;
 
-      // Poll for result every 2s
       pollIntervalRef.current = setInterval(async () => {
         try {
           const result = await api.get(`/nutrition/scan-result/${scanId}`);
@@ -82,7 +79,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
           if (status === "done") {
             clearTimers();
 
-            // ── Worker returned error (3 retries exhausted) ──────────────
             if (data?.error) {
               stepRef.current = "error";
               setStep("error");
@@ -90,7 +86,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
               return;
             }
 
-            // ── Not a food image ─────────────────────────────────────────
             if (!data.isFood) {
               toast.error(data.message || "This doesn't look like food!");
               stepRef.current = "upload";
@@ -98,19 +93,15 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
               return;
             }
 
-            // ── Success ──────────────────────────────────────────────────
             setScanResult({ ...data });
             setQuantity(data.defaultQuantity || 1);
             setGrams(data.defaultGrams || 100);
             stepRef.current = "result";
             setStep("result");
           }
-        } catch {
-          // Poll request failed — keep trying until timeout
-        }
+        } catch {}
       }, 2000);
 
-      // 30s timeout — use stepRef to avoid stale closure
       timeoutRef.current = setTimeout(() => {
         clearTimers();
         if (stepRef.current === "scanning") {
@@ -142,7 +133,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       const payload = {
         mealType,
         foodName: scanResult.foodName,
-        date, // ← required by logMealSchema
+        date,
         quantity: scanResult.type === "countable" ? quantity : 1,
         unit: scanResult.type === "countable" ? scanResult.defaultUnit : "g",
         grams: scanResult.type === "countable" ? quantity * scanResult.defaultGrams : grams,
@@ -159,7 +150,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
 
       const res = await api.post("/nutrition/log-meal", payload);
 
-      // Show notification if goal hit/over
       if (res.data.notification) {
         const { type, message } = res.data.notification;
         if (type === "hit") toast.success(message);
@@ -176,69 +166,57 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center" style={{ background: "rgba(0,0,0,0.85)" }} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md rounded-t-[32px] lg:rounded-[32px] p-6" style={{ background: "var(--bg2)", maxHeight: "90vh", overflowY: "auto" }}>
+    // Backdrop blur added for a premium glass feel
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-all" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      {/* Modal Container */}
+      <div className="w-full max-w-md bg-white rounded-t-[32px] lg:rounded-[32px] p-6 shadow-[0_20px_60px_rgb(0,0,0,0.08)] transition-all transform duration-300" style={{ maxHeight: "90vh", overflowY: "auto" }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-black text-white capitalize">Add to {mealType}</h2>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
-              {step === "upload" ? "Upload a food photo" : step === "scanning" ? "AI analyzing..." : step === "result" ? "Adjust & confirm" : step === "error" ? "Scan failed" : "Adding..."}
-            </p>
+            <h2 className="text-xl font-black text-slate-900 capitalize">Add to {mealType}</h2>
+            <p className="text-[13px] font-medium text-slate-500 mt-1">{step === "upload" ? "Upload a food photo" : step === "scanning" ? "AI analyzing..." : step === "result" ? "Adjust & confirm" : step === "error" ? "Scan failed" : "Adding..."}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--surface)", color: "var(--text2)" }}>
+          <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
             ✕
           </button>
         </div>
 
         {/* Upload step */}
         {step === "upload" && (
-          <label className="flex flex-col items-center justify-center h-48 rounded-2xl border-2 border-dashed cursor-pointer transition-all hover:border-opacity-100" style={{ borderColor: "var(--border2)", background: "var(--surface)" }}>
-            <span className="text-4xl mb-3">📸</span>
-            <p className="text-sm font-bold text-white">Take or upload a photo</p>
-            <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>
-              JPG, PNG up to 10MB
-            </p>
+          <label className="flex flex-col items-center justify-center h-56 rounded-[24px] border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer transition-all hover:border-orange-300 hover:bg-orange-50/50 group">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-slate-100 group-hover:scale-105 transition-transform">📸</div>
+            <p className="text-[15px] font-bold text-slate-700">Take or upload a photo</p>
+            <p className="text-xs font-medium text-slate-400 mt-1.5">JPG, PNG up to 10MB</p>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
           </label>
         )}
 
         {/* Scanning step */}
         {step === "scanning" && (
-          <div className="flex flex-col items-center py-10">
+          <div className="flex flex-col items-center py-12">
             {imagePreview && (
-              <div className="w-32 h-32 rounded-2xl overflow-hidden mb-5">
-                <img src={imagePreview} className="w-full h-full object-cover" alt="food preview" />
+              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 shadow-sm border border-slate-100 p-1 bg-white">
+                <img src={imagePreview} className="w-full h-full object-cover rounded-[18px]" alt="food preview" />
               </div>
             )}
-            <div
-              className="w-10 h-10 rounded-full animate-spin mb-4"
-              style={{
-                border: "3px solid var(--lime)",
-                borderTopColor: "transparent",
-              }}
-            />
-            <p className="text-white font-bold">Analyzing food...</p>
-            <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>
-              AI is identifying nutrients
-            </p>
+            <div className="w-12 h-12 rounded-full animate-spin mb-5 border-4 border-slate-100 border-t-orange-500" />
+            <p className="text-slate-800 font-bold text-lg">Analyzing food...</p>
+            <p className="text-[13px] font-medium text-slate-500 mt-1.5">AI is identifying nutrients & macros</p>
           </div>
         )}
 
-        {/* ── Error step (3 retries exhausted / timeout) ───────────────── */}
+        {/* Error step */}
         {step === "error" && (
           <div className="flex flex-col items-center py-10 text-center">
             {imagePreview && (
-              <div className="w-32 h-32 rounded-2xl overflow-hidden mb-5 opacity-50">
-                <img src={imagePreview} className="w-full h-full object-cover" alt="food preview" />
+              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 opacity-50 border border-slate-100 p-1 bg-white">
+                <img src={imagePreview} className="w-full h-full object-cover rounded-[18px]" alt="food preview" />
               </div>
             )}
-            <span className="text-5xl mb-4">❌</span>
-            <p className="text-white font-bold text-base">Food could not be identified</p>
-            <p className="text-sm mt-2 px-4" style={{ color: "var(--text3)" }}>
-              {errorMessage || "Please upload a clearer photo with good lighting."}
-            </p>
-            <button onClick={handleRetry} className="mt-6 px-8 h-12 rounded-2xl font-bold text-sm transition-all active:scale-[0.98]" style={{ background: "var(--lime)", color: "#000" }}>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-3xl mb-4 text-red-500">❌</div>
+            <p className="text-slate-900 font-bold text-lg">Food could not be identified</p>
+            <p className="text-[13px] mt-2 px-4 text-slate-500 font-medium leading-relaxed">{errorMessage || "Please upload a clearer photo with good lighting."}</p>
+            <button onClick={handleRetry} className="mt-8 w-full h-14 rounded-[20px] font-bold text-[15px] transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-[0.98]">
               Try Again
             </button>
           </div>
@@ -246,68 +224,58 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
 
         {/* Result step */}
         {step === "result" && scanResult && calculatedNutrition && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Food image + name */}
-            <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "var(--surface)" }}>
-              <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
-                {scanResult.imageUrl ? <img src={scanResult.imageUrl} className="w-full h-full object-cover" alt={scanResult.foodName} /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
+            <div className="flex items-center gap-4 p-4 rounded-[24px] bg-slate-50 border border-slate-100">
+              <div className="w-16 h-16 rounded-[18px] overflow-hidden shrink-0 bg-white shadow-sm border border-slate-50 p-0.5">
+                {scanResult.imageUrl ? <img src={scanResult.imageUrl} className="w-full h-full object-cover rounded-[14px]" alt={scanResult.foodName} /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
               </div>
               <div>
-                <p className="text-white font-black text-base">{scanResult.foodName}</p>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <div className={`w-1.5 h-1.5 rounded-full ${scanResult.confidence === "high" ? "bg-green-400" : scanResult.confidence === "medium" ? "bg-yellow-400" : "bg-red-400"}`} />
-                  <span className="text-xs capitalize" style={{ color: "var(--text3)" }}>
-                    {scanResult.confidence} confidence
-                  </span>
+                <p className="text-slate-900 font-black text-lg leading-tight">{scanResult.foodName}</p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className={`w-2 h-2 rounded-full ${scanResult.confidence === "high" ? "bg-emerald-400" : scanResult.confidence === "medium" ? "bg-amber-400" : "bg-red-400"}`} />
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{scanResult.confidence} confidence</span>
                 </div>
               </div>
             </div>
 
-            {/* Nutrition display */}
-            <div className="grid grid-cols-4 gap-2">
+            {/* Nutrition display - Soft pastel colors */}
+            <div className="grid grid-cols-4 gap-2.5">
               {[
-                { label: "Calories", value: calculatedNutrition.calories, unit: "kcal", color: "var(--lime)" },
-                { label: "Protein", value: calculatedNutrition.protein, unit: "g", color: "#ff6464" },
-                { label: "Carbs", value: calculatedNutrition.carbs, unit: "g", color: "#ffb432" },
-                { label: "Fat", value: calculatedNutrition.fat, unit: "g", color: "#6496ff" },
+                { label: "Calories", value: calculatedNutrition.calories, color: "text-slate-900", bg: "bg-slate-50" },
+                { label: "Protein", value: calculatedNutrition.protein, color: "text-purple-600", bg: "bg-purple-50" },
+                { label: "Carbs", value: calculatedNutrition.carbs, color: "text-emerald-600", bg: "bg-emerald-50" },
+                { label: "Fat", value: calculatedNutrition.fat, color: "text-orange-600", bg: "bg-orange-50" },
               ].map((n) => (
-                <div key={n.label} className="p-3 rounded-xl text-center" style={{ background: "var(--surface)" }}>
-                  <p className="text-sm font-black" style={{ color: n.color }}>
-                    {n.value}
-                  </p>
-                  <p className="text-[9px] mt-0.5" style={{ color: "var(--text3)" }}>
-                    {n.label}
-                  </p>
+                <div key={n.label} className={`p-3.5 rounded-[20px] text-center border border-slate-100/50 ${n.bg}`}>
+                  <p className={`text-[17px] font-black ${n.color}`}>{n.value}</p>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">{n.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Quantity / Grams adjuster */}
-            <div className="p-4 rounded-2xl space-y-4" style={{ background: "var(--surface)" }}>
-              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text2)" }}>
-                Adjust Amount
-              </p>
+            <div className="p-5 rounded-[24px] space-y-4 bg-slate-50 border border-slate-100">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Adjust Amount</p>
 
               {/* Quantity (countable foods) */}
               {scanResult.type === "countable" && (
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white font-semibold">Quantity ({scanResult.defaultUnit})</span>
-                    <span className="text-xs" style={{ color: "var(--text3)" }}>
-                      AI default: {scanResult.defaultQuantity}
-                    </span>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[15px] text-slate-800 font-bold">Quantity ({scanResult.defaultUnit})</span>
+                    <span className="text-[12px] font-medium text-slate-500">AI default: {scanResult.defaultQuantity}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setQuantity(Math.max(0.5, quantity - 0.5))} className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center" style={{ background: "var(--bg3)", color: "var(--text)" }}>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setQuantity(Math.max(0.5, quantity - 0.5))}
+                      className="w-12 h-12 rounded-[16px] font-black text-xl flex items-center justify-center bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
                       −
                     </button>
                     <div className="flex-1 text-center">
-                      <span className="text-2xl font-black text-white">{quantity}</span>
-                      <span className="text-sm ml-1" style={{ color: "var(--text3)" }}>
-                        {scanResult.defaultUnit}
-                      </span>
+                      <span className="text-3xl font-black text-slate-900">{quantity}</span>
+                      <span className="text-sm font-bold text-slate-400 ml-1.5">{scanResult.defaultUnit}</span>
                     </div>
-                    <button onClick={() => setQuantity(quantity + 0.5)} className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center" style={{ background: "var(--lime)", color: "#000" }}>
+                    <button onClick={() => setQuantity(quantity + 0.5)} className="w-12 h-12 rounded-[16px] font-black text-xl flex items-center justify-center bg-orange-500 text-white shadow-md hover:bg-orange-600 transition-colors">
                       +
                     </button>
                   </div>
@@ -316,53 +284,50 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
 
               {/* Grams (weighable foods) */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white font-semibold">Grams</span>
-                  <span className="text-xs" style={{ color: "var(--text3)" }}>
-                    AI default: {scanResult.defaultGrams}g
-                  </span>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[15px] text-slate-800 font-bold">Grams</span>
+                  <span className="text-[12px] font-medium text-slate-500">AI default: {scanResult.defaultGrams}g</span>
                 </div>
                 {scanResult.type === "weighable" ? (
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setGrams(Math.max(10, grams - 25))} className="w-10 h-10 rounded-xl font-bold flex items-center justify-center" style={{ background: "var(--bg3)", color: "var(--text)" }}>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setGrams(Math.max(10, grams - 25))}
+                      className="w-12 h-12 rounded-[16px] font-black text-xl flex items-center justify-center bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
                       −
                     </button>
                     <div className="flex-1 text-center">
-                      <span className="text-2xl font-black text-white">{grams}</span>
-                      <span className="text-sm ml-1" style={{ color: "var(--text3)" }}>
-                        g
-                      </span>
+                      <span className="text-3xl font-black text-slate-900">{grams}</span>
+                      <span className="text-sm font-bold text-slate-400 ml-1.5">g</span>
                     </div>
-                    <button onClick={() => setGrams(grams + 25)} className="w-10 h-10 rounded-xl font-bold flex items-center justify-center" style={{ background: "var(--lime)", color: "#000" }}>
+                    <button onClick={() => setGrams(grams + 25)} className="w-12 h-12 rounded-[16px] font-black text-xl flex items-center justify-center bg-orange-500 text-white shadow-md hover:bg-orange-600 transition-colors">
                       +
                     </button>
                   </div>
                 ) : (
-                  <p className="text-xs" style={{ color: "var(--text3)" }}>
-                    ≈ {Math.round(quantity * scanResult.defaultGrams)}g total
-                  </p>
+                  <div className="px-4 py-3 bg-white rounded-[16px] border border-slate-100 text-center">
+                    <p className="text-[13px] font-bold text-slate-500">
+                      ≈ <span className="text-slate-900 text-[15px] mx-1">{Math.round(quantity * scanResult.defaultGrams)}</span> g total
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Add button */}
-            <button onClick={handleAddFood} className="w-full h-14 rounded-2xl font-bold text-base flex items-center justify-center transition-all active:scale-[0.98]" style={{ background: "var(--lime)", color: "#000" }}>
-              Add {scanResult.foodName} — {calculatedNutrition.calories} kcal
+            <button
+              onClick={handleAddFood}
+              className="w-full h-14 mt-2 rounded-[20px] font-bold text-[15px] flex items-center justify-center transition-all bg-[#f97316] text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(249,115,22,0.3)] active:scale-[0.98]">
+              Add {scanResult.foodName} • {calculatedNutrition.calories} kcal
             </button>
           </div>
         )}
 
         {/* Adding step */}
         {step === "adding" && (
-          <div className="flex flex-col items-center py-10">
-            <div
-              className="w-10 h-10 rounded-full animate-spin"
-              style={{
-                border: "3px solid var(--lime)",
-                borderTopColor: "transparent",
-              }}
-            />
-            <p className="text-white font-bold mt-4">Logging meal...</p>
+          <div className="flex flex-col items-center py-12">
+            <div className="w-12 h-12 rounded-full animate-spin border-4 border-slate-100 border-t-orange-500" />
+            <p className="text-slate-800 font-bold text-lg mt-5">Logging meal...</p>
+            <p className="text-[13px] font-medium text-slate-500 mt-1.5">Updating your daily macros</p>
           </div>
         )}
       </div>

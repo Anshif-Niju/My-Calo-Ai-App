@@ -52,7 +52,7 @@ export default function RegisterForm() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
+      router.replace(`/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Registration failed. Please try again.";

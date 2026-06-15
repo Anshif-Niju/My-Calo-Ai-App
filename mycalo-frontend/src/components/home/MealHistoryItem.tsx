@@ -9,44 +9,64 @@ export default function MealHistoryItem({ foodName, calories, protein, carbs, fa
   });
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: "var(--surface)" }}>
-      {/* Food image */}
-      <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{ background: "var(--bg3)" }}>
-        {imageUrl ? <img src={imageUrl} alt={foodName} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-sm font-bold text-white truncate">{foodName}</p>
-          <span className="text-xs ml-2 shrink-0" style={{ color: "var(--text3)" }}>
-            {time}
-          </span>
+    <div className="group relative bg-white p-4 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+      <div className="flex items-center gap-4">
+        {/* Food Image / Placeholder */}
+        <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center">
+          {imageUrl ? <img src={imageUrl} alt={foodName} className="w-full h-full object-cover" /> : <span className="text-xl">🍽️</span>}
         </div>
-        <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--lime)" }}>
-          🔥 {calories} kcal
-        </p>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold" style={{ color: "rgba(255,100,100,0.9)" }}>
-            ⚡ {protein}g
-          </span>
-          <span className="text-[10px] font-bold" style={{ color: "rgba(255,180,50,0.9)" }}>
-            🌾 {carbs}g
-          </span>
-          <span className="text-[10px] font-bold" style={{ color: "rgba(100,150,255,0.9)" }}>
-            💧 {fat}g
-          </span>
-        </div>
-      </div>
 
-      {/* Delete */}
-      {onDelete && (
-        <button onClick={onDelete} className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:opacity-70" style={{ background: "rgba(255,78,106,0.15)", color: "#ff4e6a" }}>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
+        {/* Content */}
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-bold text-slate-900 text-[15px] leading-tight">{foodName}</h3>
+              <p className="text-[11px] font-medium text-slate-400 mt-0.5 uppercase tracking-wider">
+                {mealType} • {time}
+              </p>
+            </div>
+
+            <div className="text-right">
+              <span className="text-lg font-bold text-slate-900">{calories}</span>
+              <span className="text-[10px] font-bold text-slate-400 ml-0.5 uppercase">kcal</span>
+            </div>
+          </div>
+
+          {/* Macros (Clean minimal style with dot indicators) */}
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {/* Protein - Purple */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 border border-purple-100">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+              <span className="text-[10px] font-bold text-purple-700">Protein {protein}g</span>
+            </div>
+
+            {/* Carbs - Green */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+              <span className="text-[10px] font-bold text-emerald-700">Carbs {carbs}g</span>
+            </div>
+
+            {/* Fat - Orange */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 border border-orange-100">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+              <span className="text-[10px] font-bold text-orange-700">Fat {fat}g</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Delete Button (Appears as a floating badge on hover) */}
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="absolute -top-2 -right-2 w-7 h-7 bg-white border border-slate-100 shadow-sm rounded-full flex items-center justify-center text-slate-400 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all duration-200"
+            title="Delete meal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

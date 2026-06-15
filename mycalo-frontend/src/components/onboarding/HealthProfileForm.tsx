@@ -1,9 +1,12 @@
 "use client";
 
+import { logoutAction } from "@/store/slices/auth.slice";
 import { healthProfileSchema } from "@/validators/onboarding.schema";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {api} from '@/lib/axios'
+import {useDispatch} from 'react-redux'
 
 const ACTIVITY_LEVELS = [
   { value: "sedentary", label: "Sedentary", desc: "Little or no exercise" },
@@ -15,6 +18,8 @@ const ACTIVITY_LEVELS = [
 const DISEASES = ["Diabetes", "Hypertension", "Heart Disease", "Obesity", "Thyroid", "None"];
 
 export default function HealthProfileForm() {
+    const dispatch = useDispatch();
+
   const router = useRouter();
   const [form, setForm] = useState({
     height: "",
@@ -56,6 +61,17 @@ export default function HealthProfileForm() {
     router.replace("/onboarding/user/goal");
   };
 
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+
+      dispatch(logoutAction());
+
+      router.replace("/login");
+    } catch (error) {
+      console.error(error);
+    }
+  };
   return (
     <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg">
@@ -164,6 +180,10 @@ export default function HealthProfileForm() {
           {/* CTA */}
           <button onClick={handleNext} className="w-full h-14 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-2xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center">
             Continue →
+          </button>
+
+          <button onClick={handleLogout} className="w-full h-12 text-slate-400 font-semibold text-sm hover:text-slate-600 transition-colors">
+            Logout & Come Back Later
           </button>
         </div>
       </div>
