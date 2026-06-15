@@ -12,6 +12,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const pathname = usePathname();
 
   const { user, isInitialized } = useSelector((state: RootState) => state.auth);
+  console.log(user);
+  console.log(isInitialized);
 
   useEffect(() => {
     if (!isInitialized) return;

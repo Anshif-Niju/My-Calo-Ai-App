@@ -51,12 +51,17 @@ export default function DoctorVerificationPage() {
     return () => clearInterval(interval);
   }, [dispatch, router]);
 
-  const handleLogout = () => {
-    dispatch(logoutAction());
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
 
-    router.replace("/login");
+      dispatch(logoutAction());
+
+      router.replace("/login");
+    } catch (error) {
+      console.error(error);
+    }
   };
-
   const handleCheckStatus = async () => {
     setChecking(true);
 
