@@ -11,7 +11,7 @@ export default function LandingPage() {
   return (
     <>
       <GuestRoute>
-      <div className="min-h-screen w-full bg-[#f8fafc] flex flex-col items-center justify-center p-4 selection:bg-slate-900 selection:text-white relative overflow-hidden">
+      <div className="min-h-screen w-full  bg-[#f8fafc] flex flex-col items-center justify-center p-4 selection:bg-slate-900 selection:text-white relative overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-emerald-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-50"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-blue-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-50"></div>
 
@@ -40,7 +40,7 @@ export default function LandingPage() {
           </div>
         </main>
 
-        <div className="absolute bottom-6 text-center z-10">
+        <div className="absolute bottom-10 text-center  z-10">
           <p className="text-xs font-semibold text-slate-400">© {new Date().getFullYear()} MyCalo AI Platform</p>
         </div>
       </div>

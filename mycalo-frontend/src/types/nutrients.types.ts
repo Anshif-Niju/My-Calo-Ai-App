@@ -25,7 +25,7 @@ export interface Props {
   mealType: "breakfast" | "lunch" | "dinner" | "custom";
   date: string;
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (meal?: any) => void;
 }
 
 export interface MealHistoryItemProps {
@@ -39,3 +39,4 @@ export interface MealHistoryItemProps {
   createdAt: string;
   onDelete?: () => void;
 }
+

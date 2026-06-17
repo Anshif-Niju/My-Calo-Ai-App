@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { redis } from "../../config/redis";
+import { cloudinaryUploadQueue } from "../../jobs/queues/cloudinaryUpload.queue";
 import { foodScanQueue } from "../../jobs/queues/foodScan.queue";
 import { DailyLog } from "../../models/DailyLog.model";
 import { MealLog } from "../../models/Meal.model";
@@ -10,7 +11,7 @@ import { getErrorMessage } from "../../utils/error.util";
 
 const getToday = (): string => new Date().toISOString().split("T")[0];
 
-// ─── Internal helper ───────────────────────────────────────────────
+// Internal helper
 
 const updateDailyLog = async (userId: string, date: string) => {
   const user = await User.findById(userId).select("dailyTargets");
@@ -64,7 +65,7 @@ const updateDailyLog = async (userId: string, date: string) => {
   return { consumed, status, target };
 };
 
-// ─── GET /nutrition/dashboard ──────────────────────────────────────
+// GET /nutrition/dashboard
 
 export const getDashboard = async (req: Request, res: Response) => {
   try {
@@ -127,7 +128,6 @@ export const getDashboard = async (req: Request, res: Response) => {
       totalMeals: meals.length,
     };
 
-    // today → 2 min cache, past dates → 10 min cache (rarely changes)
     const ttl = isToday ? 120 : 600;
     await redis.set(`summary:${authUser.userId}:${date}`, JSON.stringify(summary), "EX", ttl);
 
@@ -137,7 +137,7 @@ export const getDashboard = async (req: Request, res: Response) => {
   }
 };
 
-// ─── POST /nutrition/log-meal ──────────────────────────────────────
+// POST /nutrition/log-meal
 
 export const logMeal = async (req: Request, res: Response) => {
   try {
@@ -154,6 +154,15 @@ export const logMeal = async (req: Request, res: Response) => {
       fiber: Math.round(data.fiber * 10) / 10,
     });
 
+    if (req.file) {
+      await cloudinaryUploadQueue.add("cloudinary-upload", {
+        entityType: "MealLog",
+        entityId: meal._id.toString(),
+        folder: `meals/${authUser.userId}`,
+        files: [{ fieldName: "image", path: req.file.path, mimeType: req.file.mimetype }],
+      });
+    }
+
     const result = await updateDailyLog(authUser.userId, data.date);
     const dailyLog = await DailyLog.findOne({ userId: authUser.userId, date: data.date });
     let notification = null;
@@ -165,14 +174,12 @@ export const logMeal = async (req: Request, res: Response) => {
         message: result.status === "hit" ? "🎉 Daily calorie goal reached!" : `⚠️ Calorie limit exceeded by ${result.consumed.calories - result.target} kcal`,
       };
     }
-
     return res.status(201).json({ message: "Meal logged", meal, notification });
   } catch (error) {
     return res.status(500).json({ message: getErrorMessage(error) });
   }
 };
-
-// ─── DELETE /nutrition/meal/:id ────────────────────────────────────
+// DELETE /nutrition/meal/:id
 
 export const deleteMeal = async (req: Request, res: Response) => {
   try {
@@ -186,7 +193,7 @@ export const deleteMeal = async (req: Request, res: Response) => {
   }
 };
 
-// ─── POST /nutrition/scan-food ─────────────────────────────────────
+// POST /nutrition/scan-food
 
 export const scanFood = async (req: Request, res: Response) => {
   try {
@@ -200,7 +207,7 @@ export const scanFood = async (req: Request, res: Response) => {
   }
 };
 
-// ─── GET /nutrition/scan-result/:jobId ────────────────────────────
+//  GET /nutrition/scan-result/:jobId
 
 export const getScanResult = async (req: Request, res: Response) => {
   try {

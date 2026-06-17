@@ -21,7 +21,7 @@ export const registerSchema = z.object({
     email: z.string().email("Invalid email format"),
     password: passwordValidation,
     role: z.enum(["user", "doctor"]).default("user"),
-    phone: z.string().min(7, "Invalid phone number").max(15, "Invalid phone number").regex(/^\d+$/, "Phone number must contain only digits"),
+    phone: z.string().min(8, "Invalid phone number").max(15, "Invalid phone number").regex(/^\d+$/, "Phone number must contain only digits"),
     countryCode: z.string().min(2, "Country code required").max(5, "Invalid country code"),
   }),
 });

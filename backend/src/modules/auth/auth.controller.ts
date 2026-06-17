@@ -123,7 +123,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
     await redis.del(`otp:${email}:${type}`);
 
     if (type === "email_verify") {
-      const user = await User.findOneAndUpdate({ email }, { isEmailVerified: true }, { new: true });
+      const user = await User.findOneAndUpdate({ email }, { isEmailVerified: true }, { returnDocument: "after" });
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const accessToken = generateAccessToken(user.id, user.role, user.email);

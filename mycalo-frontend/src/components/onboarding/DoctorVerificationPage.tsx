@@ -21,8 +21,6 @@ export default function DoctorVerificationPage() {
     if (!user) return;
 
     const correctPath = getRedirectPath(user);
-    console.log("Redux User:", user);
-    console.log("Redirect:", getRedirectPath(user));
     if (correctPath !== "/onboarding/doctor/verification") {
       router.replace(correctPath);
     }

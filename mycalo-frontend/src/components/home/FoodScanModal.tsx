@@ -8,6 +8,7 @@ import { Props, ScanResult } from "../../types/nutrients.types";
 export default function FoodScanModal({ mealType, date, onClose, onAdded }: Props) {
   const [step, setStep] = useState<"upload" | "scanning" | "result" | "adding" | "error">("upload");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [grams, setGrams] = useState(100);
@@ -52,6 +53,11 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Instant Image showing Without Flicker (Temporary Url)
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
 
     const reader = new FileReader();
     reader.onload = (ev) => setImagePreview(ev.target?.result as string);
@@ -100,7 +106,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             setStep("result");
           }
         } catch {}
-      }, 2000);
+      }, 1000);
 
       timeoutRef.current = setTimeout(() => {
         clearTimers();
@@ -147,8 +153,13 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
           confidence: scanResult.confidence,
         },
       };
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(payload));
+      if (selectedFile) formData.append("image", selectedFile);
 
-      const res = await api.post("/nutrition/log-meal", payload);
+      const res = await api.post("/nutrition/log-meal", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       if (res.data.notification) {
         const { type, message } = res.data.notification;
@@ -157,7 +168,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       }
 
       toast.success(`✅ ${scanResult.foodName} added to ${mealType}!`);
-      onAdded();
+      onAdded({ ...res.data.meal, tempImageUrl: imagePreview });
       onClose();
     } catch {
       toast.error("Failed to log meal. Try again.");
@@ -228,11 +239,12 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             {/* Food image + name */}
             <div className="flex items-center gap-4 p-4 rounded-[24px] bg-slate-50 border border-slate-100">
               <div className="w-16 h-16 rounded-[18px] overflow-hidden shrink-0 bg-white shadow-sm border border-slate-50 p-0.5">
-                {scanResult.imageUrl ? <img src={scanResult.imageUrl} className="w-full h-full object-cover rounded-[14px]" alt={scanResult.foodName} /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
+                {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover rounded-[14px]" alt={scanResult.foodName} /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
               </div>
               <div>
                 <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>
                 <div className="flex items-center gap-1.5 mt-1.5">
+                  {" "}
                   <div className={`w-2 h-2 rounded-full ${scanResult.confidence === "high" ? "bg-emerald-400" : scanResult.confidence === "medium" ? "bg-amber-400" : "bg-red-400"}`} />
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{scanResult.confidence} confidence</span>
                 </div>

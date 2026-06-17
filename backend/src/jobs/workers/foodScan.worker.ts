@@ -1,13 +1,10 @@
 import { Worker } from "bullmq";
 import { redis } from "../../config/redis";
-
 import { scanFoodWithGemini25 } from "../../service/ai/gemini25.service";
 import { scanFoodWithGemini35 } from "../../service/ai/gemini35.service";
 import { scanFoodWithGroq } from "../../service/ai/groq.service";
-
 import { compressImage } from "../../service/imageCompression.service";
 import { deleteTempImage } from "../../service/tempFile.service";
-
 import { logger } from "../../utils/logger";
 
 export const foodScanWorker = new Worker(

@@ -106,7 +106,11 @@ export default function DoctorIntroSlider() {
           ←
         </button>
       )}
-      <button onClick={handleNext} disabled={introMutation.isPending || isRedirecting} className="flex-1 h-14 rounded-2xl font-bold flex items-center justify-center">
+      <button onClick={handleNext} disabled={introMutation.isPending || isRedirecting} className={`flex-1 h-14 rounded-2xl font-bold flex items-center justify-center ${
+    isDark
+      ? "bg-white text-black"
+      : "bg-black text-white"
+  }`}>
         {introMutation.isPending || isRedirecting ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : isLast ? "Get Verified" : "Next"}
       </button>
     </div>
@@ -169,7 +173,6 @@ export default function DoctorIntroSlider() {
             <>
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
               <div className="absolute bottom-12 left-10 right-10 z-10">
-                <div className="w-10 h-[3px] bg-white mb-4 rounded-full" />
                 <p className="text-white font-black leading-[1.1]" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", fontFamily: "var(--font-head, 'Syne', sans-serif)" }}>
                   {slide.hookText.split(" ").slice(0, 3).join(" ")}
                   <br />

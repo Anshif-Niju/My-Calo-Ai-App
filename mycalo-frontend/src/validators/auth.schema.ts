@@ -32,7 +32,7 @@ export const registerSchema = z
     password: passwordValidation,
     confirmPassword: z.string(),
     role: z.enum(["user", "doctor"]),
-    phone: z.string().min(7, "Invalid phone number").max(15, "Invalid phone number").regex(/^\d+$/, "Phone number must contain only digits"),
+    phone: z.string().min(8, "Invalid phone number").max(15, "Invalid phone number").regex(/^\d+$/, "Phone number must contain only digits"),
     countryCode: z.string().min(2).max(5),
   })
   .refine((data) => data.password === data.confirmPassword, {

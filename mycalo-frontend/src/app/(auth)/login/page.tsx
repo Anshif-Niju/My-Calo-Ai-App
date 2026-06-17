@@ -11,7 +11,7 @@ export default function LoginPage() {
   return (
     <div className="w-full flex flex-col items-center">
       {/* Branding Header matching your reference image's clean top area */}
-      <div className="flex flex-col items-center mb-8">
+      <div className="flex flex-col items-center mb-2">
         <div className="w-12 h-12 bg-slate-950 rounded-[18px] flex items-center justify-center mb-4 shadow-lg shadow-slate-900/20">
           <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M20 10c0-4.42-3.58-8-8-8s-8 3.58-8 8c0 4.42 3.58 8 8 8s8-3.58 8-8zM12 4c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/>

@@ -102,7 +102,7 @@ export default function HealthProfileForm() {
                   type="button"
                   onClick={() => set("gender", g)}
                   className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl font-bold text-sm transition-all ${form.gender === g ? "bg-slate-950 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>
-                  {g === "male" ? "👨 Male" : "👩 Female"}
+                  {g === "male" ? " Male" : " Female"}
                 </button>
               ))}
             </div>
@@ -111,9 +111,9 @@ export default function HealthProfileForm() {
           {/* Height / Weight / Age */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { key: "height", label: "Height", unit: "cm", placeholder: "170" },
-              { key: "weight", label: "Weight", unit: "kg", placeholder: "70" },
-              { key: "age", label: "Age", unit: "yrs", placeholder: "25" },
+              { key: "height", label: "Height", unit: "cm", placeholder: "0" },
+              { key: "weight", label: "Weight", unit: "kg", placeholder: "0" },
+              { key: "age", label: "Age", unit: "yrs", placeholder: "0" },
             ].map(({ key, label, unit, placeholder }) => (
               <div key={key}>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">{label}</label>

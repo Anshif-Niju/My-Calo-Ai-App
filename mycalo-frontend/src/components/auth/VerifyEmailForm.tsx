@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/axios";
 import { setUser } from "@/store/slices/auth.slice";
-import {getRedirectPath} from "@/utils/getRedirectPath";
+import { getRedirectPath } from "@/utils/getRedirectPath";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -22,13 +22,18 @@ export default function VerifyEmailForm() {
   const [timeLeft, setTimeLeft] = useState<number>(60);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
   useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // NEW: Auto-focus the first input box on page load
+  useEffect(() => {
+    if (inputRefs.current[0]) {
+      inputRefs.current[0].focus();
+    }
+  }, []);
   const verifyMutation = useMutation({
     mutationFn: async (data: { email: string; otp: string }) => {
       const response = await api.post("/auth/verify-otp", {

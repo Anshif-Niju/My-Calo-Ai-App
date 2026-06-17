@@ -5,6 +5,7 @@ import express from "express";
 import helmet from "helmet";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
+import doctorRoutes from "./modules/doctor/doctor.routes";
 import nutritionRoutes from "./modules/nutrition/nutrition.routes";
 import onboardingRoutes from "./modules/onboarding/onboarding.routes";
 dotenv.config();
@@ -30,6 +31,6 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/nutrition", nutritionRoutes);
-
+app.use("/api/doctors", doctorRoutes);
 
 export default app;

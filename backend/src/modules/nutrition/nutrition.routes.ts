@@ -6,13 +6,31 @@ import { logMealSchema } from "./nutrition.validator";
 
 const router = Router();
 
+// Image Upload Setup
 const foodScanUpload = createDiskUploader("food-scanning", 10, (_req, file, cb) => {
   if (file.mimetype.startsWith("image/")) cb(null, true);
   else cb(new Error("Only images allowed"));
 });
 
 router.get("/dashboard", authenticate, getDashboard);
-router.post("/log-meal", authenticate, validate(logMealSchema), logMeal);
+router.post(
+  "/log-meal",
+  authenticate,
+  foodScanUpload.single("image"),
+  (req, res, next) => {
+    // Multer-ൽ നിന്ന് വരുന്ന "data" സ്ട്രിങ് ആണെങ്കിൽ അതിനെ പാർസ് ചെയ്യുക
+    if (req.body.data) {
+      try {
+        req.body = JSON.parse(req.body.data);
+      } catch (error) {
+        return res.status(400).json({ message: "Invalid data format" });
+      }
+    }
+    next();
+  },
+  validate(logMealSchema),
+  logMeal,
+);
 router.delete("/meal/:id", authenticate, deleteMeal);
 router.post("/scan-food", authenticate, foodScanUpload.single("image"), scanFood);
 router.get("/scan-result/:jobId", authenticate, getScanResult);

@@ -24,7 +24,6 @@ const fmt = (d: Date) => d.toISOString().split("T")[0];
 
 const getWeekDates = (): { date: string; label: string; day: string }[] => {
   const result = [];
-  // 🚀 ഇവിടെയാണ് മാറ്റം വരുത്തിയത്! 0 (ഇന്ന്) മുതൽ 6 (6 ദിവസം മുൻപ്) വരെ.
   for (let i = 0; i <= 6; i++) {
     const d = new Date();
     d.setDate(d.getDate() - i);
@@ -37,7 +36,7 @@ const getWeekDates = (): { date: string; label: string; day: string }[] => {
   return result;
 };
 
-// ─── Component ────────────────────────────────────────────────────
+// Component
 
 export default function HomeScreen() {
   const queryClient = useQueryClient();
@@ -53,7 +52,7 @@ export default function HomeScreen() {
   const isToday = selectedDate === todayStr;
   const weekDates = useMemo(() => getWeekDates(), []);
 
-  // ─── Fetch selected date dashboard ──────────────────────────────
+  // Fetch selected date dashboard
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard", selectedDate],
     queryFn: async () => {
@@ -64,7 +63,7 @@ export default function HomeScreen() {
     refetchOnWindowFocus: isToday,
   });
 
-  // ─── Prefetch adjacent dates on strip render ─────────────────────
+  // Prefetch adjacent dates on strip render
   const prefetchDate = (date: string) => {
     if (date === selectedDate) return;
     queryClient.prefetchQuery({
@@ -77,7 +76,7 @@ export default function HomeScreen() {
     });
   };
 
-  // ─── Delete mutation ─────────────────────────────────────────────
+  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (mealId: string) => {
       await api.delete(`/nutrition/meal/${mealId}`);
@@ -88,7 +87,7 @@ export default function HomeScreen() {
     },
   });
 
-  // ─── Derived data ────────────────────────────────────────────────
+  // Derived data
   const rawConsumed = data?.consumed || { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   const consumed = {
     calories: Math.round(rawConsumed.calories),
@@ -106,7 +105,7 @@ export default function HomeScreen() {
 
   const allMeals = [...(meals.breakfast || []), ...(meals.lunch || []), ...(meals.dinner || []), ...(meals.custom || [])].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // ─── Skeleton ────────────────────────────────────────────────────
+  // Skeleton
   const Skeleton = () => (
     <div className="space-y-4 animate-pulse w-full">
       <div className="h-40 bg-white rounded-[32px] border border-slate-100" />
@@ -167,7 +166,7 @@ export default function HomeScreen() {
               })}
             </div>
           </div>
-          {/* ─── Dashboard Content ─────────────────────────────────── */}
+          {/* Dashboard Content  */}
           <div className="flex-1 min-w-0">
             {isLoading ? (
               <Skeleton />
@@ -190,7 +189,9 @@ export default function HomeScreen() {
                       )}
                       <div className="mt-4 inline-block px-3 py-1 bg-slate-50 rounded-lg border border-slate-100">
                         <p className="text-[11px] font-bold text-slate-500">
-                          <span className="text-slate-900">{consumed.calories}</span> / {targets.calories} consumed
+                          <span className="text-slate-900">
+                            {consumed.calories} consumed / {targets.calories} target
+                          </span>
                         </p>
                       </div>
                     </div>
@@ -402,8 +403,45 @@ export default function HomeScreen() {
           mealType={scanModal.mealType}
           date={todayStr}
           onClose={() => setScanModal({ open: false, mealType: "breakfast" })}
-          onAdded={() => {
-            queryClient.invalidateQueries({ queryKey: ["dashboard", todayStr] });
+          onAdded={(newMeal: any) => {
+            // 🚀 മാറ്റം ഇവിടെയാണ്: കാഷെ അപ്ഡേറ്റ് ചെയ്യുമ്പോൾ മീൽ മാത്രമല്ല, നമ്പറുകളും കൂട്ടുന്നു!
+            if (newMeal) {
+              queryClient.setQueryData(["dashboard", todayStr], (oldData: any) => {
+                if (!oldData) return oldData;
+
+                // 1. മീൽ ലിസ്റ്റ് അപ്ഡേറ്റ് ചെയ്യുന്നു
+                const updatedMeals = { ...oldData.meals };
+                const type = newMeal.mealType;
+                const mealWithTempImage = { ...newMeal, imageUrl: newMeal.tempImageUrl || newMeal.imageUrl };
+
+                if (updatedMeals[type]) {
+                  updatedMeals[type] = [mealWithTempImage, ...updatedMeals[type]];
+                } else {
+                  updatedMeals[type] = [mealWithTempImage];
+                }
+
+                // 🚀 2. നമ്പറുകൾ (Macros & Calories) അപ്ഡേറ്റ് ചെയ്യുന്നു
+                const updatedConsumed = {
+                  calories: (oldData.consumed?.calories || 0) + (newMeal.calories || 0),
+                  protein: (oldData.consumed?.protein || 0) + (newMeal.protein || 0),
+                  carbs: (oldData.consumed?.carbs || 0) + (newMeal.carbs || 0),
+                  fat: (oldData.consumed?.fat || 0) + (newMeal.fat || 0),
+                  fiber: (oldData.consumed?.fiber || 0) + (newMeal.fiber || 0),
+                };
+
+                // 3. ആകെ മീൽ എണ്ണം കൂട്ടുന്നു (Streak/Count)
+                const updatedTotalMeals = (oldData.totalMeals || 0) + 1;
+
+                // ഇതെല്ലാം ഒന്നിച്ച് റിട്ടേൺ ചെയ്യുന്നു
+                return {
+                  ...oldData,
+                  meals: updatedMeals,
+                  consumed: updatedConsumed,
+                  totalMeals: updatedTotalMeals,
+                };
+              });
+            }
+
             setScanModal({ open: false, mealType: "breakfast" });
           }}
         />

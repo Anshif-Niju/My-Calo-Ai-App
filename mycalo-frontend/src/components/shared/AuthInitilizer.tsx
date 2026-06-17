@@ -11,7 +11,6 @@ export default function AuthInitializer({ children }: { children: React.ReactNod
   const { isInitialized } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    // ⚡ ഡാറ്റ ഓൾറെഡി ഉണ്ടെങ്കിൽ വീണ്ടും API വിളിക്കില്ല! സ്പീഡ് കൂടും.
     if (isInitialized) return;
 
     const initialize = async () => {
