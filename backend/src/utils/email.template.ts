@@ -7,7 +7,6 @@ export const sendEmail = async ({ to, subject, html }: SendEmailArgs): Promise<v
     return;
   }
   try {
-    // Brevo SDK-ക്ക് പകരം നേരിട്ട് API Call ചെയ്യുന്നു
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {

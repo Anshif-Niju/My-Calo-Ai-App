@@ -73,29 +73,36 @@ export interface IDoctorProfile extends Document {
   updatedAt: Date;
 }
 
-
-export type BookingStatus = 'pending_payment' | 'confirmed' | 'cancelled' | 'completed'
+export type BookingStatus = "pending_payment" | "confirmed" | "cancelled" | "completed";
 
 export interface IBooking extends Document {
-  userId: mongoose.Types.ObjectId
-  doctorId: mongoose.Types.ObjectId
-  doctorProfileId: mongoose.Types.ObjectId
-  slotId: string
-  slotDate: Date
-  slotDay: string
-  startTime: string
-  endTime: string
-  patientName: string
-  patientEmail: string
-  consultationFee: number
-  gstAmount: number
-  totalAmount: number
-  paymentOrderId: string  // Razorpay order id (mock for now)
-  paymentId?: string      // Razorpay payment id after success
-  status: BookingStatus
-  chatSessionId?: string
-  chatStartTime?: Date
-  chatEndTime?: Date
-  createdAt: Date
-  updatedAt: Date
+  userId: mongoose.Types.ObjectId;
+  doctorId: mongoose.Types.ObjectId;
+  doctorProfileId: mongoose.Types.ObjectId;
+  slotId: string;
+  slotDate: Date;
+  slotDay: string;
+  startTime: string;
+  endTime: string;
+  patientName: string;
+  patientEmail: string;
+  consultationFee: number;
+  gstAmount: number;
+  totalAmount: number;
+  paymentOrderId: string; // Razorpay order id (mock for now)
+  paymentId?: string; // Razorpay payment id after success
+  status: BookingStatus;
+  chatSessionId?: string;
+  chatStartTime?: Date;
+  chatEndTime?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IAppointment extends Document {
+  patientId: mongoose.Types.ObjectId;
+  doctorId: mongoose.Types.ObjectId;
+  appointmentDate: Date;
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  reason: string;
 }

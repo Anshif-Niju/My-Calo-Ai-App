@@ -23,12 +23,16 @@ export default function VerifyOtpForm() {
   const [timeLeft, setTimeLeft] = useState<number>(60);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
   useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
+  useEffect(() => {
+    if (inputRefs.current[0]) {
+      inputRefs.current[0].focus();
+    }
+  }, []);
 
   const verifyMutation = useMutation({
     mutationFn: async (data: { email: string; otp: string; type: string }) => {
@@ -135,13 +139,15 @@ export default function VerifyOtpForm() {
                 inputRefs.current[index] = el;
               }}
               type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(e, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               onFocus={() => setActiveInput(index)}
               className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-black rounded-2xl border transition-all outline-none
-                ${activeInput === index ? "border-slate-950 ring-2 ring-slate-950/20 bg-white" : "border-slate-100 bg-slate-50/70 text-slate-900"}`}
+    ${activeInput === index ? "border-slate-950 ring-2 ring-slate-950/20 bg-white" : "border-slate-100 bg-slate-50/70 text-slate-900"}`}
             />
           ))}
         </div>

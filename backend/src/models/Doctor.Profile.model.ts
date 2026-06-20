@@ -52,6 +52,5 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
 );
 
 DoctorProfileSchema.index({ specialization: 1 });
-DoctorProfileSchema.index({ doctorId: 1 });
 
 export const DoctorProfile = mongoose.model<IDoctorProfile>("DoctorProfile", DoctorProfileSchema);

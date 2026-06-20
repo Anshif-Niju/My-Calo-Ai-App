@@ -1,5 +1,5 @@
 import { redis } from "../../config/redis";
-import { Doctor } from "../../models/Doctor.model";
+import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { MealLog } from "../../models/Meal.model";
 import { CloudinaryUploadResult } from "../../types/index";
 
@@ -7,7 +7,7 @@ type UploadResults = Record<string, CloudinaryUploadResult>;
 
 const handlers: Record<string, (entityId: string, results: UploadResults) => Promise<void>> = {
   "doctor-verification": async (entityId, results) => {
-    await Doctor.findByIdAndUpdate(entityId, {
+    await DoctorVerification.findByIdAndUpdate(entityId, {
       documents: {
         mcuCertificate: results.mcuCertificate?.url ?? "",
         degreeCertificate: results.degreeCertificate?.url ?? "",
@@ -22,11 +22,9 @@ const handlers: Record<string, (entityId: string, results: UploadResults) => Pro
     const imageUrl = results.image?.url;
     if (imageUrl) {
       const meal = await MealLog.findByIdAndUpdate(entityId, { imageUrl: imageUrl }, { returnDocument: "after" });
-
-      // Redis Cache Cleared
       if (meal) {
         await redis.del(`summary:${meal.userId}:${meal.date}`);
-        console.log(`✅ MealLog  updated in MongoDB with image: ${imageUrl}`);
+        console.log(` MealLog  updated in MongoDB with image`);
       }
     }
   },

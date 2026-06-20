@@ -1,4 +1,4 @@
-import ProtectedRoute from "../../components/shared/ProtectedRoute";
+import ProtectedRoute from "../../components/guard/ProtectedRoute";
 
 export default function SubadminDashboardLayout({ children }: { children: React.ReactNode }) {
   return (

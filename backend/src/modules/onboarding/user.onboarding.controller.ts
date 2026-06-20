@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index";
-import { getErrorMessage } from "../../utils/error.util";
 
 export const completeIntro = async (req: Request, res: Response) => {
   try {
@@ -9,7 +8,7 @@ export const completeIntro = async (req: Request, res: Response) => {
     await User.findByIdAndUpdate(authUser.userId, { onboardingCompleted: true });
     return res.status(200).json({ message: "Intro completed" });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };
 
@@ -54,6 +53,6 @@ export const completeUserverifiaction = async (req: Request, res: Response) => {
       goal: user.goal,
     });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };

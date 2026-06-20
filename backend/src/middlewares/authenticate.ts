@@ -19,6 +19,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
+//Checking the role
+
 export const authorize = (roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as AuthUserPayload | undefined;
@@ -52,3 +54,6 @@ export const validate = (schema: AnyZodObject) => (req: Request, res: Response, 
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+

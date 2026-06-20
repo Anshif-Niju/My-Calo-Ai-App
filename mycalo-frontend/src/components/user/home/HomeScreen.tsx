@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import CalorieRing from "./CalorieRing";
-import FoodScanModal from "./FoodScanModal";
+import FoodScanModal from "./FoodScan";
 import MacroRing from "./MacroRing";
 import MealHistoryItem from "./MealHistoryItem";
 

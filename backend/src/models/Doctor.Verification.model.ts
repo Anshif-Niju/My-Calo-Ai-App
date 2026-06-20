@@ -33,4 +33,4 @@ const DoctorSchema = new Schema<IDoctor>(
 
 DoctorSchema.index({ verificationStatus: 1 });
 
-export const Doctor = mongoose.model<IDoctor>("Doctor", DoctorSchema);
+export const DoctorVerification = mongoose.model<IDoctor>("DoctorVerification", DoctorSchema);

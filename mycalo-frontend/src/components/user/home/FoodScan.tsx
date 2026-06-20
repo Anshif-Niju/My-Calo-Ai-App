@@ -3,7 +3,7 @@
 import { api } from "@/lib/axios";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Props, ScanResult } from "../../types/nutrients.types";
+import { Props, ScanResult } from "../../../types/nutrients.types";
 
 export default function FoodScanModal({ mealType, date, onClose, onAdded }: Props) {
   const [step, setStep] = useState<"upload" | "scanning" | "result" | "adding" | "error">("upload");

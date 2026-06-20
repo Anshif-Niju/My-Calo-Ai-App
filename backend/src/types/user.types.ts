@@ -2,11 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export type UserRole = "user" | "doctor" | "subadmin" | "admin";
 
-export interface AuthUserPayload {
-  userId: string;
-  role: UserRole;
-  email: string;
-}
+
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
@@ -23,6 +19,8 @@ export interface IUser extends Document {
   googleId?: string;
   profilePhoto?: string;
   onboardingCompleted: boolean;
+  isBlocked: Boolean;
+  isDeleted: Boolean;
   healthProfile?: {
     height: number;
     weight: number;

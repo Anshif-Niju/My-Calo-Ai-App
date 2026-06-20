@@ -1,4 +1,4 @@
-import DoctorVerificationPage from "@/components/onboarding/DoctorVerificationPage";
+import DoctorVerificationPage from "@/components/onboarding/doctor/DoctorVerificationPage";
 
 export default function Page() {
   return <DoctorVerificationPage />;

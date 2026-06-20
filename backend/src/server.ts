@@ -2,14 +2,10 @@ import app from "./app";
 import { connectDB } from "./config/db";
 import { env } from "./config/env";
 import { redis } from "./config/redis";
-import { startDailyEmailScheduler } from "./jobs/schedulers/dailyEmail.scheduler";
 import "./jobs/workers/cloudinary.worker";
 import "./jobs/workers/email.worker";
 import "./jobs/workers/emailNotification.worker";
 import "./jobs/workers/foodScan.worker";
-
-// Start scheduler
-startDailyEmailScheduler();
 
 const PORT = env.PORT;
 

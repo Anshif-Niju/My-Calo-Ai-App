@@ -1,578 +1,165 @@
-import bcrypt from "bcrypt";
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import qrcode from "qrcode";
-import speakeasy from "speakeasy";
-import { env } from "../../config/env";
-import { redis } from "../../config/redis";
-import { emailQueue } from "../../jobs/queues/email.queue";
-import { Doctor } from "../../models/Doctor.model";
-import { User } from "../../models/User.model";
-import { AuthUserPayload } from "../../types/index.js";
-import { getErrorMessage } from "../../utils/error.util";
-import { generateOTP } from "../../utils/otp.utils";
-import type { LoginInput, RegisterInput } from "./auth.validator";
+import * as authService from "./auth.service";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { setAccessTokenCookie, setRefreshCookie, clearAuthCookies } from "./auth.cookies";
+import { AuthUserPayload } from "../../types";
 
-// Token helpers
-const generateAccessToken = (userId: string, role: string, email: string): string => jwt.sign({ userId, role, email }, env.JWT_SECRET, { expiresIn: "15m" });
+//Register
 
-const generateRefreshToken = (userId: string): string => jwt.sign({ userId }, env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+export const register = asyncHandler(async (req, res) => {
+  const result = await authService.register(req.body);
 
-const generateTemp2FAToken = (userId: string): string => jwt.sign({ userId }, env.JWT_2FA_TEMP_SECRET, { expiresIn: "5m" });
+  res.status(201).json(result);
+});
 
-const setRefreshCookie = (res: Response, token: string): void => {
-  res.cookie("refreshToken", token, {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+//Login
+
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const result = await authService.login(req.body.email, req.body.password);
+
+  if ("requiresTwoFactor" in result) {
+    return res.status(200).json(result);
+  }
+
+  setAccessTokenCookie(res, result.accessToken);
+
+  setRefreshCookie(res, result.refreshToken);
+
+  res.status(200).json({
+    user: result.user,
   });
-};
+});
 
-const setAccessTokenCookie = (res: Response, token: string): void => {
-  res.cookie("accessToken", token, {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 15 * 60 * 1000, // 15m, matches access token JWT expiry
+//Verify User Otp
+
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const result = await authService.verifyOtp(req.body);
+
+  if (result.accessToken) {
+    setAccessTokenCookie(res, result.accessToken);
+
+    setRefreshCookie(res, result.refreshToken);
+  }
+
+  res.status(200).json(result.data);
+});
+
+//Forgot Password
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const result = await authService.forgotPassword(req.body.email);
+
+  res.status(200).json(result);
+});
+
+//Refresh Token usign Acces Token Generate
+
+export const refresh = asyncHandler(async (req, res) => {
+  const result = await authService.refresh(req.cookies.refreshToken);
+
+  setAccessTokenCookie(res, result.accessToken);
+
+  res.status(200).json({
+    user: result.user,
   });
-};
+});
 
-// 1. REGISTER
+//Logout
 
-export const register = async (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role, phone, countryCode } = req.body as RegisterInput;
+export const logout = asyncHandler(async (_req, res) => {
+  clearAuthCookies(res);
 
-    // Check verified users only
-    const existingUser = await User.exists({
-      email,
-      isEmailVerified: true,
-    });
+  res.status(200).json({
+    message: "Logged out successfully",
+  });
+});
 
-    if (existingUser) {
-      return res.status(409).json({
-        message: "This email is already registered. Please login instead.",
-      });
-    }
+//Resend Otp
 
-    // Remove stale unverified accounts
-    await User.findOneAndDelete({
-      email,
-      isEmailVerified: false,
-    });
+export const resendOtp = asyncHandler(async (req, res) => {
+  const result = await authService.resendOtp(req.body);
 
-    // Explicit password hashing
-    const hashedPassword = await bcrypt.hash(password, 10);
+  res.status(200).json(result);
+});
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-      phone,
-      countryCode,
-    });
+//Verify Reset Otp
 
-    // Create doctor profile if needed
-    if (role === "doctor") {
-      await Doctor.create({
-        userId: user._id,
-      });
-    }
+export const verifyResetOtp = asyncHandler(async (req, res) => {
+  const result = await authService.verifyResetOtp(req.body);
 
-    // OTP
-    const otp = generateOTP();
+  res.status(200).json(result);
+});
 
-    await redis.set(`otp:${email}:email_verify`, otp, "EX", 180);
+//Reset Password
 
-    // Queue email
-    emailQueue.add("send-verify-email", {
-      type: "verify_email",
-      to: email,
-      subject: "Verify your MyCalo AI account",
-      otp,
-    });
+export const resetPassword = asyncHandler(async (req, res) => {
+  const result = await authService.resetPassword(req.body);
 
-    return res.status(201).json({
-      message: "OTP sent to your email",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: getErrorMessage(error),
-    });
+  res.status(200).json(result);
+});
+
+//Setup 2 Factor Authentication
+
+export const setup2FA = asyncHandler(async (req, res) => {
+  const authUser = req.user as AuthUserPayload;
+  const result = await authService.setup2FA(authUser);
+
+  res.status(200).json(result);
+});
+
+// Verify Two Factor Authentication
+
+export const verify2FA = asyncHandler(async (req, res) => {
+  const authUser = req.user as AuthUserPayload;
+
+  const result = await authService.verify2FA(req.body, authUser);
+
+  if (result.accessToken) {
+    setAccessTokenCookie(res, result.accessToken);
+
+    setRefreshCookie(res, result.refreshToken);
   }
-};
 
-// 2. VERIFY OTP (unified for email_verify + forgot_password)
+  res.status(200).json({
+    user: result.user,
+  });
+});
 
-export const verifyOtp = async (req: Request, res: Response) => {
-  try {
-    const { email, otp, type } = req.body;
+//Disable 2factor Authentication
 
-    const storedOtp = await redis.get(`otp:${email}:${type}`);
+export const disable2FA = asyncHandler(async (req, res) => {
+  const authUser = req.user as AuthUserPayload;
+  const result = await authService.disable2FA(authUser, req.body.password);
 
-    if (!storedOtp) {
-      return res.status(400).json({ message: "OTP expired. Please request a new one." });
-    }
-    if (storedOtp !== otp) {
-      return res.status(400).json({ message: "Incorrect OTP" });
-    }
+  res.status(200).json(result);
+});
 
-    await redis.del(`otp:${email}:${type}`);
+//Google Callback
 
-    if (type === "email_verify") {
-      const user = await User.findOneAndUpdate({ email }, { isEmailVerified: true }, { returnDocument: "after" });
-      if (!user) return res.status(404).json({ message: "User not found" });
+export const googleCallback = asyncHandler(async (req, res) => {
+  const result = await authService.googleCallback(req.user);
 
-      const accessToken = generateAccessToken(user.id, user.role, user.email);
-      const refreshToken = generateRefreshToken(user.id);
-      setRefreshCookie(res, refreshToken);
-      setAccessTokenCookie(res, accessToken);
-
-      emailQueue
-        .add("login-success-notification", {
-          type: "login_success",
-          to: user.email,
-          subject: "New login to your MyCalo AI account",
-        })
-        .catch((err) => console.error("Failed to queue login email:", err));
-
-      return res.status(200).json({ user });
-    }
-
-    if (type === "forgot_password") {
-      const resetToken = jwt.sign({ email }, env.JWT_SECRET, { expiresIn: "10m" });
-      return res.status(200).json({ resetToken });
-    }
-
-    return res.status(400).json({ message: "Invalid OTP type" });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+  if (result.redirectUrl) {
+    return res.redirect(result.redirectUrl);
   }
-};
-
-// 3. RESEND OTP
-
-export const resendOtp = async (req: Request, res: Response) => {
-  try {
-    const { email, type } = req.body;
-
-    const rateLimitKey = `resend_limit:${email}:${type}`;
-    const attempts = await redis.incr(rateLimitKey);
-
-    if (attempts === 1) {
-      await redis.expire(rateLimitKey, 600); // 10 minutes window safely initialized
-    }
-
-    if (attempts > 3) {
-      return res.status(429).json({
-        message: "Too many OTP requests. Please wait 10 minutes before trying again.",
-      });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(200).json({ message: "If this email is registered, an OTP has been sent." });
-    }
-
-    if (type === "email_verify" && user.isEmailVerified) {
-      return res.status(400).json({ message: "Email is already verified." });
-    }
-
-    const otp = generateOTP();
-    await redis.set(`otp:${email}:${type}`, otp, "EX", 180);
-
-    const subject = type === "email_verify" ? "Your new MyCalo AI verification code" : "Your new MyCalo AI password reset code";
-
-    await emailQueue.add("resend-otp", {
-      type: type === "email_verify" ? "verify_email" : "forgot_password",
-      to: email,
-      subject,
-      otp,
-    });
-
-    return res.status(200).json({ message: "A new OTP has been sent to your email." });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+  if (!result.accessToken || !result.refreshToken || !result.frontendRedirect) {
+    throw new Error("Invalid Google callback response");
   }
-};
 
-// 4. LOGIN
+  setAccessTokenCookie(res, result.accessToken);
 
-export const login = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body as LoginInput;
+  setRefreshCookie(res, result.refreshToken);
 
-    const user = await User.findOne({ email }).select("+password");
+  return res.redirect(result.frontendRedirect);
+});
 
-    if (!user || !user.password) {
-      return res.status(401).json({
-        message: "Invalid credentials",
-      });
-    }
+//Get User Details
 
-    const isMatch = await bcrypt.compare(password, user.password);
+export const getMe = asyncHandler(async (req, res) => {
+  const authUser = req.user as AuthUserPayload;
+  const user = await authService.getMe(authUser.userId);
 
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "Invalid credentials",
-      });
-    }
-
-    if (!user.isEmailVerified) {
-      return res.status(400).json({
-        message: "Please verify your email before logging in.",
-      });
-    }
-
-    /*
-     * Two Factor Authentication
-     */
-
-    if (user.isTwoFactorEnabled) {
-      const tempToken = generateTemp2FAToken(user.id);
-
-      return res.status(200).json({
-        requiresTwoFactor: true,
-        tempToken,
-      });
-    }
-
-    // Generate tokens
-
-    const accessToken = generateAccessToken(user.id, user.role, user.email);
-
-    const refreshToken = generateRefreshToken(user.id);
-
-    setRefreshCookie(res, refreshToken);
-    setAccessTokenCookie(res, accessToken);
-
-    // Fire-and-forget login notification email
-
-    emailQueue
-      .add("login-success-notification", {
-        type: "login_success",
-        to: user.email,
-        subject: "New login to your MyCalo AI account",
-      })
-      .catch((err) => console.error("Failed to queue login email:", err));
-
-    /*
-     * Doctor lookup in parallel
-     */
-
-    const doctorProfile =
-      user.role === "doctor"
-        ? await Doctor.findOne({
-            userId: user._id,
-          })
-            .select("verificationStatus")
-            .lean()
-        : null;
-
-    return res.status(200).json({
-      user: {
-        _id: user._id,
-
-        name: user.name,
-
-        email: user.email,
-
-        role: user.role,
-
-        hasSubmittedVerification: user.hasSubmittedVerification,
-
-        isEmailVerified: user.isEmailVerified,
-
-        onboardingCompleted: user.onboardingCompleted,
-
-        isTwoFactorEnabled: user.isTwoFactorEnabled,
-
-        ...(user.role === "doctor" && {
-          verificationStatus: doctorProfile?.verificationStatus ?? "not_submitted",
-        }),
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: getErrorMessage(error),
-    });
-  }
-};
-
-// 5. FORGOT PASSWORD (Only for send otp)
-
-export const forgotPassword = async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "This email is not registered" });
-
-    const otp = generateOTP();
-    await redis.set(`otp:${email}:forgot_password`, otp, "EX", 180);
-
-    await emailQueue.add("forgot-password-otp", {
-      type: "forgot_password",
-      to: email,
-      subject: "Reset your MyCalo AI password",
-      otp,
-    });
-    return res.status(200).json({ message: "OTP sent." });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-// 6. VERIFY Reset OTP
-
-export const verifyResetOtp = async (req: Request, res: Response) => {
-  try {
-    const { email, otp } = req.body;
-    const storedOtp = await redis.get(`otp:${email}:forgot_password`);
-
-    if (storedOtp !== otp) return res.status(400).json({ message: "Incorrect or expired OTP" });
-
-    const resetToken = jwt.sign({ email }, env.JWT_SECRET, { expiresIn: "10m" });
-    return res.status(200).json({ resetToken });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-// 7. RESET PASSWORD
-
-export const resetPassword = async (req: Request, res: Response) => {
-  try {
-    const { resetToken, newPassword } = req.body;
-    const decoded = jwt.verify(resetToken, env.JWT_SECRET) as { email: string };
-
-    const user = await User.findOne({ email: decoded.email }).select("+password");
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    user.password = newPassword;
-    await user.save();
-
-    return res.status(200).json({ message: "Password reset successful" });
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-};
-
-// 8. REFRESH TOKEN
-
-export const refresh = async (req: Request, res: Response) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-
-    if (!refreshToken) {
-      return res.status(401).json({
-        message: "No refresh token provided",
-      });
-    }
-
-    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
-      userId: string;
-    };
-
-    const user = await User.findById(decoded.userId).select("_id name email role phone countryCode isEmailVerified hasSubmittedVerification isTwoFactorEnabled profilePhoto onboardingCompleted healthProfile goal dailyTargets").lean();
-
-    if (!user) {
-      return res.status(401).json({
-        message: "User not found",
-      });
-    }
-
-    const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
-
-    setAccessTokenCookie(res, accessToken);
-
-    return res.status(200).json({
-      user,
-    });
-  } catch {
-    return res.status(401).json({
-      message: "Invalid or expired refresh token",
-    });
-  }
-};
-
-// 9. LOGOUT
-
-export const logout = (_req: Request, res: Response) => {
-  res.clearCookie("refreshToken");
-  res.clearCookie("accessToken");
-  return res.status(200).json({ message: "Logged out successfully" });
-};
-
-// 10. SETUP 2FA
-
-export const setup2FA = async (req: Request, res: Response) => {
-  try {
-    const authUser = req.user as AuthUserPayload | undefined;
-    if (!authUser?.userId) return res.status(401).json({ message: "Unauthorized" });
-
-    const user = await User.findById(authUser.userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const secret = speakeasy.generateSecret({ name: "MyCalo AI" });
-    user.twoFactorSecret = secret.base32;
-    await user.save();
-
-    const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url as string);
-    return res.status(200).json({ qrCode: qrCodeUrl, secret: secret.base32 });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-// 11. VERIFY 2FA
-
-export const verify2FA = async (req: Request, res: Response) => {
-  try {
-    let userId = (req.user as AuthUserPayload | undefined)?.userId;
-    const { token, tempToken } = req.body;
-
-    if (tempToken) {
-      // Use dedicated 2FA temporary handshake secret
-      const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET as string) as any;
-      userId = decoded.userId;
-    }
-
-    if (!userId) {
-      return res.status(400).json({ message: "User context not identified" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user || !user.twoFactorSecret) {
-      return res.status(400).json({ message: "2FA not configured for this user" });
-    }
-
-    const isValid = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: "base32",
-      token,
-      window: 1,
-    });
-
-    if (!isValid) {
-      return res.status(400).json({ message: "Invalid 2FA token. Check your authenticator app." });
-    }
-
-    if (!user.isTwoFactorEnabled) {
-      user.isTwoFactorEnabled = true;
-      await user.save();
-    }
-
-    const accessToken = generateAccessToken(user.id, user.role, user.email);
-    const refreshToken = generateRefreshToken(user.id);
-    setRefreshCookie(res, refreshToken);
-    setAccessTokenCookie(res, accessToken);
-
-    return res.status(200).json({ user });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-// 12. DISABLE 2FA
-
-export const disable2FA = async (req: Request, res: Response) => {
-  try {
-    const { password } = req.body;
-    const authUser = req.user as AuthUserPayload | undefined;
-
-    if (!authUser?.userId) {
-      return res.status(401).json({ message: "Unauthorized: Missing user context" });
-    }
-    const user = await User.findById(authUser.userId).select("+password");
-    if (!user || !user.password) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Incorrect password" });
-    }
-
-    user.isTwoFactorEnabled = false;
-    user.twoFactorSecret = undefined;
-    await user.save();
-
-    return res.status(200).json({ message: "Two-Factor Authentication disabled successfully" });
-  } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
-  }
-};
-
-// 13. GOOGLE CALLBACK
-
-export const googleCallback = async (req: Request, res: Response) => {
-  try {
-    const user = req.user as any;
-    if (!user) {
-      return res.redirect(`${env.FRONTEND_URL}/login?error=auth_failed`);
-    }
-
-    if (user.isTwoFactorEnabled) {
-      const tempToken = generateTemp2FAToken(user._id.toString());
-      return res.redirect(`${env.FRONTEND_URL}/verify-2fa?tempToken=${tempToken}`);
-    }
-
-    const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
-    const refreshToken = generateRefreshToken(user._id.toString());
-    setRefreshCookie(res, refreshToken);
-    setAccessTokenCookie(res, accessToken);
-
-    emailQueue
-      .add("google-login-notification", {
-        type: "login_success",
-        to: user.email,
-        subject: "New login to your MyCalo AI account",
-      })
-      .catch((err) => console.error("Failed to queue Google login email:", err));
-
-    return res.redirect(`${env.FRONTEND_URL}/google-callback`);
-  } catch (error) {
-    return res.redirect(`${env.FRONTEND_URL}/login?error=server_error`);
-  }
-};
-
-// 14. getMe (Send user details)
-export const getMe = async (req: Request, res: Response) => {
-  try {
-    const authUser = req.user as AuthUserPayload;
-
-    const user = await User.findById(authUser.userId).select("-password -twoFactorSecret").lean();
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    let verificationStatus: string | undefined;
-
-    if (user.role === "doctor") {
-      const doc = await Doctor.findOne({
-        userId: user._id,
-      }).select("verificationStatus");
-
-      verificationStatus = doc?.verificationStatus;
-    }
-
-    return res.status(200).json({
-      user: {
-        ...user,
-        ...(user.role === "doctor" && {
-          verificationStatus,
-        }),
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: getErrorMessage(error),
-    });
-  }
-};
+  res.status(200).json({
+    user,
+  });
+});

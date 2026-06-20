@@ -7,12 +7,12 @@ import * as zod from "./auth.validator";
 
 const router = Router();
 
-// Registration & Verification
+// Registration
 router.post("/register", validate(zod.registerSchema), authController.register);
 router.post("/verify-otp", validate(zod.verifyOtpSchema), authController.verifyOtp);
 router.post("/resend-otp", validate(zod.resendOtpSchema), authController.resendOtp);
 
-// Login & Session
+// Login 
 router.post("/login", validate(zod.loginSchema), authController.login);
 router.post("/refresh", authController.refresh);
 router.post("/logout", authController.logout);

@@ -1,4 +1,4 @@
-import HealthProfileForm from "@/components/onboarding/HealthProfileForm";
+import HealthProfileForm from "@/components/onboarding/user/HealthProfileForm";
 export default function UserProfilePage() {
   return <HealthProfileForm />;
 }

@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import { cloudinaryUploadQueue } from "../../jobs/queues/cloudinaryUpload.queue";
-import { Doctor } from "../../models/Doctor.model";
+import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { User } from "../../models/User.model";
 import { AuthUserPayload, CloudinaryUploadFile } from "../../types/index";
-import { getErrorMessage } from "../../utils/error.util";
 
 export const completeDoctorIntro = async (req: Request, res: Response) => {
   try {
@@ -11,7 +10,7 @@ export const completeDoctorIntro = async (req: Request, res: Response) => {
     await User.findByIdAndUpdate(authUser.userId, { onboardingCompleted: true });
     return res.status(200).json({ success: true, message: "Intro completed" });
   } catch (error) {
-    return res.status(500).json({ success: false, message: getErrorMessage(error) });
+    return res.status(500).json({ success: false, message: error });
   }
 };
 
@@ -37,7 +36,7 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
 
     const { specialization, experience, registrationNumber, registrationCouncil, registrationYear } = req.body;
 
-    const doctorProfile = await Doctor.findOne({
+    const doctorProfile = await DoctorVerification.findOne({
       userId: authUser.userId,
     });
 
@@ -98,7 +97,7 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: getErrorMessage(error),
+      message: error,
     });
   }
 };

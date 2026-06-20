@@ -7,7 +7,6 @@ import { DailyLog } from "../../models/DailyLog.model";
 import { MealLog } from "../../models/Meal.model";
 import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index";
-import { getErrorMessage } from "../../utils/error.util";
 
 const getToday = (): string => new Date().toISOString().split("T")[0];
 
@@ -133,7 +132,7 @@ export const getDashboard = async (req: Request, res: Response) => {
 
     return res.status(200).json(summary);
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };
 
@@ -176,7 +175,7 @@ export const logMeal = async (req: Request, res: Response) => {
     }
     return res.status(201).json({ message: "Meal logged", meal, notification });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };
 // DELETE /nutrition/meal/:id
@@ -189,7 +188,7 @@ export const deleteMeal = async (req: Request, res: Response) => {
     await updateDailyLog(authUser.userId, meal.date);
     return res.status(200).json({ message: "Meal removed" });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };
 
@@ -203,7 +202,7 @@ export const scanFood = async (req: Request, res: Response) => {
     await foodScanQueue.add("scan", { scanId, tempPath: file.path, mimeType: file.mimetype }, { jobId: scanId });
     return res.status(202).json({ scanId, status: "processing" });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };
 
@@ -215,6 +214,6 @@ export const getScanResult = async (req: Request, res: Response) => {
     if (!result) return res.status(202).json({ status: "processing" });
     return res.status(200).json({ status: "done", data: JSON.parse(result) });
   } catch (error) {
-    return res.status(500).json({ message: getErrorMessage(error) });
+    return res.status(500).json({ message: error });
   }
 };

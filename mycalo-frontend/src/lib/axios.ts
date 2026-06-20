@@ -4,7 +4,7 @@ import { logoutAction, setUser } from "../store/slices/auth.slice";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
-  withCredentials: true, // കുക്കികൾ തനിയെ പോകാനും വരാനും ഇത് നിർബന്ധമാണ്
+  withCredentials: true, 
 });
 
 // Response Interceptor: Handle 401 logic
@@ -13,7 +13,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 🚨 ഫിക്സ് 1: ലോഗിൻ ചെയ്യുമ്പോഴോ, റീഫ്രഷ് ചെയ്യുമ്പോഴോ വരുന്ന 401 എററുകളെ Interceptor പിടിക്കാൻ പാടില്ല!
     if (
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/refresh")
