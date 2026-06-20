@@ -28,7 +28,7 @@ export const foodScanWorker = new Worker(
         // Step 1: Groq alone try
         try {
           const result = await scanFoodWithGroq(imageBase64, mimeType);
-          console.log("✅ Groq won — skipping Gemini");
+          console.log("✅ Groq Ai Completed — skipping Gemini");
           return result;
         } catch (groqError) {
           console.warn("⚠️ Groq failed, trying Gemini fallback...");

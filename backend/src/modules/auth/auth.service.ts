@@ -8,7 +8,7 @@ import { redis } from "../../config/redis";
 import { emailQueue } from "../../jobs/queues/email.queue";
 import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { User } from "../../models/User.model";
-import { AuthUserPayload, ResendOtpPayload, Verify2FAPayload,VerifyResetOtpPayload,ResetPasswordPayload,GoogleCallbackResult} from "../../types/index.js";
+import { AuthUserPayload, ResendOtpPayload, Verify2FAPayload, VerifyResetOtpPayload, ResetPasswordPayload, GoogleCallbackResult } from "../../types/index.js";
 import { generateOTP } from "../../utils/otp.utils";
 import type { LoginInput, RegisterInput } from "./auth.validator";
 import { generateAccessToken, generateRefreshToken, generateTemp2FAToken } from "./auth.tokens";
@@ -45,6 +45,19 @@ export const login = async (email: string, password: string) => {
     };
   }
 
+  let userData: any = user.toObject();
+
+  if (user.role === "doctor") {
+    const verification = await DoctorVerification.findOne({
+      userId: user._id,
+    }).lean();
+
+    userData = {
+      ...userData,
+      verificationStatus: verification?.verificationStatus ?? "not_submitted",
+    };
+  }
+
   const accessToken = generateAccessToken(user.id, user.role, user.email);
 
   const refreshToken = generateRefreshToken(user.id);
@@ -52,7 +65,7 @@ export const login = async (email: string, password: string) => {
   return {
     accessToken,
     refreshToken,
-    user,
+    user: userData,
   };
 };
 
@@ -206,10 +219,22 @@ export const refresh = async (refreshToken: string) => {
     throw new AppError(401, "User not found");
   }
 
+  let userData: any = user;
+
+  if (user.role === "doctor") {
+    const verification = await DoctorVerification.findOne({
+      userId: user._id,
+    }).lean();
+
+    userData = {
+      ...userData,
+      verificationStatus: verification?.verificationStatus ?? "not_submitted",
+    };
+  }
+
   return {
     accessToken: generateAccessToken(user._id.toString(), user.role, user.email),
-
-    user,
+    user: userData,
   };
 };
 
@@ -438,6 +463,17 @@ export const getMe = async (userId: string) => {
 
   if (!user) {
     throw new AppError(404, "User not found");
+  }
+
+  if (user.role === "doctor") {
+    const verification = await DoctorVerification.findOne({
+      userId,
+    }).lean();
+
+    return {
+      ...user,
+      verificationStatus: verification?.verificationStatus ?? "not_submitted",
+    };
   }
 
   return user;

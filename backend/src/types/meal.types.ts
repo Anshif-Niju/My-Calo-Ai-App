@@ -42,3 +42,16 @@ export interface IDailyLog {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type MealType = "breakfast" | "lunch" | "dinner" | "custom";
+
+export interface LogMealInput {
+  foodName: string;
+  mealType: MealType;
+  date: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}

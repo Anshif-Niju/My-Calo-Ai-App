@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as adminService from "./admin.service";
 
+//Get Dashboard
+
 export const getDashboard = asyncHandler(async (req: Request, res: Response) => {
   const dashboard = await adminService.getDashboard();
 
@@ -10,6 +12,8 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
     dashboard,
   });
 });
+
+//Get all users
 
 export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   const page = Number(req.query.page) || 1;
@@ -26,6 +30,8 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(result);
 });
 
+//Get User by Id
+
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.params.id as string;
 
@@ -36,6 +42,8 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
     user,
   });
 });
+
+//Block User
 
 export const blockUser = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.params.id as string;
@@ -48,6 +56,8 @@ export const blockUser = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+//Delete User
+
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.params.id as string;
 
@@ -56,5 +66,16 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "User deleted",
+  });
+});
+
+//Adding Food
+
+export const createFood = asyncHandler(async (req, res) => {
+  const food = await adminService.createFood(req.body);
+
+  res.status(201).json({
+    success: true,
+    food,
   });
 });

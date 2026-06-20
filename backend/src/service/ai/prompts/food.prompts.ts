@@ -50,32 +50,31 @@ Nutrition Rules:
 * Protein, carbs, fat, and fiber MUST be realistic (0–150 g).
 * Default quantities and grams should reflect normal serving sizes.
 
-Respond ONLY with valid JSON matching this schema:
+Respond ONLY with valid JSON exactly matching this format. Do not include null or empty values. If a value is unknown, use 0.
 
+Example Output:
 {
-"isFood": boolean,
-"foodName": string,
-"confidence": "high" | "medium" | "low",
-"type": "countable" | "weighable",
-"defaultQuantity": number,
-"defaultUnit": string,
-"defaultGrams": number,
-
-"nutritionPerUnit": {
-"calories": number,
-"protein": number,
-"carbs": number,
-"fat": number,
-"fiber": number
-},
-
-"nutritionPer100g": {
-"calories": number,
-"protein": number,
-"carbs": number,
-"fat": number,
-"fiber": number
-}
+  "isFood": true,
+  "foodName": "Chicken Mandi",
+  "confidence": "high",
+  "type": "weighable",
+  "defaultQuantity": 1,
+  "defaultUnit": "plate",
+  "defaultGrams": 350,
+  "nutritionPerUnit": {
+    "calories": 650,
+    "protein": 45,
+    "carbs": 60,
+    "fat": 25,
+    "fiber": 4
+  },
+  "nutritionPer100g": {
+    "calories": 185,
+    "protein": 12,
+    "carbs": 17,
+    "fat": 7,
+    "fiber": 1
+  }
 }
 
 Serving Rules:

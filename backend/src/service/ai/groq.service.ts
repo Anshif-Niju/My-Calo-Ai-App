@@ -28,7 +28,6 @@ export const scanFoodWithGroq = async (imageBase64: string, mimeType: string) =>
     const content = completion.choices[0]?.message?.content;
     if (!content) throw new Error("Groq returned empty response");
 
-    console.log("✅ Groq Llama 4 Scout completed");
     return parseFoodResponse(content);
   } catch (error: any) {
     console.error("❌ Groq failed:", error?.message || error);

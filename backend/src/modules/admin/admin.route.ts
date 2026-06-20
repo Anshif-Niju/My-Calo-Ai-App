@@ -9,4 +9,5 @@ router.get("/users", authenticate, authorize(["admin"]), adminController.getAllU
 router.get("/users/:id", authenticate, authorize(["admin"]), adminController.getUserById);
 router.patch("/users/:id/block", authenticate, authorize(["admin"]), adminController.blockUser);
 router.delete("/users/:id", authenticate, authorize(["admin"]), adminController.deleteUser);
+router.post("/foods", authenticate, authorize(["admin"]), adminController.createFood);
 export default router;

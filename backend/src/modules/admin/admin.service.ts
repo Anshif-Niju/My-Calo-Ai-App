@@ -5,6 +5,7 @@ import { Appointment } from "../../models/Appointment.model";
 import { DoctorProfile } from "../../models/Doctor.Profile.model";
 import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { User } from "../../models/User.model";
+import { Foods } from "../../models/Foods.model";
 
 export const getDashboard = async () => {
   const [totalUsers, totalDoctors, pendingVerifications, totalAppointments] = await Promise.all([
@@ -84,4 +85,10 @@ export const softDeleteUser = async (userId: string) => {
   await user.save();
 
   return user;
+};
+
+//Admin Food Adding
+
+export const createFood = async (payload: any) => {
+  return Foods.create(payload);
 };

@@ -18,7 +18,6 @@ router.post(
   authenticate,
   foodScanUpload.single("image"),
   (req, res, next) => {
-    // Multer-ൽ നിന്ന് വരുന്ന "data" സ്ട്രിങ് ആണെങ്കിൽ അതിനെ പാർസ് ചെയ്യുക
     if (req.body.data) {
       try {
         req.body = JSON.parse(req.body.data);

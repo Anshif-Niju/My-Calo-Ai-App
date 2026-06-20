@@ -1,6 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 import { IDailyLog } from "../types/index";
 
+//User daily consumed calorie,protein,fat,carbs overall
+
 const DailyLogSchema = new Schema<IDailyLog>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
