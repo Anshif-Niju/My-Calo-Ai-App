@@ -1,9 +1,11 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { updateUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 
 const slides = [
@@ -39,6 +41,7 @@ const slides = [
 export default function DoctorIntroSlider() {
   const [current, setCurrent] = useState(0);
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isRedirecting, setIsRedirecting] = useState(false);
   // Preload all mobile images on mount
   useEffect(() => {
@@ -56,9 +59,13 @@ export default function DoctorIntroSlider() {
       return response.data;
     },
 
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      // Update the Redux store FIRST so the ProtectedRoute guard sees
+      // onboardingCompleted: true before navigating to the next step.
+      if (data?.user) {
+        dispatch(updateUser(data.user));
+      }
       setIsRedirecting(true);
-
       router.replace("/onboarding/doctor/profile");
     },
 

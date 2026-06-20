@@ -5,8 +5,12 @@ import { AuthUserPayload } from "../../types/index";
 export const completeIntro = async (req: Request, res: Response) => {
   try {
     const authUser = req.user as AuthUserPayload;
-    await User.findByIdAndUpdate(authUser.userId, { onboardingCompleted: true });
-    return res.status(200).json({ message: "Intro completed" });
+    const updatedUser = await User.findByIdAndUpdate(
+      authUser.userId,
+      { onboardingCompleted: true },
+      { new: true }
+    ).select("-password");
+    return res.status(200).json({ message: "Intro completed", user: updatedUser });
   } catch (error) {
     return res.status(500).json({ message: error });
   }
