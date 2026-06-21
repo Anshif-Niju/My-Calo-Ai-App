@@ -1,11 +1,12 @@
 export default function AIPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center pb-20 lg:pt-16" style={{ background: "var(--bg)" }}>
-      <div className="text-center">
-        <div className="text-5xl mb-4">🤖</div>
-        <h1 className="text-2xl font-black text-white mb-2">AI Nutrition Chat</h1>
-        <p style={{ color: "var(--text2)" }} className="text-sm">
-          Coming soon — powered by Gemini AI
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-[32px] p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 animate-in fade-in duration-300">
+        <div className="w-16 h-16 bg-emerald-50 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🤖</div>
+        <h1 className="text-2xl font-black text-slate-900 mb-2">AI Nutrition Chat</h1>
+        <p className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-4">Coming Soon</p>
+        <p className="text-sm text-slate-500 font-medium leading-relaxed">
+          Your personal Gemini-powered AI nutritionist coach will soon be ready to answer your questions, analyze your food habits, and guide your health journey.
         </p>
       </div>
     </div>

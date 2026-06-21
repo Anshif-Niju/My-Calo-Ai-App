@@ -1,6 +1,6 @@
 import { env } from "./config/env";
 dotenv.config();
-import compression from "compression";  
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -17,8 +17,8 @@ import { globalLimiter, authLimiter, scanLimiter } from "./middlewares/rateLimit
 const app = express();
 
 
-// 1. Compression 
-app.use(compression());                        
+// 1. Compression
+app.use(compression());
 
 // 2. Security Middlewares
 app.use(helmet());
@@ -30,10 +30,10 @@ app.use(
 );
 
 // 3. Global rate limiter — applies to ALL routes
-app.use(globalLimiter); 
+app.use(globalLimiter);
 
 // 2. req parsing with body size limits
-app.use(express.json({ limit: "10kb" })); 
+app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
@@ -41,6 +41,7 @@ app.use(cookieParser());
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/nutrition/scan-food", scanLimiter);
+app.use("/api/nutrition", nutritionRoutes);
 // app.use("/api/doctors", doctorRoutes);
 app.use("/api/admin", adminRoutes);
 

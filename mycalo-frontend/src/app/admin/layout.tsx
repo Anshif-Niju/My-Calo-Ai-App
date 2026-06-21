@@ -5,11 +5,11 @@ export default function SubadminDashboardLayout({ children }: { children: React.
   return (
     <>
       <ProtectedRoute allowedRoles={["admin"]}>
-        <div className="min-h-screen bg-slate-50 pt-8">
+        <div className="min-h-screen bg-[#f8fafc] pt-20 pb-24 lg:pt-24 lg:pb-12">
           <AdminNavbar />
           <main className="">{children}</main>
         </div>
-      </ProtectedRoute>{" "}
+      </ProtectedRoute>
     </>
   );
 }

@@ -84,7 +84,6 @@ export default function AdminNavbar() {
 
   return (
     <>
-      🖥️ Desktop top navbar (Premium B&W)
       <nav className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center px-8 justify-between border-b" style={{ background: "#ffffff", borderColor: "#e2e8f0" }}>
         <div className="flex items-center gap-3">
           <span className="text-xl">🛡️</span>

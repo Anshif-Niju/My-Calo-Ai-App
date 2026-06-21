@@ -10,7 +10,7 @@ export default function AddFoodModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl rounded-[32px] bg-white p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200 [scrollbar-width:thin]">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">Add New Food</h2>
@@ -23,7 +23,7 @@ export default function AddFoodModal({ open, onClose }: Props) {
 
         <div className="space-y-6">
           {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input placeholder="Food Name " className="rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400" />
             <select className="rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 bg-white">
               <option value="" disabled selected>
@@ -35,7 +35,7 @@ export default function AddFoodModal({ open, onClose }: Props) {
           </div>
 
           {/* Measurements */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <input
               type="number"
               placeholder="Default Qty "
@@ -50,8 +50,8 @@ export default function AddFoodModal({ open, onClose }: Props) {
           </div>
 
           {/* Macros */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-4 border-t border-slate-100">
-            <input type="number" placeholder="Calories" className="col-span-2 md:col-span-1 rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-400" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-4 border-t border-slate-100">
+            <input type="number" placeholder="Calories" className="col-span-2 sm:col-span-1 md:col-span-1 rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-400" />
             <input type="number" placeholder="Protein (g)" className="rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-purple-400" />
             <input type="number" placeholder="Carbs (g)" className="rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-400" />
             <input type="number" placeholder="Fat (g)" className="rounded-[16px] border border-slate-200 p-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-400" />

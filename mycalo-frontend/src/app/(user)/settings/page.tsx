@@ -22,19 +22,19 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center pb-20 lg:pt-16" style={{ background: "var(--bg)" }}>
-      <div className="text-center">
-        <div className="text-5xl mb-4">⚙️</div>
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-[32px] p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 animate-in fade-in duration-300">
+        <div className="w-16 h-16 bg-slate-50 text-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm border border-slate-100">⚙️</div>
 
-        <h1 className="text-2xl font-black text-white mb-2">Settings</h1>
+        <h1 className="text-2xl font-black text-slate-900 mb-1">Settings</h1>
 
-        <p style={{ color: "var(--text2)" }} className="text-sm mb-8">
+        <p className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-8">
           Profile and preferences
         </p>
 
         {/* Temporary Logout Button */}
-        <button onClick={handleLogout} className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-2xl transition-all active:scale-[0.98]">
-          Logout
+        <button onClick={handleLogout} className="w-full h-14 bg-red-50 border border-red-100 hover:bg-red-100 text-red-600 font-bold rounded-2xl transition-all active:scale-[0.98]">
+          Logout from MyCalo
         </button>
       </div>
     </div>

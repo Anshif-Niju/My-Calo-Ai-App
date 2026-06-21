@@ -71,14 +71,14 @@ export default function UsersPage() {
     <div className="min-h-screen bg-[#f8fafc] font-sans pb-12">
 
       {/* ─── Top Navbar / Header (Glassmorphism) ─── */}
-      <div className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-slate-100 px-8 py-5 flex items-center justify-between">
+      <div className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-slate-100 px-4 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">User Management</h1>
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">{data?.total ?? 0} Registered Users</p>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-[18px] border border-slate-100 shadow-inner">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-50 rounded-[18px] border border-slate-100 shadow-inner w-fit">
           {(["all", "active", "blocked"] as const).map((f) => {
             const isActive = filter === f;
             return (
@@ -88,7 +88,7 @@ export default function UsersPage() {
                   setFilter(f);
                   setPage(1);
                 }}
-                className={`px-5 py-2 rounded-[14px] text-[13px] font-bold transition-all duration-300 ${
+                className={`px-4 sm:px-5 py-2 rounded-[14px] text-[13px] font-bold transition-all duration-300 ${
                   isActive ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
@@ -99,7 +99,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 pt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
 
         {/* ─── Users Table ─── */}
         <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
@@ -158,7 +158,7 @@ export default function UsersPage() {
                         </p>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <Link href={`/admin/users/${user._id}`} className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all">
                             View
                           </Link>

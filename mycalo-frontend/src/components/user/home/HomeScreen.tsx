@@ -121,7 +121,7 @@ export default function HomeScreen() {
 
   return (
     <div className="min-h-screen pb-24 lg:pb-10 lg:pt-20 bg-slate-50 font-sans">
-      <div className="max-w-lg mx-auto px-5 pt-6 lg:max-w-5xl">
+      <div className="max-w-md mx-auto sm:max-w-xl md:max-w-3xl lg:max-w-5xl px-4 sm:px-6 pt-6">
         {/*  Header  */}
 
         <div className="flex items-center justify-between  mb-8">
