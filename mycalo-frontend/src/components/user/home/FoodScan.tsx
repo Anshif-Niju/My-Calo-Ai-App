@@ -1,6 +1,8 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getSocket } from "@/lib/socket";
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Props, ScanResult } from "../../../types/nutrients.types";
@@ -16,12 +18,17 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stepRef = useRef<string>("upload");
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keep track of the socket event name so we can remove the listener on cleanup
+  const socketEventRef = useRef<string | null>(null);
 
   const clearTimers = () => {
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    // Remove the socket listener when done
+    if (socketEventRef.current) {
+      getSocket().off(socketEventRef.current);
+      socketEventRef.current = null;
+    }
   };
 
   const calculatedNutrition = scanResult
@@ -76,39 +83,56 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       });
 
       const { scanId } = res.data;
+      const eventName = `scan:complete:${scanId}`;
+      socketEventRef.current = eventName;
 
-      pollIntervalRef.current = setInterval(async () => {
+      const socket = getSocket();
+
+      // ✅ Listen for instant push from the worker
+      socket.on(eventName, ({ data }: { status: string; data: any }) => {
+        clearTimers();
+
+        if (data?.error) {
+          stepRef.current = "error";
+          setStep("error");
+          setErrorMessage(data.message || "Food could not be identified. Please upload a clearer photo.");
+          return;
+        }
+
+        if (!data.isFood) {
+          toast.error(data.message || "This doesn't look like food!");
+          stepRef.current = "upload";
+          setStep("upload");
+          return;
+        }
+
+        setScanResult({ ...data });
+        setQuantity(data.defaultQuantity || 1);
+        setGrams(data.defaultGrams || 100);
+        stepRef.current = "result";
+        setStep("result");
+      });
+
+      // 🛡️ Safety net: if socket missed the event, poll Redis once after 3s
+      const fallbackPoll = async () => {
         try {
           const result = await api.get(`/nutrition/scan-result/${scanId}`);
           const { status, data } = result.data;
-
-          if (status === "done") {
+          if (status === "done" && stepRef.current === "scanning") {
             clearTimers();
-
-            if (data?.error) {
-              stepRef.current = "error";
-              setStep("error");
-              setErrorMessage(data.message || "Food could not be identified. Please upload a clearer photo.");
-              return;
-            }
-
-            if (!data.isFood) {
-              toast.error(data.message || "This doesn't look like food!");
-              stepRef.current = "upload";
-              setStep("upload");
-              return;
-            }
-
-            setScanResult({ ...data });
-            setQuantity(data.defaultQuantity || 1);
-            setGrams(data.defaultGrams || 100);
-            stepRef.current = "result";
-            setStep("result");
+            if (data?.error) { stepRef.current = "error"; setStep("error"); setErrorMessage(data.message || ""); return; }
+            if (!data.isFood) { toast.error(data.message || "This doesn't look like food!"); stepRef.current = "upload"; setStep("upload"); return; }
+            setScanResult({ ...data }); setQuantity(data.defaultQuantity || 1); setGrams(data.defaultGrams || 100); stepRef.current = "result"; setStep("result");
           }
         } catch {}
-      }, 1000);
+      };
 
-      timeoutRef.current = setTimeout(() => {
+      // Poll once after 3s then every 3s until socket fires or timeout hits
+      const retryTimer = setInterval(fallbackPoll, 3000);
+      timeoutRef.current = retryTimer as any;
+
+      // Hard timeout — give up after 50 seconds
+      setTimeout(() => {
         clearTimers();
         if (stepRef.current === "scanning") {
           stepRef.current = "error";
@@ -206,8 +230,8 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
         {step === "scanning" && (
           <div className="flex flex-col items-center py-12">
             {imagePreview && (
-              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 shadow-sm border border-slate-100 p-1 bg-white">
-                <img src={imagePreview} className="w-full h-full object-cover rounded-[18px]" alt="food preview" />
+              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 shadow-sm border border-slate-100 p-1 bg-white relative">
+                <Image src={imagePreview} fill className="object-cover rounded-[18px]" alt="food preview" unoptimized sizes="128px" />
               </div>
             )}
             <div className="w-12 h-12 rounded-full animate-spin mb-5 border-4 border-slate-100 border-t-orange-500" />
@@ -220,8 +244,8 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
         {step === "error" && (
           <div className="flex flex-col items-center py-10 text-center">
             {imagePreview && (
-              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 opacity-50 border border-slate-100 p-1 bg-white">
-                <img src={imagePreview} className="w-full h-full object-cover rounded-[18px]" alt="food preview" />
+              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 opacity-50 border border-slate-100 p-1 bg-white relative">
+                <Image src={imagePreview} fill className="object-cover rounded-[18px]" alt="food preview" unoptimized sizes="128px" />
               </div>
             )}
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-3xl mb-4 text-red-500">❌</div>
@@ -239,7 +263,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             {/* Food image + name */}
             <div className="flex items-center gap-4 p-4 rounded-[24px] bg-slate-50 border border-slate-100">
               <div className="w-16 h-16 rounded-[18px] overflow-hidden shrink-0 bg-white shadow-sm border border-slate-50 p-0.5">
-                {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover rounded-[14px]" alt={scanResult.foodName} /> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
+                {imagePreview ? <div className="relative w-full h-full"><Image src={imagePreview} fill className="object-cover rounded-[14px]" alt={scanResult.foodName} unoptimized sizes="64px" /></div> : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>}
               </div>
               <div>
                 <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>

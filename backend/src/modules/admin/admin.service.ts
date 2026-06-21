@@ -1,13 +1,24 @@
 // admin.service.ts
 
 import AppError from "../../errors/AppError";
+import { redis } from "../../config/redis";
 import { Appointment } from "../../models/Appointment.model";
 import { DoctorProfile } from "../../models/Doctor.Profile.model";
 import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { User } from "../../models/User.model";
 import { Foods } from "../../models/Foods.model";
 
+const ADMIN_DASHBOARD_CACHE_KEY = "admin:dashboard:stats";
+const ADMIN_DASHBOARD_TTL = 300; // 5 minutes
+
 export const getDashboard = async () => {
+  // Check Redis cache first
+  const cached = await redis.get(ADMIN_DASHBOARD_CACHE_KEY);
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
+  // Cache miss — run the 4 DB queries
   const [totalUsers, totalDoctors, pendingVerifications, totalAppointments] = await Promise.all([
     User.countDocuments(),
     DoctorProfile.countDocuments(),
@@ -17,12 +28,17 @@ export const getDashboard = async () => {
     Appointment.countDocuments(),
   ]);
 
-  return {
+  const stats = {
     totalUsers,
     totalDoctors,
     pendingVerifications,
     totalAppointments,
   };
+
+  // Store in Redis for 5 minutes
+  await redis.set(ADMIN_DASHBOARD_CACHE_KEY, JSON.stringify(stats), "EX", ADMIN_DASHBOARD_TTL);
+
+  return stats;
 };
 
 export const getAllUsers = async ({ page, limit, isBlocked }: { page: number; limit: number; isBlocked?: boolean }) => {
@@ -70,6 +86,9 @@ export const toggleBlockUser = async (userId: string) => {
 
   await user.save();
 
+  // Invalidate dashboard cache so stats refresh on next open
+  await redis.del(ADMIN_DASHBOARD_CACHE_KEY);
+
   return user;
 };
 
@@ -83,6 +102,9 @@ export const softDeleteUser = async (userId: string) => {
   user.isDeleted = true;
 
   await user.save();
+
+  // Invalidate dashboard cache so user count updates
+  await redis.del(ADMIN_DASHBOARD_CACHE_KEY);
 
   return user;
 };

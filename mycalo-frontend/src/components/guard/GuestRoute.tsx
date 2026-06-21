@@ -6,41 +6,28 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
+/**
+ * GuestRoute (thin version with client-side guard)
+ * ------------------------------------------------
+ * The Next.js middleware (middleware.ts) already redirects logged-in users
+ * away from guest-only pages at the edge. This component handles client-side
+ * history navigation (like browser back/forward buttons) to ensure logged-in
+ * users are client-redirected without exposing guest page contents.
+ */
 export default function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { isInitialized, user } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
 
-  const { user, isInitialized } = useSelector((state: RootState) => state.auth);
-
   useEffect(() => {
-    if (!isInitialized) return;
-
-    if (user) {
-      // Use replace so the browser back button from the logged-in area
-      // does NOT bring the user back to the login/register page.
+    if (isInitialized && user) {
       router.replace(getRedirectPath(user));
     }
-  }, [user, isInitialized, router]);
+  }, [isInitialized, user, router]);
 
-  // While auth is still being determined, show a blank loading screen
-  // (same style as ProtectedRoute so there is no visual flash).
-  if (!isInitialized) {
+  if (!isInitialized || user) {
     return (
-      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-start sm:justify-center py-12 px-4 relative overflow-x-hidden">
-        <div className="bg-[#f8fafc] text-center pb-6 shrink-0">
-          <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If the user IS logged in, render nothing while the redirect is in flight.
-  // This prevents a flash of the login/register UI before the router.replace fires.
-  if (user) {
-    return (
-      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-start sm:justify-center py-12 px-4 relative overflow-x-hidden">
-        <div className="bg-[#f8fafc] text-center pb-6 shrink-0">
-          <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
-        </div>
+      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center py-12 px-4">
+        <p className="text-xs font-semibold text-slate-400">MyCalo AI • Secure Platform</p>
       </div>
     );
   }

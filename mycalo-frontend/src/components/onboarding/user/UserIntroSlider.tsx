@@ -3,8 +3,9 @@
 import { api } from "@/lib/axios";
 import { updateUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 
@@ -44,15 +45,6 @@ export default function UserIntroSlider() {
   const dispatch = useDispatch();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Preload all mobile images on mount
-  useEffect(() => {
-    slides.forEach((s) => {
-      const img = new Image();
-      img.src = s.mobileImage;
-      const img2 = new Image();
-      img2.src = s.desktopImage;
-    });
-  }, []);
 
   const introMutation = useMutation({
     mutationFn: async () => {
@@ -138,7 +130,7 @@ export default function UserIntroSlider() {
         {/* Image — increased to 55% */}
         <div className="relative w-full shrink-0" style={{ height: "55%" }}>
           <picture className="block w-full h-full">
-            <img src={slide.mobileImage} alt={slide.title} className="absolute inset-0 w-full h-full object-cover" />
+            <Image src={slide.mobileImage} alt={slide.title} fill className="object-cover" priority sizes="100vw" />
           </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60" />
 
@@ -193,7 +185,7 @@ export default function UserIntroSlider() {
       <div className="hidden lg:flex w-full h-full">
         {/* Left — image */}
         <div className="relative w-1/2 h-full overflow-hidden">
-          <img src={slide.desktopImage} alt={slide.title} className="w-full h-full object-cover" />
+          <Image src={slide.desktopImage} alt={slide.title} fill className="object-cover" priority sizes="50vw" />
 
           {/* Base gradient always */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40" />

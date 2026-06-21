@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { User } from "../../models/User.model";
 import { AuthUserPayload } from "../../types/index";
+import { generateAccessToken } from "../auth/auth.tokens";
+import { setAccessTokenCookie } from "../auth/auth.cookies";
 
 export const completeIntro = async (req: Request, res: Response) => {
   try {
@@ -10,6 +12,22 @@ export const completeIntro = async (req: Request, res: Response) => {
       { onboardingCompleted: true },
       { new: true }
     ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Re-issue access token so the middleware cookie reflects onboardingCompleted: true
+    const newAccessToken = generateAccessToken(
+      updatedUser._id.toString(),
+      updatedUser.role,
+      updatedUser.email,
+      true,
+      updatedUser.hasSubmittedVerification,
+      "not_submitted"
+    );
+    setAccessTokenCookie(res, newAccessToken);
+
     return res.status(200).json({ message: "Intro completed", user: updatedUser });
   } catch (error) {
     return res.status(500).json({ message: error });
@@ -49,6 +67,17 @@ export const completeUserverifiaction = async (req: Request, res: Response) => {
     user.hasSubmittedVerification = true;
 
     await user.save();
+
+    // Re-issue access token so the middleware cookie reflects hasSubmittedVerification: true
+    const newAccessToken = generateAccessToken(
+      user._id.toString(),
+      user.role,
+      user.email,
+      user.onboardingCompleted,
+      true,
+      "not_submitted"
+    );
+    setAccessTokenCookie(res, newAccessToken);
 
     return res.status(200).json({
       message: "Profile setup complete",

@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import { redis } from "../../config/redis";
+import { getIO } from "../../config/socket";
 import { scanFoodWithGemini25 } from "../../service/ai/gemini25.service";
 import { scanFoodWithGemini35 } from "../../service/ai/gemini35.service";
 import { scanFoodWithGroq } from "../../service/ai/groq.service";
@@ -40,9 +41,16 @@ export const foodScanWorker = new Worker(
 
       const result = await runWithFallback(imageBase64, mimeType);
 
-      // Store result for polling / Socket.IO
-
+      // Store result in Redis (kept as fallback if socket disconnects)
       await redis.set(`scan-result:${scanId}`, JSON.stringify(result), "EX", 300);
+
+      // Push result instantly to the frontend via Socket.IO
+      try {
+        getIO().emit(`scan:complete:${scanId}`, { status: "done", data: result });
+        logger.info(`📡 Socket event emitted [scan:complete:${scanId}]`);
+      } catch {
+        logger.warn("Socket.IO not ready — frontend will fallback to Redis poll");
+      }
 
       logger.info(`✅ Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);
 
@@ -71,14 +79,23 @@ foodScanWorker.on("failed", async (job, err) => {
   // Promise.any failed only if ALL providers failed.
 
   if (job) {
+    const errorPayload = {
+      error: true,
+      message: "All AI providers failed. Please try again.",
+    };
+
     await redis.set(
       `scan-result:${job.data.scanId}`,
-      JSON.stringify({
-        error: true,
-        message: "All AI providers failed. Please try again.",
-      }),
+      JSON.stringify(errorPayload),
       "EX",
       300,
     );
+
+    // Push failure instantly to frontend
+    try {
+      getIO().emit(`scan:complete:${job.data.scanId}`, { status: "done", data: errorPayload });
+    } catch {
+      // Socket not ready — frontend timeout will handle it
+    }
   }
 });

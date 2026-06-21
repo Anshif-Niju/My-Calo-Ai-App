@@ -58,7 +58,14 @@ export const login = async (email: string, password: string) => {
     };
   }
 
-  const accessToken = generateAccessToken(user.id, user.role, user.email);
+  const accessToken = generateAccessToken(
+    user.id,
+    user.role,
+    user.email,
+    user.onboardingCompleted,
+    user.hasSubmittedVerification,
+    userData.verificationStatus ?? "not_submitted"
+  );
 
   const refreshToken = generateRefreshToken(user.id);
 
@@ -154,14 +161,21 @@ export const verifyOtp = async (payload: { email: string; otp: string; type: str
     }
 
     return {
-      accessToken: generateAccessToken(user.id, user.role, user.email),
+        accessToken: generateAccessToken(
+          user.id,
+          user.role,
+          user.email,
+          user.onboardingCompleted,
+          user.hasSubmittedVerification,
+          "not_submitted"
+        ),
 
-      refreshToken: generateRefreshToken(user.id),
+        refreshToken: generateRefreshToken(user.id),
 
-      data: {
-        user,
-      },
-    };
+        data: {
+          user,
+        },
+      };
   }
 
   const resetToken = jwt.sign({ email }, env.JWT_SECRET, {
@@ -233,7 +247,14 @@ export const refresh = async (refreshToken: string) => {
   }
 
   return {
-    accessToken: generateAccessToken(user._id.toString(), user.role, user.email),
+    accessToken: generateAccessToken(
+      user._id.toString(),
+      user.role,
+      user.email,
+      user.onboardingCompleted,
+      user.hasSubmittedVerification,
+      userData.verificationStatus ?? "not_submitted"
+    ),
     user: userData,
   };
 };
@@ -345,7 +366,14 @@ export const googleCallback = async (user: any): Promise<GoogleCallbackResult> =
     };
   }
 
-  const accessToken = generateAccessToken(user._id.toString(), user.role, user.email);
+  const accessToken = generateAccessToken(
+    user._id.toString(),
+    user.role,
+    user.email,
+    user.onboardingCompleted,
+    user.hasSubmittedVerification,
+    "not_submitted"
+  );
 
   const refreshToken = generateRefreshToken(user._id.toString());
 
@@ -422,7 +450,14 @@ export const verify2FA = async (payload: Verify2FAPayload, authUser?: AuthUserPa
   await user.save();
 
   return {
-    accessToken: generateAccessToken(user.id, user.role, user.email),
+    accessToken: generateAccessToken(
+      user.id,
+      user.role,
+      user.email,
+      user.onboardingCompleted,
+      user.hasSubmittedVerification,
+      "not_submitted"
+    ),
 
     refreshToken: generateRefreshToken(user.id),
 

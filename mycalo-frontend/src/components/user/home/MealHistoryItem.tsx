@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { MealHistoryItemProps } from "../../../types/nutrients.types";
 
 export default function MealHistoryItem({ foodName, calories, protein, carbs, fat, imageUrl, mealType, createdAt, onDelete }: MealHistoryItemProps) {
@@ -12,8 +13,8 @@ export default function MealHistoryItem({ foodName, calories, protein, carbs, fa
     <div className="group relative bg-white p-4 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
       <div className="flex items-center gap-4">
         {/* Food Image / Placeholder */}
-        <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center">
-          {imageUrl ? <img src={imageUrl} alt={foodName} className="w-full h-full object-cover" /> : <span className="text-xl">🍽️</span>}
+        <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center relative">
+          {imageUrl ? <Image src={imageUrl} alt={foodName} fill className="object-cover" sizes="56px" /> : <span className="text-xl">🍽️</span>}
         </div>
 
         {/* Content */}
