@@ -2,13 +2,8 @@ import { Request, Response } from "express";
 import { AuthUserPayload } from "../../types/index";
 import * as subadminService from "./subadmin.service";
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+//Dashboard
 
-/**
- * GET /api/subadmin/dashboard
- * Returns pending verifications count + list.
- * If none → pendingCount: 0, pendingVerifications: []
- */
 export const getDashboard = async (req: Request, res: Response) => {
   try {
     const data = await subadminService.getDashboardStats();
@@ -18,12 +13,8 @@ export const getDashboard = async (req: Request, res: Response) => {
   }
 };
 
-// ─── Verification detail ──────────────────────────────────────────────────────
+//Verification detail
 
-/**
- * GET /api/subadmin/verifications/:doctorId
- * Full verification detail — submitted docs & images.
- */
 export const getVerificationDetail = async (req: Request, res: Response) => {
   try {
     const doctorId = req.params.doctorId as string;
@@ -34,11 +25,8 @@ export const getVerificationDetail = async (req: Request, res: Response) => {
   }
 };
 
-// ─── Approve verification ─────────────────────────────────────────────────────
+//Approve verification
 
-/**
- * PATCH /api/subadmin/verifications/:doctorId/approve
- */
 export const approveVerification = async (req: Request, res: Response) => {
   try {
     const doctorId = req.params.doctorId as string;
@@ -49,12 +37,8 @@ export const approveVerification = async (req: Request, res: Response) => {
   }
 };
 
-// ─── Reject verification ──────────────────────────────────────────────────────
+//Reject verification
 
-/**
- * PATCH /api/subadmin/verifications/:doctorId/reject
- * Body: { reason: string }
- */
 export const rejectVerification = async (req: Request, res: Response) => {
   try {
     const doctorId = req.params.doctorId as string;
@@ -66,11 +50,8 @@ export const rejectVerification = async (req: Request, res: Response) => {
   }
 };
 
-// ─── All doctors list ─────────────────────────────────────────────────────────
+//All doctors list
 
-/**
- * GET /api/subadmin/doctors?page=1&limit=10&search=
- */
 export const getAllDoctors = async (req: Request, res: Response) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -84,12 +65,8 @@ export const getAllDoctors = async (req: Request, res: Response) => {
   }
 };
 
-// ─── Single doctor detail ─────────────────────────────────────────────────────
+//Single doctor detail
 
-/**
- * GET /api/subadmin/doctors/:userId
- * Returns full info: user + verification + profile.
- */
 export const getDoctorDetail = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;
@@ -100,11 +77,8 @@ export const getDoctorDetail = async (req: Request, res: Response) => {
   }
 };
 
-// ─── Toggle doctor active/deactivate ─────────────────────────────────────────
+//Toggle doctor active/deactivate
 
-/**
- * PATCH /api/subadmin/doctors/:userId/toggle-status
- */
 export const toggleDoctorStatus = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;
@@ -116,12 +90,8 @@ export const toggleDoctorStatus = async (req: Request, res: Response) => {
   }
 };
 
-// ─── Hard-delete doctor ───────────────────────────────────────────────────────
+//Delete doctor
 
-/**
- * DELETE /api/subadmin/doctors/:userId
- * Permanently removes User + DoctorVerification + DoctorProfile.
- */
 export const deleteDoctor = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;

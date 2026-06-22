@@ -31,7 +31,7 @@ router.post(
     }
     next();
   },
-  adminController.createFood
+  adminController.createFood,
 );
 router.get("/foods", authenticate, authorize(["admin"]), adminController.getAllFoods);
 router.delete("/foods/:id", authenticate, authorize(["admin"]), adminController.deleteFood);
