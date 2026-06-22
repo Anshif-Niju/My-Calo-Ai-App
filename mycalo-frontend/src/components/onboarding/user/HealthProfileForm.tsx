@@ -28,9 +28,32 @@ export default function HealthProfileForm() {
     gender: "male",
     activityLevel: "moderate",
     diseases: [] as string[],
+    dob: "",
   });
 
   const set = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dobValue = e.target.value;
+    setForm((p) => {
+      let calculatedAge = "";
+      if (dobValue) {
+        const birthDate = new Date(dobValue);
+        const today = new Date();
+        let calculated = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          calculated--;
+        }
+        calculatedAge = calculated >= 0 ? calculated.toString() : "";
+      }
+      return {
+        ...p,
+        dob: dobValue,
+        age: calculatedAge,
+      };
+    });
+  };
 
   const toggleDisease = (d: string) => {
     setForm((p) => ({
@@ -108,12 +131,11 @@ export default function HealthProfileForm() {
             </div>
           </div>
 
-          {/* Height / Weight / Age */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Height / Weight */}
+          <div className="grid grid-cols-2 gap-3">
             {[
               { key: "height", label: "Height", unit: "cm", placeholder: "0" },
               { key: "weight", label: "Weight", unit: "kg", placeholder: "0" },
-              { key: "age", label: "Age", unit: "yrs", placeholder: "0" },
             ].map(({ key, label, unit, placeholder }) => (
               <div key={key}>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">{label}</label>
@@ -129,6 +151,27 @@ export default function HealthProfileForm() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Date of Birth / Calculated Age */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">Date of Birth</label>
+              <input
+                type="date"
+                value={form.dob}
+                onChange={handleDobChange}
+                max={new Date().toISOString().split("T")[0]}
+                className="w-full h-14 px-4 rounded-2xl bg-slate-50 text-slate-900 font-bold text-base outline-none focus:ring-2 focus:ring-slate-950 transition-all cursor-pointer"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">Calculated Age</label>
+              <div className="w-full h-14 px-4 rounded-2xl bg-slate-100/70 border border-slate-100 text-slate-500 font-black text-base flex items-center justify-between">
+                <span>{form.age || "—"}</span>
+                <span className="text-xs font-bold text-slate-400">yrs</span>
+              </div>
+            </div>
           </div>
 
           {/* Activity Level */}

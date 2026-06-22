@@ -3,6 +3,7 @@
 import { api } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface User {
@@ -27,6 +28,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"all" | "blocked" | "active">("all");
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data, isLoading } = useQuery<UsersResponse>({
     queryKey: ["admin-users", page, filter],
@@ -130,7 +132,7 @@ export default function UsersPage() {
                   </tr>
                 ) : (
                   data?.users.map((user) => (
-                    <tr key={user._id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                    <tr key={user._id} onClick={() => router.push(`/admin/users/${user._id}`)} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group cursor-pointer">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-[14px] bg-slate-900 text-white flex items-center justify-center font-bold shadow-sm">
@@ -157,7 +159,7 @@ export default function UsersPage() {
                           {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <Link href={`/admin/users/${user._id}`} className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all">
                             View

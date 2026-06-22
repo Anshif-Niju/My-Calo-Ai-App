@@ -2,24 +2,31 @@ import { Router } from "express";
 import passport from "passport";
 import "../../config/passport";
 import { authenticate, validate } from "../../middlewares/authenticate";
+import { authLimiter } from "../../middlewares/rateLimiter";
+import { createDiskUploader } from "../../middlewares/upload.middleware";
 import * as authController from "./auth.controller";
 import * as zod from "./auth.validator";
 
 const router = Router();
 
+const profileUpload = createDiskUploader("profiles", 5, (_req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) cb(null, true);
+  else cb(new Error("Only images allowed"));
+});
+
 // Registration
-router.post("/register", validate(zod.registerSchema), authController.register);
-router.post("/verify-otp", validate(zod.verifyOtpSchema), authController.verifyOtp);
-router.post("/resend-otp", validate(zod.resendOtpSchema), authController.resendOtp);
+router.post("/register", authLimiter, validate(zod.registerSchema), authController.register);
+router.post("/verify-otp", authLimiter, validate(zod.verifyOtpSchema), authController.verifyOtp);
+router.post("/resend-otp", authLimiter, validate(zod.resendOtpSchema), authController.resendOtp);
 
 // Login 
-router.post("/login", validate(zod.loginSchema), authController.login);
+router.post("/login", authLimiter, validate(zod.loginSchema), authController.login);
 router.post("/refresh", authController.refresh);
 router.post("/logout", authController.logout);
 
 // Password Recovery
-router.post("/forgot-password", validate(zod.forgotPasswordSchema), authController.forgotPassword);
-router.post("/reset-password", validate(zod.resetPasswordSchema), authController.resetPassword);
+router.post("/forgot-password", authLimiter, validate(zod.forgotPasswordSchema), authController.forgotPassword);
+router.post("/reset-password", authLimiter, validate(zod.resetPasswordSchema), authController.resetPassword);
 
 // 2FA
 router.post("/setup-2fa", authenticate, authController.setup2FA);
@@ -32,5 +39,7 @@ router.get("/google/callback", passport.authenticate("google", { failureRedirect
 
 // User Detail
 router.get("/me", authenticate, authController.getMe);
+
+
 
 export default router;

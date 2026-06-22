@@ -1,11 +1,22 @@
 import { redis } from "../../config/redis";
 import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { MealLog } from "../../models/Meal.model";
+import { User } from "../../models/User.model";
 import { CloudinaryUploadResult } from "../../types/index";
 
 type UploadResults = Record<string, CloudinaryUploadResult>;
 
 const handlers: Record<string, (entityId: string, results: UploadResults) => Promise<void>> = {
+  User: async (entityId, results) => {
+    const imageUrl = results.image?.url;
+    if (imageUrl) {
+      await User.findByIdAndUpdate(entityId, { profilePhoto: imageUrl });
+      const todayStr = new Date().toISOString().split("T")[0];
+      await redis.del(`summary:${entityId}:${todayStr}`);
+      console.log(`✅ User profilePhoto updated in MongoDB with image`);
+    }
+  },
+
   "doctor-verification": async (entityId, results) => {
     await DoctorVerification.findByIdAndUpdate(entityId, {
       documents: {

@@ -4,7 +4,7 @@ export interface CloudinaryUploadFile {
   mimeType?: string;
 }
 export interface CloudinaryUploadJobData {
-  entityType: "doctor-verification" | "food-scan" | "MealLog";
+  entityType: "doctor-verification" | "food-scan" | "MealLog" | "User";
   entityId: string;
   folder: string;
   files: CloudinaryUploadFile[];

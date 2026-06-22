@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate, validate } from "../../middlewares/authenticate";
 import { createDiskUploader } from "../../middlewares/upload.middleware";
-import { deleteMeal, getDashboard, getScanResult, logMeal, scanFood } from "./nutrition.controller";
+import { deleteMeal, getDashboard, getScanResult, logMeal, scanFood, searchFoods } from "./nutrition.controller";
 import { logMealSchema } from "./nutrition.validator";
 
 const router = Router();
@@ -33,5 +33,6 @@ router.post(
 router.delete("/meal/:id", authenticate, deleteMeal);
 router.post("/scan-food", authenticate, foodScanUpload.single("image"), scanFood);
 router.get("/scan-result/:jobId", authenticate, getScanResult);
+router.get("/search-foods", authenticate, searchFoods);
 
 export default router;

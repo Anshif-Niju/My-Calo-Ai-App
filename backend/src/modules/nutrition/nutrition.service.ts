@@ -8,6 +8,7 @@ import { MealLog } from "../../models/Meal.model";
 import { User } from "../../models/User.model";
 import AppError from "../../errors/AppError";
 import { AuthUserPayload, LogMealInput } from "../../types/index";
+import { Foods } from "../../models/Foods.model";
 
 //Get Today's Date
 
@@ -337,4 +338,18 @@ export const getScanResult = async (jobId: string) => {
     status: "done",
     data: JSON.parse(result),
   };
+};
+
+// Search Foods
+
+export const searchFoods = async (query: string) => {
+  if (!query) {
+    return Foods.find({ isActive: true }).limit(35).lean();
+  }
+  return Foods.find({
+    name: { $regex: query, $options: "i" },
+    isActive: true,
+  })
+    .limit(35)
+    .lean();
 };

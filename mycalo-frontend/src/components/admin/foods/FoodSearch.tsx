@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+interface Props {
+  search: string;
+  setSearch: (s: string) => void;
+}
 
-export default function FoodSearch() {
-  const [search, setSearch] = useState("");
-
+export default function FoodSearch({ search, setSearch }: Props) {
   return (
     <div className="relative w-full max-w-md">
       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

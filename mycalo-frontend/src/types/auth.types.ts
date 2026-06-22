@@ -13,6 +13,27 @@ export interface User {
   profilePhoto?: string;
   googleId?: string;
   fcmToken?: string;
+  healthProfile?: {
+    height?: number;
+    weight?: number;
+    age?: number;
+    gender?: "male" | "female";
+    diseases?: string[];
+    bmi?: number;
+    bmr?: number;
+    activityLevel?: "sedentary" | "light" | "moderate" | "active";
+  };
+  goal?: {
+    type?: "weight_loss" | "weight_gain" | "maintain";
+    targetWeight?: number;
+  };
+  dailyTargets?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    fiber?: number;
+  };
   createdAt: string;
   updatedAt: string;
 }

@@ -11,6 +11,8 @@ import authRoutes from "./modules/auth/auth.routes";
 import adminRoutes from "./modules/admin/admin.route";
 import nutritionRoutes from "./modules/nutrition/nutrition.routes";
 import onboardingRoutes from "./modules/onboarding/onboarding.routes";
+import settingsRoutes from "./modules/settings/settings.routes";
+import subadminRoutes from "./modules/subadmin/subadmin.routes";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import { globalLimiter, authLimiter, scanLimiter } from "./middlewares/rateLimiter";
 
@@ -38,12 +40,14 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
 // 3. API Routes
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/nutrition/scan-food", scanLimiter);
 app.use("/api/nutrition", nutritionRoutes);
 // app.use("/api/doctors", doctorRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/subadmin", subadminRoutes);
 
 // 404 Route
 app.use((req, res) => {

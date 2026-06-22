@@ -3,6 +3,18 @@ import * as authService from "./auth.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { setAccessTokenCookie, setRefreshCookie, clearAuthCookies } from "./auth.cookies";
 import { AuthUserPayload } from "../../types";
+import fs from "fs";
+import { User } from "../../models/User.model";
+import { MealLog } from "../../models/Meal.model";
+import { DailyLog } from "../../models/DailyLog.model";
+import { Appointment } from "../../models/Appointment.model";
+import { Booking } from "../../models/Booking.model";
+import { DoctorProfile } from "../../models/Doctor.Profile.model";
+import { DoctorVerification } from "../../models/Doctor.Verification.model";
+import { redis } from "../../config/redis";
+import { generateAccessToken } from "./auth.tokens";
+import jwt from "jsonwebtoken";
+import { cloudinaryUploadQueue } from "../../jobs/queues/cloudinaryUpload.queue";
 
 //Register
 
@@ -110,7 +122,17 @@ export const setup2FA = asyncHandler(async (req, res) => {
 // Verify Two Factor Authentication
 
 export const verify2FA = asyncHandler(async (req, res) => {
-  const authUser = req.user as AuthUserPayload;
+  let authUser = req.user as AuthUserPayload | undefined;
+
+  // Try to authenticate from cookies if not already authenticated (since route has no middleware)
+  if (!authUser && req.cookies?.accessToken) {
+    try {
+      const decoded = jwt.verify(req.cookies.accessToken, process.env.JWT_SECRET as string) as AuthUserPayload;
+      authUser = decoded;
+    } catch (e) {
+      // Ignore token verification error
+    }
+  }
 
   const result = await authService.verify2FA(req.body, authUser);
 
@@ -129,9 +151,14 @@ export const verify2FA = asyncHandler(async (req, res) => {
 
 export const disable2FA = asyncHandler(async (req, res) => {
   const authUser = req.user as AuthUserPayload;
-  const result = await authService.disable2FA(authUser, req.body.password);
+  await authService.disable2FA(authUser, req.body.password);
 
-  res.status(200).json(result);
+  const updatedUser = await User.findById(authUser.userId).select("-password -twoFactorSecret");
+
+  res.status(200).json({
+    message: "Two-Factor Authentication disabled successfully",
+    user: updatedUser,
+  });
 });
 
 //Google Callback
@@ -163,3 +190,5 @@ export const getMe = asyncHandler(async (req, res) => {
     user,
   });
 });
+
+

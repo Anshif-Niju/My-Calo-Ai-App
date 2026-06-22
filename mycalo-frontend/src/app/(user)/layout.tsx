@@ -5,8 +5,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <ProtectedRoute allowedRoles={["user"]}>
-        {children}
         <Navbar />
+    <div className='lg:pb-10 bg-slate-50 lg:pt-20'>
+        {children}
+      </div>
       </ProtectedRoute>
     </>
   );

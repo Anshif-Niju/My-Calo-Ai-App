@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export default function ForgotPasswordForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const mutation = useMutation({
     mutationFn: async (email: string) => {
@@ -16,6 +17,8 @@ export default function ForgotPasswordForm() {
       return res.data;
     },
     onSuccess: () => {
+      setIsRedirecting(true);
+
       router.push(`/verify-reset-otp?type=forgot_password&email=${encodeURIComponent(email)}`);
     },
     onError: (error: any) => {
@@ -31,7 +34,6 @@ export default function ForgotPasswordForm() {
 
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20 space-y-6">
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">Email address</label>
@@ -46,14 +48,9 @@ export default function ForgotPasswordForm() {
 
         <button
           type="submit"
-          disabled={mutation.isPending || !email}
-          className="w-full h-[60px] bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-[24px] transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center text-sm"
-        >
-          {mutation.isPending ? (
-            <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
-          ) : (
-            "Send reset code"
-          )}
+          disabled={mutation.isPending || isRedirecting || !email}
+          className="w-full h-[60px] bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-[24px] transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center text-sm">
+          {mutation.isPending ? <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" /> : "Send reset code"}
         </button>
       </form>
 

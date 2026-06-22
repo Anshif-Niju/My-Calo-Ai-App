@@ -1,3 +1,4 @@
+import fs from "fs";
 import { Worker } from "bullmq";
 import { redis } from "../../config/redis";
 import { getIO } from "../../config/socket";
@@ -7,6 +8,8 @@ import { scanFoodWithGroq } from "../../service/ai/groq.service";
 import { compressImage } from "../../service/imageCompression.service";
 import { deleteTempImage } from "../../service/tempFile.service";
 import { logger } from "../../utils/logger";
+import { Foods } from "../../models/Foods.model";
+import { uploadFileToCloudinary } from "../../utils/cloudinaryUpload.util";
 
 export const foodScanWorker = new Worker(
   "food-scan",
@@ -17,11 +20,12 @@ export const foodScanWorker = new Worker(
 
     try {
       // Compress image ONCE
-
       const compressedBuffer = await compressImage(tempPath);
 
-      // Convert to base64 ONCE
+      // Overwrite temp file with the compressed version
+      await fs.promises.writeFile(tempPath, compressedBuffer);
 
+      // Convert to base64 ONCE
       const imageBase64 = compressedBuffer.toString("base64");
 
       // Ai Worker
@@ -50,6 +54,45 @@ export const foodScanWorker = new Worker(
         logger.info(`📡 Socket event emitted [scan:complete:${scanId}]`);
       } catch {
         logger.warn("Socket.IO not ready — frontend will fallback to Redis poll");
+      }
+
+      // Automatically register newly scanned food to Foods database synchronously inside worker
+      if (result && result.isFood && result.foodName) {
+        try {
+          const trimmedName = result.foodName.trim();
+          const exists = await Foods.findOne({
+            name: { $regex: new RegExp(`^${trimmedName}$`, "i") },
+            isActive: true,
+          });
+
+          if (!exists) {
+            let uploadedImageUrl = undefined;
+
+            try {
+              // Upload the compressed scanned image from tempPath to Cloudinary
+              const uploadResult = await uploadFileToCloudinary(tempPath, "foods");
+              uploadedImageUrl = uploadResult.url;
+              logger.info(`📸 Scanned food image uploaded to Cloudinary: ${uploadedImageUrl}`);
+            } catch (uploadError) {
+              logger.error(`⚠️ Cloudinary upload failed for auto-registered food "${trimmedName}":`, uploadError);
+            }
+
+            await Foods.create({
+              name: trimmedName,
+              servingType: result.type,
+              defaultQuantity: result.defaultQuantity || 1,
+              defaultUnit: result.defaultUnit || "piece",
+              defaultGrams: result.defaultGrams || 100,
+              nutritionPerUnit: result.nutritionPerUnit,
+              nutritionPer100g: result.nutritionPer100g,
+              imageUrl: uploadedImageUrl,
+              isActive: true,
+            });
+            logger.info(`🌱 Automatically added newly scanned food "${trimmedName}" to database`);
+          }
+        } catch (dbError) {
+          logger.error(`⚠️ Failed to automatically add scanned food "${result.foodName}" to database:`, dbError);
+        }
       }
 
       logger.info(`✅ Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);

@@ -41,6 +41,10 @@ const FoodSchema = new Schema(
       fiber: Number,
     },
 
+    imageUrl: {
+      type: String,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -52,5 +56,3 @@ const FoodSchema = new Schema(
 );
 
 export const Foods = model("Foods", FoodSchema);
-
-

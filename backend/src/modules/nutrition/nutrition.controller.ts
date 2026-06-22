@@ -48,3 +48,15 @@ export const getScanResult = asyncHandler(async (req, res) => {
   const result = await nutritionService.getScanResult(mealId);
   res.status(result.status === "processing" ? 202 : 200).json(result);
 });
+
+//Search Foods
+
+export const searchFoods = asyncHandler(async (req: Request, res: Response) => {
+  const query = (req.query.q as string) || "";
+  const result = await nutritionService.searchFoods(query);
+
+  res.status(200).json({
+    success: true,
+    foods: result,
+  });
+});
