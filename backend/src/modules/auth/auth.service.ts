@@ -13,6 +13,7 @@ import { generateOTP } from "../../utils/otp.utils";
 import type { LoginInput, RegisterInput } from "./auth.validator";
 import { generateAccessToken, generateRefreshToken, generateTemp2FAToken } from "./auth.tokens";
 
+
 //Login
 
 export const login = async (email: string, password: string) => {
@@ -45,26 +46,13 @@ export const login = async (email: string, password: string) => {
     };
   }
 
-  let userData: any = user.toObject();
-
-  if (user.role === "doctor") {
-    const verification = await DoctorVerification.findOne({
-      userId: user._id,
-    }).lean();
-
-    userData = {
-      ...userData,
-      verificationStatus: verification?.verificationStatus ?? "not_submitted",
-    };
-  }
-
   const accessToken = generateAccessToken(
     user.id,
     user.role,
     user.email,
     user.onboardingCompleted,
     user.hasSubmittedVerification,
-    userData.verificationStatus ?? "not_submitted"
+    user.verificationStatus
   );
 
   const refreshToken = generateRefreshToken(user.id);
@@ -72,9 +60,10 @@ export const login = async (email: string, password: string) => {
   return {
     accessToken,
     refreshToken,
-    user: userData,
+    user,
   };
 };
+
 
 //Register
 
@@ -128,6 +117,7 @@ export const register = async (payload: RegisterInput) => {
   };
 };
 
+
 //Verify User Otp
 
 export const verifyOtp = async (payload: { email: string; otp: string; type: string }) => {
@@ -167,7 +157,7 @@ export const verifyOtp = async (payload: { email: string; otp: string; type: str
           user.email,
           user.onboardingCompleted,
           user.hasSubmittedVerification,
-          "not_submitted"
+          user.verificationStatus
         ),
 
         refreshToken: generateRefreshToken(user.id),
@@ -188,6 +178,7 @@ export const verifyOtp = async (payload: { email: string; otp: string; type: str
     },
   };
 };
+
 
 //Forgot Password
 
@@ -216,6 +207,7 @@ export const forgotPassword = async (email: string) => {
   };
 };
 
+
 //Refresh Token Acces Token Genrating
 
 export const refresh = async (refreshToken: string) => {
@@ -233,19 +225,6 @@ export const refresh = async (refreshToken: string) => {
     throw new AppError(401, "User not found");
   }
 
-  let userData: any = user;
-
-  if (user.role === "doctor") {
-    const verification = await DoctorVerification.findOne({
-      userId: user._id,
-    }).lean();
-
-    userData = {
-      ...userData,
-      verificationStatus: verification?.verificationStatus ?? "not_submitted",
-    };
-  }
-
   return {
     accessToken: generateAccessToken(
       user._id.toString(),
@@ -253,11 +232,12 @@ export const refresh = async (refreshToken: string) => {
       user.email,
       user.onboardingCompleted,
       user.hasSubmittedVerification,
-      userData.verificationStatus ?? "not_submitted"
+      user.verificationStatus
     ),
-    user: userData,
+    user,
   };
 };
+
 
 //Resend Otp
 
@@ -304,6 +284,7 @@ export const resendOtp = async (payload: ResendOtpPayload) => {
   };
 };
 
+
 //VerifyResetOtp
 
 export const verifyResetOtp = async (payload: VerifyResetOtpPayload) => {
@@ -323,6 +304,7 @@ export const verifyResetOtp = async (payload: VerifyResetOtpPayload) => {
     resetToken,
   };
 };
+
 
 //ResetPassword
 
@@ -351,6 +333,7 @@ export const resetPassword = async (payload: ResetPasswordPayload) => {
 };
 
 //Google CallBack
+
 export const googleCallback = async (user: any): Promise<GoogleCallbackResult> => {
   if (!user) {
     return {
@@ -372,7 +355,7 @@ export const googleCallback = async (user: any): Promise<GoogleCallbackResult> =
     user.email,
     user.onboardingCompleted,
     user.hasSubmittedVerification,
-    "not_submitted"
+    user.verificationStatus
   );
 
   const refreshToken = generateRefreshToken(user._id.toString());
@@ -389,6 +372,7 @@ export const googleCallback = async (user: any): Promise<GoogleCallbackResult> =
     frontendRedirect: `${env.FRONTEND_URL}/google-callback`,
   };
 };
+
 
 //Setup2FA
 
@@ -414,6 +398,7 @@ export const setup2FA = async (authUser: AuthUserPayload) => {
     secret: secret.base32,
   };
 };
+
 
 //Verify2FA
 
@@ -456,7 +441,7 @@ export const verify2FA = async (payload: Verify2FAPayload, authUser?: AuthUserPa
       user.email,
       user.onboardingCompleted,
       user.hasSubmittedVerification,
-      "not_submitted"
+      user.verificationStatus
     ),
 
     refreshToken: generateRefreshToken(user.id),
@@ -464,6 +449,7 @@ export const verify2FA = async (payload: Verify2FAPayload, authUser?: AuthUserPa
     user,
   };
 };
+
 
 //Disable2FA
 
@@ -491,6 +477,7 @@ export const disable2FA = async (authUser: AuthUserPayload, password: string) =>
   };
 };
 
+
 //Get User details
 
 export const getMe = async (userId: string) => {
@@ -498,17 +485,6 @@ export const getMe = async (userId: string) => {
 
   if (!user) {
     throw new AppError(404, "User not found");
-  }
-
-  if (user.role === "doctor") {
-    const verification = await DoctorVerification.findOne({
-      userId,
-    }).lean();
-
-    return {
-      ...user,
-      verificationStatus: verification?.verificationStatus ?? "not_submitted",
-    };
   }
 
   return user;

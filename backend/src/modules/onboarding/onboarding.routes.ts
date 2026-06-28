@@ -12,7 +12,6 @@ const doctorDocsUpload = createDiskUploader("doctor-verification",5).fields([
   { name: "mcuCertificate", maxCount: 1 },
   { name: "degreeCertificate", maxCount: 1 },
   { name: "governmentId", maxCount: 1 },
-  { name: "clinicProof", maxCount: 1 },
 ]);
 
 //User Onboarding

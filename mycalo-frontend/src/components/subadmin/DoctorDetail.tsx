@@ -32,7 +32,6 @@ interface DoctorDetailResponse {
       mcuCertificate?: string;
       degreeCertificate?: string;
       governmentId?: string;
-      clinicProof?: string;
     };
     createdAt: string;
   } | null;

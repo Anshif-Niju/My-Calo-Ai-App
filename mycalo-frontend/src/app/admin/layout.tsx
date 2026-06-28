@@ -1,5 +1,5 @@
-import ProtectedRoute from "@/components/guard/ProtectedRoute";
-import AdminNavbar from "@/components/shared/admin/AdminNavbar";
+import ProtectedRoute from "@/guard/ProtectedRoute";
+import AdminNavbar from "@/components/layouts/AdminNavbar";
 
 export default function SubadminDashboardLayout({ children }: { children: React.ReactNode }) {
   return (

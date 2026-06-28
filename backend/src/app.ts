@@ -1,9 +1,7 @@
 import { env } from "./config/env";
-dotenv.config();
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
 import authRoutes from "./modules/auth/auth.routes";

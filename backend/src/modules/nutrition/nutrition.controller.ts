@@ -23,7 +23,7 @@ export const logMeal = asyncHandler(async (req, res) => {
   res.status(201).json(result);
 });
 
-//Delete Meal(When user Remove the food)
+//Delete Meal
 
 export const deleteMeal = asyncHandler(async (req, res) => {
   const authUser = req.user as AuthUserPayload;
@@ -33,7 +33,7 @@ export const deleteMeal = asyncHandler(async (req, res) => {
   res.status(200).json(result);
 });
 
-//Scan Food(When User click the Scan Food)
+//Scan Food
 
 export const scanFood = asyncHandler(async (req: Request, res: Response) => {
   const result = await nutritionService.scanFood(req.file);
@@ -41,7 +41,7 @@ export const scanFood = asyncHandler(async (req: Request, res: Response) => {
   res.status(202).json(result);
 });
 
-//Get Scan Result(When User is waiting for the scaned foofd result)
+//Get Scan Result
 
 export const getScanResult = asyncHandler(async (req, res) => {
   const mealId = req.params.jobId as string;
@@ -52,7 +52,7 @@ export const getScanResult = asyncHandler(async (req, res) => {
 //Search Foods
 
 export const searchFoods = asyncHandler(async (req: Request, res: Response) => {
-  const query = (req.query.q as string) || "";
+  const query = (req.query.name as string) || "";
   const result = await nutritionService.searchFoods(query);
 
   res.status(200).json({

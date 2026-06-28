@@ -10,10 +10,8 @@ import { uploadFileToCloudinary } from "../../utils/cloudinaryUpload.util";
 import { getDashboard as getNutritionDashboard } from "../nutrition/nutrition.service";
 
 const ADMIN_DASHBOARD_CACHE_KEY = "admin:dashboard:stats";
-const ADMIN_DASHBOARD_TTL = 300; // 5 minutes
 
 export const getDashboard = async () => {
-  // Check Redis cache first
   const cached = await redis.get(ADMIN_DASHBOARD_CACHE_KEY);
   if (cached) {
     return JSON.parse(cached);
@@ -37,7 +35,7 @@ export const getDashboard = async () => {
   };
 
   // Store in Redis for 5 minutes
-  await redis.set(ADMIN_DASHBOARD_CACHE_KEY, JSON.stringify(stats), "EX", ADMIN_DASHBOARD_TTL);
+  await redis.set(ADMIN_DASHBOARD_CACHE_KEY, JSON.stringify(stats), "EX", 300);
 
   return stats;
 };

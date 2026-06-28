@@ -27,7 +27,6 @@ interface VerificationDetail {
     mcuCertificate?: string;
     degreeCertificate?: string;
     governmentId?: string;
-    clinicProof?: string;
   };
   createdAt: string;
 }
@@ -370,7 +369,6 @@ export default function VerificationDetailPage() {
             <DocViewer label="MCU Certificate" url={data.documents?.mcuCertificate} />
             <DocViewer label="Degree Certificate" url={data.documents?.degreeCertificate} />
             <DocViewer label="Government ID" url={data.documents?.governmentId} />
-            <DocViewer label="Clinic Proof" url={data.documents?.clinicProof} />
           </div>
         </div>
 

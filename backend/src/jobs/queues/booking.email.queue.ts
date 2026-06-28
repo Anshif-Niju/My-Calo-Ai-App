@@ -16,7 +16,7 @@ export interface BookingEmailJobData {
   totalAmount: number;
 }
 
-// ─── Queue ────────────────────────────────────────────────────────────────────
+//  Queue
 export const bookingEmailQueue = new Queue<BookingEmailJobData>("bookingEmailQueue", {
   connection: redis as any,
   defaultJobOptions: {
@@ -27,7 +27,7 @@ export const bookingEmailQueue = new Queue<BookingEmailJobData>("bookingEmailQue
   },
 });
 
-// ─── Worker ───────────────────────────────────────────────────────────────────
+// Worker
 export const bookingEmailWorker = new Worker<BookingEmailJobData>(
   "bookingEmailQueue",
   async (job: Job<BookingEmailJobData>) => {
@@ -77,7 +77,6 @@ export const bookingEmailWorker = new Worker<BookingEmailJobData>(
       </div>
     `;
 
-    // ✅ Uses your existing sendEmail util (same as emailWorker)
     await emailTemplate.sendEmail({
       to,
       subject: "Consultation Booking Confirmed - MyCalo AI",
@@ -97,5 +96,5 @@ bookingEmailWorker.on("failed", (job, err) => {
 });
 
 bookingEmailWorker.on("completed", (job) => {
-  console.log(`✅ Booking email sent [${job.id}] → ${job.data.to}`);
+  console.log(` Booking email sent [${job.id}] → ${job.data.to}`);
 });

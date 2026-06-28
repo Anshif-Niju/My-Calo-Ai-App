@@ -18,7 +18,6 @@ export interface IDoctor extends Document {
     mcuCertificate?: string;
     degreeCertificate?: string;
     governmentId?: string;
-    clinicProof?: string;
   };
 
   createdAt: Date;
@@ -35,8 +34,6 @@ export interface DoctorVerificationJobData {
   mcuPath: string;
   degreePath: string;
   governmentIdPath: string;
-
-  clinicProofPath?: string;
 }
 
 export interface ITimeSlot {

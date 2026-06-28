@@ -343,13 +343,23 @@ export const getScanResult = async (jobId: string) => {
 // Search Foods
 
 export const searchFoods = async (query: string) => {
+
   if (!query) {
     return Foods.find({ isActive: true }).limit(35).lean();
   }
-  return Foods.find({
-    name: { $regex: query, $options: "i" },
-    isActive: true,
-  })
+
+  const filter :  Record<string, any> = {
+    isActive : true
+  }
+
+  if(query){
+    filter.$or = [{
+      name: { $regex: query , $options: "i" } ,
+      category : {$regex  : query , $options : "i"}
+    }]
+  }
+
+  return Foods.find(filter)
     .limit(35)
     .lean();
 };

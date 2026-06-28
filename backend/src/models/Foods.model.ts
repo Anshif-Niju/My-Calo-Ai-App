@@ -11,6 +11,7 @@ const FoodSchema = new Schema(
     category: {
       type: String,
       enum: ["fruit", "vegetable", "meat", "rice", "drink", "snack", "fastfood", "other"],
+      default : "other"
     },
 
     servingType: {

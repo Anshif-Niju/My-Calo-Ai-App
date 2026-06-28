@@ -19,13 +19,12 @@ export const foodScanWorker = new Worker(
     logger.info(`🔍 Processing food scan [${scanId}]`);
 
     try {
-      // Compress image ONCE
+
       const compressedBuffer = await compressImage(tempPath);
 
       // Overwrite temp file with the compressed version
       await fs.promises.writeFile(tempPath, compressedBuffer);
 
-      // Convert to base64 ONCE
       const imageBase64 = compressedBuffer.toString("base64");
 
       // Ai Worker
@@ -33,10 +32,10 @@ export const foodScanWorker = new Worker(
         // Step 1: Groq alone try
         try {
           const result = await scanFoodWithGroq(imageBase64, mimeType);
-          console.log("✅ Groq Ai Completed — skipping Gemini");
+          console.log(" Groq Ai Completed ");
           return result;
         } catch (groqError) {
-          console.warn("⚠️ Groq failed, trying Gemini fallback...");
+          console.warn(" Groq failed, trying Gemini fallback...");
         }
 
         // Step 2: Groq failed — now Gemini both parallel
@@ -48,15 +47,13 @@ export const foodScanWorker = new Worker(
       // Store result in Redis (kept as fallback if socket disconnects)
       await redis.set(`scan-result:${scanId}`, JSON.stringify(result), "EX", 300);
 
-      // Push result instantly to the frontend via Socket.IO
       try {
         getIO().emit(`scan:complete:${scanId}`, { status: "done", data: result });
-        logger.info(`📡 Socket event emitted [scan:complete:${scanId}]`);
+        logger.info(` Socket event emitted [scan:complete:${scanId}]`);
       } catch {
         logger.warn("Socket.IO not ready — frontend will fallback to Redis poll");
       }
 
-      // Automatically register newly scanned food to Foods database synchronously inside worker
       if (result && result.isFood && result.foodName) {
         try {
           const trimmedName = result.foodName.trim();
@@ -79,6 +76,7 @@ export const foodScanWorker = new Worker(
 
             await Foods.create({
               name: trimmedName,
+              category: result.category || "other",
               servingType: result.type,
               defaultQuantity: result.defaultQuantity || 1,
               defaultUnit: result.defaultUnit || "piece",
@@ -88,18 +86,17 @@ export const foodScanWorker = new Worker(
               imageUrl: uploadedImageUrl,
               isActive: true,
             });
-            logger.info(`🌱 Automatically added newly scanned food "${trimmedName}" to database`);
+            logger.info(` Automatically added newly scanned food "${trimmedName}" to database`);
           }
         } catch (dbError) {
-          logger.error(`⚠️ Failed to automatically add scanned food "${result.foodName}" to database:`, dbError);
+          logger.error(` Failed to automatically add scanned food "${result.foodName}" to database:`, dbError);
         }
       }
 
-      logger.info(`✅ Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);
+      logger.info(` Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);
 
       return result;
     } finally {
-      // Delete temp file once processing ends
 
       await deleteTempImage(tempPath);
     }
@@ -117,9 +114,9 @@ export const foodScanWorker = new Worker(
 );
 
 foodScanWorker.on("failed", async (job, err) => {
-  logger.error(`❌ Food scan failed [${job?.id}]`, err);
+  logger.error(` Food scan failed [${job?.id}]`, err);
 
-  // Promise.any failed only if ALL providers failed.
+
 
   if (job) {
     const errorPayload = {

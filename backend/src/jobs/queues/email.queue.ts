@@ -8,9 +8,9 @@ export const emailQueue = new Queue<EmailJobData>("emailQueue", {
     attempts: 3,
     backoff: {
       type: "exponential",
-      delay: 3000, // first retry after 5s, then 10s, then 20s
+      delay: 3000,
     },
-    removeOnComplete: true, // don't pile up completed jobs in Redis
-    removeOnFail: 100, // keep last 100 failed jobs for debugging
+    removeOnComplete: true,
+    removeOnFail: 100, 
   },
 });

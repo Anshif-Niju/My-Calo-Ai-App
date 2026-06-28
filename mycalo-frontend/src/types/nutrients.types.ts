@@ -10,6 +10,7 @@ export interface MacroCardProps {
 export interface ScanResult {
   isFood: boolean;
   foodName: string;
+  category?: string;
   type: "countable" | "weighable";
   defaultQuantity: number;
   defaultUnit: string;
@@ -35,6 +36,7 @@ export interface MealHistoryItemProps {
   carbs: number;
   fat: number;
   imageUrl?: string;
+  category?: string;
   mealType: string;
   createdAt: string;
   onDelete?: () => void;

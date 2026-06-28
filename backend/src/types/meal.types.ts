@@ -54,4 +54,5 @@ export interface LogMealInput {
   carbs: number;
   fat: number;
   fiber: number;
+  category?: "fruit" | "vegetable" | "meat" | "rice" | "drink" | "snack" | "fastfood" | "other";
 }

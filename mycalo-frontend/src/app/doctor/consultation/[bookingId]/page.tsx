@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import ConsultationRoom from "@/components/shared/ConsultationRoom";
+import ConsultationRoom from "@/components/layouts/ConsultationRoom";
 
 export default function DoctorConsultationPage() {
   const { bookingId } = useParams<{ bookingId: string }>();

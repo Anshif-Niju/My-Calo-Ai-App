@@ -15,7 +15,6 @@ const DOC_FIELDS = [
   { key: "mcuCertificate", label: "MCU Certificate", required: true },
   { key: "degreeCertificate", label: "Degree Certificate", required: true },
   { key: "governmentId", label: "Government ID", required: true },
-  { key: "clinicProof", label: "Clinic Proof", required: false },
 ];
 
 export default function DoctorVerificationForm() {
@@ -33,7 +32,6 @@ export default function DoctorVerificationForm() {
     mcuCertificate: null,
     degreeCertificate: null,
     governmentId: null,
-    clinicProof: null,
   });
 
   const set = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
@@ -48,7 +46,6 @@ export default function DoctorVerificationForm() {
         mcuCertificate: files.mcuCertificate,
         degreeCertificate: files.degreeCertificate,
         governmentId: files.governmentId,
-        clinicProof: files.clinicProof ?? undefined,
       });
 
       if (!result.success) {
@@ -65,7 +62,6 @@ export default function DoctorVerificationForm() {
       if (files.mcuCertificate) formData.append("mcuCertificate", files.mcuCertificate);
       if (files.degreeCertificate) formData.append("degreeCertificate", files.degreeCertificate);
       if (files.governmentId) formData.append("governmentId", files.governmentId);
-      if (files.clinicProof) formData.append("clinicProof", files.clinicProof);
 
       const response = await api.post("/onboarding/doctor-verification", formData);
       return response.data;

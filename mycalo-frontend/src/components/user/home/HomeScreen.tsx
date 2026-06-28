@@ -18,7 +18,7 @@ const MEAL_SECTIONS: { type: MealType; label: string; icon: string }[] = [
   { type: "custom", label: "Custom", icon: "➕" },
 ];
 
-// ─── Date helpers ──────────────────────────────────────────────────
+// Date helpers
 
 const fmt = (d: Date) => d.toISOString().split("T")[0];
 

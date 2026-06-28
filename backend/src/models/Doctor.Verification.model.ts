@@ -25,7 +25,6 @@ const DoctorSchema = new Schema<IDoctor>(
       mcuCertificate: { type: String },
       degreeCertificate: { type: String },
       governmentId: { type: String },
-      clinicProof: { type: String },
     },
   },
   { timestamps: true },

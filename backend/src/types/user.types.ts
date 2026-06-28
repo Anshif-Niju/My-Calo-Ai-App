@@ -18,6 +18,7 @@ export interface IUser extends Document {
   twoFactorSecret?: string;
   googleId?: string;
   profilePhoto?: string;
+  verificationStatus: "not_submitted" | "pending" | "under_review" | "approved" | "rejected";
   onboardingCompleted: boolean;
   isBlocked: Boolean;
   isDeleted: Boolean;

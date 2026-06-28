@@ -13,9 +13,9 @@ export interface IMealLog {
   fat: number;
   fiber: number;
   imageUrl?: string;
+  category?: "fruit" | "vegetable" | "meat" | "rice" | "drink" | "snack" | "fastfood" | "other";
   source: "scan" | "search" | "manual";
   date: string;
-  // AI scan data
   scanData?: {
     type: "countable" | "weighable";
     nutritionPer100g: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
@@ -39,6 +39,11 @@ const MealLogSchema = new Schema<IMealLog>(
     fat: { type: Number, required: true },
     fiber: { type: Number, default: 0 },
     imageUrl: { type: String },
+    category: {
+      type: String,
+      enum: ["fruit", "vegetable", "meat", "rice", "drink", "snack", "fastfood", "other"],
+      default: "other",
+    },
     source: { type: String, enum: ["scan", "search", "manual"], default: "manual" },
     date: { type: String, required: true, index: true },
     scanData: {

@@ -17,7 +17,7 @@ export default function AuthInitializer({ children }: { children: React.ReactNod
       try {
         const { data } = await api.get("/auth/me");
         dispatch(setUser({ user: data.user }));
-      } catch (error) {
+      } catch {
         dispatch(logoutAction());
       } finally {
         dispatch(setInitialized());

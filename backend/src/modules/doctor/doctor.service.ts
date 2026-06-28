@@ -8,7 +8,7 @@ import { ChatMessage } from "../../models/ChatMessage.model";
 import { razorpay } from "../../config/razorpay";
 import { env } from "../../config/env";
 
-// ─── Doctor Profile ─────────────────────────────────────────────────────────
+// Doctor Profile
 
 export async function getDoctorProfileByDoctorId(doctorId: string) {
   return DoctorProfile.findOne({ doctorId });
@@ -66,7 +66,7 @@ export async function updateAvailability(doctorId: string, data: UpdateAvailabil
   return profile;
 }
 
-// ─── Public Doctor Listing ───────────────────────────────────────────────────
+// Public Doctor Listing
 
 export async function listDoctors(filters: { specialization?: string; search?: string; page?: number; limit?: number }) {
   const { specialization, search, page = 1, limit = 12 } = filters;
@@ -141,7 +141,7 @@ export async function getAvailableSlots(profileId: string, date: string) {
   }));
 }
 
-// ─── Booking ─────────────────────────────────────────────────────────────────
+// Booking
 
 export async function createBookingOrder(userId: string, userEmail: string, userName: string, data: CreateBookingInput) {
   const profile = await DoctorProfile.findById(data.doctorProfileId);
@@ -286,7 +286,7 @@ export async function getDoctorBookings(doctorId: string) {
     .lean();
 }
 
-// ─── Chat Gate ────────────────────────────────────────────────────────────────
+// Chat Gate
 
 export async function checkChatAccess(userId: string, bookingId: string) {
   const booking = await Booking.findOne({

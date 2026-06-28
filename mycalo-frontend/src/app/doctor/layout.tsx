@@ -1,4 +1,4 @@
-import ProtectedRoute from "../../components/guard/ProtectedRoute";
+import ProtectedRoute from "../../guard/ProtectedRoute";
 import DoctorNavbar from "../../components/doctor/DoctorNavbar";
 
 export default function DocotrLayout({ children }: { children: React.ReactNode }) {

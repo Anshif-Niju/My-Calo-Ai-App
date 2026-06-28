@@ -4,24 +4,25 @@ import * as ctrl from "./doctor.controller";
 
 const router = Router();
 
-// ─── Doctor Routes (authenticate + authorize(['doctor'])) ─────────────────────
+// Doctor Routes
 router.get("/doctor/profile", authenticate, authorize(["doctor"]), ctrl.getMyProfile);
 router.put("/doctor/profile", authenticate, authorize(["doctor"]), ctrl.updateMyProfile);
 router.put("/doctor/availability", authenticate, authorize(["doctor"]), ctrl.updateMyAvailability);
 router.get("/doctor/bookings", authenticate, authorize(["doctor"]), ctrl.getMyBookings);
 router.get("/doctor/chat-access/:bookingId", authenticate, authorize(["doctor"]), ctrl.doctorChatAccess);
 
-// ─── User Routes ──────────────────────────────────────────────────────────────
+// User Routes
 router.post("/book", authenticate, authorize(["user"]), ctrl.createBooking);
 router.post("/payment/verify", authenticate, authorize(["user"]), ctrl.verifyPayment);
 router.get("/bookings/my", authenticate, authorize(["user"]), ctrl.getUserBookings);
 router.get("/chat-access/:bookingId", authenticate, authorize(["user"]), ctrl.userChatAccess);
 
-// ─── Shared Consultation Routes ───────────────────────────────────────────────
+// Shared Consultation Routes
+router.get("/bookings/:bookingId", authenticate, authorize(["doctor", "user"]), ctrl.getBookingDetails);
 router.get("/bookings/:bookingId/messages", authenticate, authorize(["doctor", "user"]), ctrl.getBookingMessages);
 router.patch("/bookings/:bookingId/complete", authenticate, authorize(["doctor"]), ctrl.completeBooking);
 
-// ─── Public Routes (last!) ────────────────────────────────────────────────────
+// Public Routes 
 router.get("/list", ctrl.listDoctors);
 router.get("/:profileId/slots", ctrl.getAvailableSlots);
 router.get("/:profileId", ctrl.getDoctorDetail);

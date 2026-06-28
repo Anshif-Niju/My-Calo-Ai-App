@@ -1,4 +1,4 @@
-import GuestRoute from "@/components/guard/GuestRoute";
+import GuestRoute from "@/guard/GuestRoute";
 import { Metadata } from "next";
 import Link from "next/link";
 

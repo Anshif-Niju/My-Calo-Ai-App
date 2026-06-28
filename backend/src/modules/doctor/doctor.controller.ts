@@ -6,6 +6,7 @@ import { AuthUserPayload } from "../../types";
 import crypto from "crypto";
 import { env } from "../../config/env";
 
+
 // Doctor Side
 
 export async function getMyProfile(req: Request, res: Response, next: NextFunction) {
@@ -61,7 +62,7 @@ export async function doctorChatAccess(req: Request, res: Response, next: NextFu
   }
 }
 
-// ─── Public (User Side) ───────────────────────────────────────────────────────
+// Public (User Side)
 
 export async function listDoctors(req: Request, res: Response, next: NextFunction) {
   try {
@@ -100,7 +101,7 @@ export async function getAvailableSlots(req: Request, res: Response, next: NextF
   }
 }
 
-// ─── Booking (Auth Required) ──────────────────────────────────────────────────
+// Booking (Auth Required)
 
 export async function createBooking(req: Request, res: Response, next: NextFunction) {
   try {
@@ -171,13 +172,13 @@ export async function getBookingMessages(req: Request, res: Response, next: Next
   try {
     const userId = (req.user as AuthUserPayload).userId;
     const bookingId = req.params.bookingId as string;
-    
+
     // Check membership
     const booking = await doctorService.getBookingById(bookingId);
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found" });
     }
-    
+
     if (booking.userId.toString() !== userId && booking.doctorId.toString() !== userId) {
       return res.status(403).json({ success: false, message: "Access denied. You are not a member of this consultation." });
     }
@@ -200,4 +201,25 @@ export async function completeBooking(req: Request, res: Response, next: NextFun
     next(err);
   }
 }
+
+export async function getBookingDetails(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req.user as AuthUserPayload).userId;
+    const bookingId = req.params.bookingId as string;
+
+    const booking = await doctorService.getBookingById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" });
+    }
+
+    if (booking.userId.toString() !== userId && booking.doctorId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: "Access denied. You are not a member of this consultation." });
+    }
+
+    res.json({ success: true, data: booking });
+  } catch (err) {
+    next(err);
+  }
+}
+
 

@@ -63,7 +63,6 @@ export default function BottomNavbar() {
         style={{ background: "#ffffff", borderColor: "#e2e8f0" }} // White bg, Slate-200 border
       >
         <div className="flex items-center gap-3">
-          <span className="text-xl">🥗</span>
           <span
             className="font-black text-xl leading-none"
             style={{ color: "#0f172a", fontFamily: "var(--font-head)" }} // Slate-900 logo

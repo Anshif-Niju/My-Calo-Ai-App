@@ -1,4 +1,3 @@
-// jobs/workers/cloudinaryUpload.worker.ts
 import { Worker } from "bullmq";
 import { redis } from "../../config/redis";
 import { deleteTempImage } from "../../service/tempFile.service";

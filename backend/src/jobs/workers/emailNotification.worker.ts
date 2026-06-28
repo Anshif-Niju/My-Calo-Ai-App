@@ -28,7 +28,7 @@ export const emailNotificationWorker = new Worker(
     if (type === "goal_hit") {
       await emailTemplate.sendEmail({
         to: user.email,
-        subject: "🎉 Daily calorie goal achieved!",
+        subject: " Daily calorie goal achieved!",
         html: emailTemplate.getGoalHitTemplate({ name: user.name, calories: data.calories }),
       });
     }
@@ -36,12 +36,12 @@ export const emailNotificationWorker = new Worker(
     if (type === "goal_over") {
       await emailTemplate.sendEmail({
         to: user.email,
-        subject: "⚠️ You've exceeded your daily calorie limit",
+        subject: " You've exceeded your daily calorie limit",
         html: emailTemplate.getGoalOverTemplate({ name: user.name, consumed: data.consumed, target: data.target }),
       });
     }
 
-    logger.info(`✅ Email sent [${job.id}] type=${type}`);
+    logger.info(`Email sent [${job.id}] type=${type}`);
   },
   { connection: redis as any, concurrency: 10 },
 );

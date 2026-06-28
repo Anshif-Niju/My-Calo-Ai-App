@@ -1,4 +1,4 @@
-import ProtectedRoute from "../../components/guard/ProtectedRoute";
+import ProtectedRoute from "../../guard/ProtectedRoute";
 import SubadminNavbar from "../../components/subadmin/SubadminNavbar";
 
 export default function SubadminLayout({ children }: { children: React.ReactNode }) {

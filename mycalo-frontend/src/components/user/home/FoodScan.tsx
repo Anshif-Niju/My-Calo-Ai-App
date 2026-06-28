@@ -7,10 +7,49 @@ import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Props, ScanResult } from "../../../types/nutrients.types";
 
+function OrangeSpinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+  const sizeClasses = {
+    sm: "w-8 h-8",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
+  };
+
+  return (
+    <div className={`relative ${sizeClasses[size]} flex items-center justify-center`}>
+
+      <div className="absolute inset-0 rounded-full bg-orange-500/10 animate-ping opacity-75" style={{ animationDuration: "1.5s" }} />
+      <div className="absolute w-3/4 h-3/4 rounded-full bg-orange-500/5 blur-sm" />
+      <svg
+        className="w-full h-full animate-spin-smooth"
+        viewBox="0 0 50 50"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx="25"
+          cy="25"
+          r="20"
+          stroke="url(#orange-spinner-gradient)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray="90 30"
+        />
+        <defs>
+          <linearGradient id="orange-spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f97316" />
+            <stop offset="60%" stopColor="#fdba74" />
+            <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
+}
+
 export default function FoodScanModal({ mealType, date, onClose, onAdded }: Props) {
   const [step, setStep] = useState<"upload" | "scanning" | "result" | "adding" | "error">("upload");
   const [activeTab, setActiveTab] = useState<"scan" | "search">("scan");
-  
+
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -35,7 +74,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       setSearchResults([]);
       return;
     }
-    
+
     setIsSearching(true);
     const delayDebounceFn = setTimeout(async () => {
       try {
@@ -174,6 +213,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
     setScanResult({
       isFood: true,
       foodName: food.name,
+      category: food.category,
       type: food.servingType,
       defaultQuantity: food.defaultQuantity || 1,
       defaultUnit: food.defaultUnit || "piece",
@@ -207,6 +247,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       const payload = {
         mealType,
         foodName: scanResult.foodName,
+        category: scanResult.category || "other",
         date,
         quantity: scanResult.type === "countable" ? quantity : 1,
         unit: scanResult.type === "countable" ? scanResult.defaultUnit : "g",
@@ -249,20 +290,20 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
   return (
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-all" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-md bg-white rounded-t-[32px] lg:rounded-[32px] p-6 shadow-[0_20px_60px_rgb(0,0,0,0.08)] transition-all transform duration-300" style={{ maxHeight: "90vh", overflowY: "auto" }}>
-        
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-medium text-slate-900 capitalize">Add to {mealType}</h2>
             <p className="text-[13px] font-medium text-slate-500 mt-1">
-              {step === "upload" 
-                ? (activeTab === "scan" ? "Upload a food photo" : "Search database by name") 
-                : step === "scanning" 
-                ? "AI analyzing..." 
-                : step === "result" 
-                ? "Review nutritional content" 
-                : step === "error" 
-                ? "Scan failed" 
+              {step === "upload"
+                ? (activeTab === "scan" ? "Upload a food photo" : "Search database by name")
+                : step === "scanning"
+                ? "AI analyzing..."
+                : step === "result"
+                ? "Review nutritional content"
+                : step === "error"
+                ? "Scan failed"
                 : "Adding..."}
             </p>
           </div>
@@ -319,8 +360,8 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             </div>
 
             {isSearching ? (
-              <div className="py-12 text-center">
-                <div className="w-8 h-8 rounded-full animate-spin border-4 border-slate-200 border-t-slate-900 mx-auto" />
+              <div className="py-12 flex justify-center">
+                <OrangeSpinner size="sm" />
               </div>
             ) : searchResults.length === 0 ? (
               <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-[24px] bg-slate-50/50">
@@ -331,8 +372,8 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                 {searchResults.map((food) => {
-                  const cal = food.servingType === "countable" 
-                    ? food.nutritionPerUnit?.calories 
+                  const cal = food.servingType === "countable"
+                    ? food.nutritionPerUnit?.calories
                     : food.nutritionPer100g?.calories;
                   return (
                     <button
@@ -364,11 +405,14 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
         {step === "scanning" && (
           <div className="flex flex-col items-center py-12">
             {imagePreview && (
-              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 shadow-sm border border-slate-100 p-1 bg-white relative">
+              <div className="w-32 h-32 rounded-[24px] overflow-hidden mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-1 bg-white relative group">
                 <Image src={imagePreview} fill className="object-cover rounded-[18px]" alt="food preview" unoptimized sizes="128px" />
+                <div className="absolute inset-1 rounded-[18px] bg-gradient-to-b from-orange-500/10 to-transparent pointer-events-none animate-scan-pulse" />
               </div>
             )}
-            <div className="w-12 h-12 rounded-full animate-spin mb-5 border-4 border-slate-100 border-t-orange-500" />
+            <div className="mb-5">
+              <OrangeSpinner size="md" />
+            </div>
             <p className="text-slate-800 font-bold text-lg">Analyzing food...</p>
             <p className="text-[13px] font-medium text-slate-500 mt-1.5">AI is identifying nutrients & macros</p>
           </div>
@@ -406,7 +450,14 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
                 )}
               </div>
               <div>
-                <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>
+                  {scanResult.category && (
+                    <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      {scanResult.category}
+                    </span>
+                  )}
+                </div>
                 {scanResult.imageUrl ? (
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <div className={`w-2 h-2 rounded-full ${scanResult.confidence === "high" ? "bg-emerald-400" : scanResult.confidence === "medium" ? "bg-amber-400" : "bg-red-400"}`} />
@@ -497,7 +548,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
                 className="w-full h-14 rounded-[20px] font-medium text-[15px] flex items-center justify-center transition-all bg-[#f97316] text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(249,115,22,0.3)] active:scale-[0.98]">
                 Add {scanResult.foodName} • {calculatedNutrition.calories} kcal
               </button>
-              
+
               <button
                 onClick={handleRetry}
                 className="w-full h-12 rounded-[20px] font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
@@ -510,7 +561,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
         {/* Adding step */}
         {step === "adding" && (
           <div className="flex flex-col items-center py-12">
-            <div className="w-12 h-12 rounded-full animate-spin border-4 border-slate-100 border-t-orange-500" />
+            <OrangeSpinner size="md" />
             <p className="text-slate-800 font-bold text-lg mt-5">Logging meal...</p>
             <p className="text-[13px] font-medium text-slate-500 mt-1.5">Updating your daily macros</p>
           </div>

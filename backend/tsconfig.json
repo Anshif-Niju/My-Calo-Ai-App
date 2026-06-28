@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2021",
     "lib": ["ES2021"],
-    "noEmit": true,
+    "noEmit": false,
     "noEmitOnError": true,
     "module": "node16",
     "moduleResolution": "node16",

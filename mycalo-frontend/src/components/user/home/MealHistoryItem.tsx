@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { MealHistoryItemProps } from "../../../types/nutrients.types";
 
-export default function MealHistoryItem({ foodName, calories, protein, carbs, fat, imageUrl, mealType, createdAt, onDelete }: MealHistoryItemProps) {
+export default function MealHistoryItem({ foodName, calories, protein, carbs, fat, imageUrl, category, mealType, createdAt, onDelete }: MealHistoryItemProps) {
   const time = new Date(createdAt).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -21,8 +21,15 @@ export default function MealHistoryItem({ foodName, calories, protein, carbs, fa
         <div className="flex-1 flex flex-col justify-center">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-medium text-slate-900 text-[15px] leading-tight">{foodName}</h3>
-              <p className="text-[11px] font-medium text-slate-400 mt-0.5 uppercase tracking-wider">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-medium text-slate-900 text-[15px] leading-tight">{foodName}</h3>
+                {category && (
+                  <span className="text-[9px] bg-slate-50 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-slate-100">
+                    {category}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] font-medium text-slate-400 mt-1.5 uppercase tracking-wider">
                 {mealType} • {time}
               </p>
             </div>

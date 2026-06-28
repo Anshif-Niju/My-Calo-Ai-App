@@ -70,12 +70,6 @@ export const doctorVerificationSchema = z.object({
   degreeCertificate: fileSchema("Degree Certificate is required"),
 
   governmentId: fileSchema("Government ID is required"),
-
-  clinicProof: z
-    .instanceof(File)
-    .refine((file) => file.size <= MAX_FILE_SIZE, "File size must be less than 5MB")
-    .refine((file) => ACCEPTED_TYPES.includes(file.type), "Only JPG, PNG, or PDF files are allowed")
-    .optional(),
 });
 
 export type DoctorVerificationInput = z.infer<typeof doctorVerificationSchema>;

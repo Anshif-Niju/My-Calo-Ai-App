@@ -49,6 +49,7 @@ Nutrition Rules:
 * Calories MUST be realistic (0–2000 kcal).
 * Protein, carbs, fat, and fiber MUST be realistic (0–150 g).
 * Default quantities and grams should reflect normal serving sizes.
+* category MUST be strictly one of: "fruit", "vegetable", "meat", "rice", "drink", "snack", "fastfood", "other". Choose the closest match logically.
 
 Respond ONLY with valid JSON exactly matching this format. Do not include null or empty values. If a value is unknown, use 0.
 
@@ -56,6 +57,7 @@ Example Output:
 {
   "isFood": true,
   "foodName": "Chicken Mandi",
+  "category": "meat",
   "confidence": "high",
   "type": "weighable",
   "defaultQuantity": 1,

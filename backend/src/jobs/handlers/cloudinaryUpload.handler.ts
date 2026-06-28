@@ -13,7 +13,7 @@ const handlers: Record<string, (entityId: string, results: UploadResults) => Pro
       await User.findByIdAndUpdate(entityId, { profilePhoto: imageUrl });
       const todayStr = new Date().toISOString().split("T")[0];
       await redis.del(`summary:${entityId}:${todayStr}`);
-      console.log(`✅ User profilePhoto updated in MongoDB with image`);
+      console.log(` User profilePhoto updated in MongoDB with image`);
     }
   },
 
@@ -23,10 +23,9 @@ const handlers: Record<string, (entityId: string, results: UploadResults) => Pro
         mcuCertificate: results.mcuCertificate?.url ?? "",
         degreeCertificate: results.degreeCertificate?.url ?? "",
         governmentId: results.governmentId?.url ?? "",
-        clinicProof: results.clinicProof?.url ?? "",
       },
     });
-    console.log(`✅ Doctor Verfication updated in MongoDB `);
+    console.log(` Doctor Verfication updated in MongoDB `);
   },
 
   MealLog: async (entityId, results) => {

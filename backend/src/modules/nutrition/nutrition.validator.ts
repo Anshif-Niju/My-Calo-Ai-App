@@ -13,6 +13,7 @@ export const logMealSchema = z.object({
     fat: z.number().min(0).max(1000),
     fiber: z.number().min(0).max(500).default(0),
     imageUrl: z.string().url().optional().or(z.literal("")),
+    category: z.enum(["fruit", "vegetable", "meat", "rice", "drink", "snack", "fastfood", "other"]).optional().default("other"),
     quantity: z.number().optional(),
     unit: z.string().optional(),
     grams: z.number().optional(),

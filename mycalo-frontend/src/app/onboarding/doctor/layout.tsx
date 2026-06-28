@@ -1,5 +1,5 @@
 "use client";
-import ProtectedRoute from "../../../components/guard/ProtectedRoute";
+import ProtectedRoute from "../../../guard/ProtectedRoute";
 
 export default function DoctorOnboardingLayout({ children }: { children: React.ReactNode }) {
   return (

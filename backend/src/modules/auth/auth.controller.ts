@@ -3,18 +3,9 @@ import * as authService from "./auth.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { setAccessTokenCookie, setRefreshCookie, clearAuthCookies } from "./auth.cookies";
 import { AuthUserPayload } from "../../types";
-import fs from "fs";
 import { User } from "../../models/User.model";
-import { MealLog } from "../../models/Meal.model";
-import { DailyLog } from "../../models/DailyLog.model";
-import { Appointment } from "../../models/Appointment.model";
-import { Booking } from "../../models/Booking.model";
-import { DoctorProfile } from "../../models/Doctor.Profile.model";
-import { DoctorVerification } from "../../models/Doctor.Verification.model";
-import { redis } from "../../config/redis";
-import { generateAccessToken } from "./auth.tokens";
 import jwt from "jsonwebtoken";
-import { cloudinaryUploadQueue } from "../../jobs/queues/cloudinaryUpload.queue";
+
 
 //Register
 
@@ -23,6 +14,7 @@ export const register = asyncHandler(async (req, res) => {
 
   res.status(201).json(result);
 });
+
 
 //Login
 
@@ -42,6 +34,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+
 //Verify User Otp
 
 export const verifyOtp = asyncHandler(async (req, res) => {
@@ -56,6 +49,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   res.status(200).json(result.data);
 });
 
+
 //Forgot Password
 
 export const forgotPassword = asyncHandler(async (req, res) => {
@@ -63,6 +57,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   res.status(200).json(result);
 });
+
 
 //Refresh Token usign Acces Token Generate
 
@@ -76,6 +71,7 @@ export const refresh = asyncHandler(async (req, res) => {
   });
 });
 
+
 //Logout
 
 export const logout = asyncHandler(async (_req, res) => {
@@ -86,6 +82,7 @@ export const logout = asyncHandler(async (_req, res) => {
   });
 });
 
+
 //Resend Otp
 
 export const resendOtp = asyncHandler(async (req, res) => {
@@ -93,6 +90,7 @@ export const resendOtp = asyncHandler(async (req, res) => {
 
   res.status(200).json(result);
 });
+
 
 //Verify Reset Otp
 
@@ -102,6 +100,7 @@ export const verifyResetOtp = asyncHandler(async (req, res) => {
   res.status(200).json(result);
 });
 
+
 //Reset Password
 
 export const resetPassword = asyncHandler(async (req, res) => {
@@ -109,6 +108,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   res.status(200).json(result);
 });
+
 
 //Setup 2 Factor Authentication
 
@@ -118,6 +118,7 @@ export const setup2FA = asyncHandler(async (req, res) => {
 
   res.status(200).json(result);
 });
+
 
 // Verify Two Factor Authentication
 
@@ -147,6 +148,7 @@ export const verify2FA = asyncHandler(async (req, res) => {
   });
 });
 
+
 //Disable 2factor Authentication
 
 export const disable2FA = asyncHandler(async (req, res) => {
@@ -160,6 +162,7 @@ export const disable2FA = asyncHandler(async (req, res) => {
     user: updatedUser,
   });
 });
+
 
 //Google Callback
 
@@ -179,6 +182,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
 
   return res.redirect(result.frontendRedirect);
 });
+
 
 //Get User Details
 

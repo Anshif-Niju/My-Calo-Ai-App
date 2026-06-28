@@ -120,10 +120,23 @@ export default function DoctorIntroSlider() {
       {/* MOBILE */}
       <div className="lg:hidden fixed inset-0 flex flex-col overflow-hidden">
         <div className="relative w-full shrink-0" style={{ height: "55%" }}>
-          <picture className="block w-full h-full">
-            <Image src={slide.mobileImage} alt={slide.title} fill className="object-cover" priority sizes="100vw" />
-          </picture>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60" />
+          <div className="block w-full h-full relative">
+            {slides.map((s, index) => (
+              <Image
+                key={s.mobileImage}
+                src={s.mobileImage}
+                alt={s.title}
+                fill
+                className={`object-cover transition-opacity duration-500 absolute inset-0 ${
+                  index === current ? "opacity-100" : "opacity-0 pointer-events-none"
+                }`}
+                priority
+                unoptimized
+                sizes="100vw"
+              />
+            ))}
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60 pointer-events-none" />
           {slide.hookText && (
             <div className="absolute bottom-20 left-5 right-5 z-10">
               <p className="text-white font-black leading-[1.1] text-2xl" style={{ fontFamily: "var(--font-head, 'Syne', sans-serif)" }}>
@@ -166,11 +179,24 @@ export default function DoctorIntroSlider() {
       {/* DESKTOP */}
       <div className="hidden lg:flex w-full h-full">
         <div className="relative w-1/2 h-full overflow-hidden">
-          <Image src={slide.desktopImage} alt={slide.title} fill className="object-cover" priority sizes="50vw" />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40" />
+          {slides.map((s, index) => (
+            <Image
+              key={s.desktopImage}
+              src={s.desktopImage}
+              alt={s.title}
+              fill
+              className={`object-cover transition-opacity duration-500 absolute inset-0 ${
+                index === current ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+              priority
+              unoptimized
+              sizes="50vw"
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40 pointer-events-none" />
           {slide.hookText && (
             <>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
               <div className="absolute bottom-12 left-10 right-10 z-10">
                 <p className="text-white font-black leading-[1.1]" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", fontFamily: "var(--font-head, 'Syne', sans-serif)" }}>
                   {slide.hookText.split(" ").slice(0, 3).join(" ")}

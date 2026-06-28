@@ -118,3 +118,85 @@ input[type="range"]::-webkit-slider-thumb {
 .pulse-lime {
   animation: pulse-lime 2s infinite;
 }
+
+/* Smooth spinner animation using GPU acceleration */
+@keyframes spin-smooth {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-smooth {
+  animation: spin-smooth 0.8s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Glowing horizontal scan line animation */
+@keyframes scan-line {
+  0% {
+    transform: translateY(0px);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(112px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0px);
+    opacity: 0.4;
+  }
+}
+.animate-scan-line {
+  animation: scan-line 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+/* Soft scan overlay pulse */
+@keyframes scan-pulse {
+  0%, 100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.animate-scan-pulse {
+  animation: scan-pulse 2.5s ease-in-out infinite;
+}
+
+/* Hide scrollbar for desktop auth form areas */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Auth page transition — slide panel left and right inside stationary card container */
+@keyframes slide-panel-from-left {
+  from { transform: translate3d(-100%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+@keyframes slide-panel-from-right {
+  from { transform: translate3d(100%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+.auth-slide-from-left-panel {
+  animation: slide-panel-from-left 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+}
+.auth-slide-from-right-panel {
+  animation: slide-panel-from-right 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+}
+
+
+/* Subtle mobile page transition fade-in */
+@keyframes auth-mobile-fade-in {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.auth-mobile-fade-in {
+  animation: auth-mobile-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+

@@ -68,19 +68,8 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
   const { data: booking, isLoading: bookingLoading } = useQuery<BookingDetails>({
     queryKey: ["booking-consultation-detail", bookingId],
     queryFn: async () => {
-      // Both roles can hit the detail route since we configured it in controller
-      const res = await api.get(`/doctors/bookings/${bookingId}/messages`);
-      // Wait, that route returns messages. Let's write a route to get booking detail or use existing.
-      // Wait, we have userChatAccess or doctorChatAccess which returns access details, or getVerificationDetail?
-      // Actually, we can get booking details from the message endpoint or getMyBookings list, or load it from a query.
-      // Let's call the message history API which we created, it returns the messages.
-      return {
-        _id: bookingId,
-        patientName: role === "doctor" ? "Patient" : "Doctor",
-        startTime: "",
-        endTime: "",
-        status: "confirmed"
-      } as any;
+      const res = await api.get(`/doctors/bookings/${bookingId}`);
+      return res.data.data;
     }
   });
 
@@ -350,10 +339,21 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
     setNewMessage("");
   };
 
+  if (bookingLoading) {
+    return (
+      <div className="h-[calc(100vh-140px)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const isSessionActive = booking?.status === "confirmed";
+
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 p-4">
       {/* LEFT PANEL: Media Call / Stream View */}
-      <div className="flex-1 flex flex-col bg-slate-900 rounded-[28px] border border-slate-800 p-6 relative overflow-hidden">
+      {isSessionActive && (
+        <div className="flex-1 flex flex-col bg-slate-900 rounded-[28px] border border-slate-800 p-6 relative overflow-hidden">
         
         {/* Connection status header */}
         <div className="flex items-center justify-between mb-4 z-10">
@@ -463,10 +463,11 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
             </button>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       {/* RIGHT PANEL: Chat Messaging Box */}
-      <div className="w-full lg:w-96 flex flex-col bg-white rounded-[28px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden">
+      <div className={`w-full ${isSessionActive ? "lg:w-96" : "flex-1"} flex flex-col bg-white rounded-[28px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden`}>
         {/* Chat header */}
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
@@ -514,22 +515,28 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
         </div>
 
         {/* Input box */}
-        <form onSubmit={sendMessage} className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
-          <input
-            type="text"
-            required
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type message here..."
-            className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition-colors"
-          >
-            Send
-          </button>
-        </form>
+        {isSessionActive ? (
+          <form onSubmit={sendMessage} className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
+            <input
+              type="text"
+              required
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type message here..."
+              className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition-colors"
+            >
+              Send
+            </button>
+          </form>
+        ) : (
+          <div className="p-4 border-t border-slate-100 bg-slate-50 text-center text-xs font-bold text-slate-400">
+            This session is completed. You are viewing the chat history.
+          </div>
+        )}
       </div>
     </div>
   );

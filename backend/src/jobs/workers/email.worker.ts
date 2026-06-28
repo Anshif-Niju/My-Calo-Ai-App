@@ -18,7 +18,7 @@ export const emailWorker = new Worker<EmailJobData>(
 
     switch (type) {
       case "verify_email":
-        // otp is guaranteed to exist for this type (TypeScript + runtime check)
+        // otp is guaranteed to exist for this type
         if (!otp) throw new Error("OTP missing for verify_email job");
         emailHtml = emailTemplate.getEmailVerificationTemplate({ name: userName, otp });
         break;

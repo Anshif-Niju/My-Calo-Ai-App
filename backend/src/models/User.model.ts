@@ -8,14 +8,21 @@ const UserSchema = new Schema<IUser>(
     password: { type: String, select: false },
     role: { type: String, enum: ["user", "doctor", "subadmin", "admin"], default: "user" },
     phone: { type: String, trim: true },
-    countryCode: { type: String, trim: true }, 
+    countryCode: { type: String, trim: true },
     isEmailVerified: { type: Boolean, default: false },
-    hasSubmittedVerification: { type: Boolean, default: false }, // for doctor verification
+    onboardingCompleted: { type: Boolean, default: false },
+    hasSubmittedVerification: { type: Boolean, default: false },
+    verificationStatus: {
+      type: String,
+      enum: ["not_submitted", "pending", "under_review", "approved", "rejected"],
+      default: function (this: any) {
+        return this.role === "doctor" ? "not_submitted" : "approved";
+      },
+    },
     isTwoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String },
     googleId: { type: String, sparse: true, unique: true },
     profilePhoto: { type: String },
-    onboardingCompleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     healthProfile: {

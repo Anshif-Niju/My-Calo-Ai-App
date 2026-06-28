@@ -26,7 +26,7 @@ export const completeDoctorIntro = async (req: Request, res: Response) => {
       updatedUser.email,
       true,
       updatedUser.hasSubmittedVerification,
-      "not_submitted"
+      updatedUser.verificationStatus
     );
     setAccessTokenCookie(res, newAccessToken);
 
@@ -47,7 +47,6 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
     const mcuPath = files?.mcuCertificate?.[0]?.path;
     const degreePath = files?.degreeCertificate?.[0]?.path;
     const governmentIdPath = files?.governmentId?.[0]?.path;
-    const clinicProofPath = files?.clinicProof?.[0]?.path;
 
     if (!mcuPath || !degreePath || !governmentIdPath) {
       return res.status(400).json({
@@ -78,7 +77,7 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
 
     const updatedUser = await User.findByIdAndUpdate(
       authUser.userId,
-      { hasSubmittedVerification: true },
+      { hasSubmittedVerification: true, verificationStatus: "pending" },
       { new: true }
     ).select("-password");
 
@@ -86,7 +85,6 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
       mcuCertificate: "",
       degreeCertificate: "",
       governmentId: "",
-      clinicProof: "",
     };
 
     await doctorProfile.save();
@@ -95,7 +93,6 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
       { fieldName: "mcuCertificate", path: mcuPath },
       { fieldName: "degreeCertificate", path: degreePath },
       { fieldName: "governmentId", path: governmentIdPath },
-      ...(clinicProofPath ? [{ fieldName: "clinicProof", path: clinicProofPath }] : []),
     ];
 
     await cloudinaryUploadQueue.add("upload-documents", {
@@ -113,7 +110,7 @@ export const completeDoctorVerification = async (req: Request, res: Response) =>
         updatedUser.email,
         updatedUser.onboardingCompleted,
         true,
-        "pending"
+        updatedUser.verificationStatus
       );
       setAccessTokenCookie(res, newAccessToken);
     }

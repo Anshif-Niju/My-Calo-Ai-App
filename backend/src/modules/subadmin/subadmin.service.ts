@@ -43,9 +43,10 @@ export const approveVerification = async (doctorId: string) => {
   verification.rejectionReason = undefined;
   await verification.save();
 
-  // Mark hasSubmittedVerification on user (already true, but ensure it)
+  // Mark hasSubmittedVerification and verificationStatus on user (already true, but ensure it)
   await User.findByIdAndUpdate(verification.userId, {
     hasSubmittedVerification: true,
+    verificationStatus: "approved",
   });
 
   return verification;
@@ -63,6 +64,11 @@ export const rejectVerification = async (doctorId: string, reason: string) => {
   verification.verificationStatus = "rejected";
   verification.rejectionReason = reason;
   await verification.save();
+
+  // Set verificationStatus on user to rejected
+  await User.findByIdAndUpdate(verification.userId, {
+    verificationStatus: "rejected",
+  });
 
   return verification;
 };
