@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { setUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,8 +49,7 @@ export default function VerifyOtpForm() {
       }
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid code. Please try again.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Invalid code. Please try again."));
     },
   });
 
@@ -63,7 +63,7 @@ export default function VerifyOtpForm() {
       setTimeLeft(60);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to resend code.");
+      toast.error(getErrorMessage(error, "Failed to resend code."));
     },
   });
 
@@ -174,3 +174,4 @@ export default function VerifyOtpForm() {
     </div>
   );
 }
+

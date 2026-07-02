@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { updateUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import Image from "next/image";
@@ -62,9 +63,7 @@ export default function DoctorIntroSlider() {
     },
 
     onError: (error: any) => {
-      const msg = error.response?.data?.message;
-
-      toast.error(typeof msg === "string" ? msg : "Something went wrong.");
+      toast.error(getErrorMessage(error, "Something went wrong."));
 
       setIsRedirecting(false);
     },
@@ -241,3 +240,4 @@ export default function DoctorIntroSlider() {
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { RootState } from "@/store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -114,7 +115,7 @@ export default function DoctorsPage() {
       setCheckoutBooking(data);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message);
+      toast.error(getErrorMessage(err));
     },
   });
 
@@ -131,7 +132,7 @@ export default function DoctorsPage() {
       queryClient.invalidateQueries({ queryKey: ["user-bookings"] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message);
+      toast.error(getErrorMessage(err));
     },
   });
 
@@ -607,3 +608,4 @@ export default function DoctorsPage() {
     </div>
   );
 }
+

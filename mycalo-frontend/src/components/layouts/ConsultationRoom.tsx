@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { RootState } from "@/store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -94,7 +95,7 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
       router.replace(role === "doctor" ? "/doctor/dashboard" : "/doctor/bookings");
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || err.message);
+      toast.error(getErrorMessage(err));
     }
   });
 
@@ -541,3 +542,4 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
     </div>
   );
 }
+

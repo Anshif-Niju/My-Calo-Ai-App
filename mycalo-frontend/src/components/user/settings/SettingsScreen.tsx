@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { useMutation } from "@tanstack/react-query";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -110,7 +111,7 @@ export default function SettingsScreen() {
       setActiveAccordion(null);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update profile.");
+      toast.error(getErrorMessage(err, "Failed to update profile."));
     },
   });
 
@@ -756,3 +757,4 @@ export default function SettingsScreen() {
     </div>
   );
 }
+

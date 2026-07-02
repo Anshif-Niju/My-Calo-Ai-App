@@ -14,10 +14,10 @@ export const getRedirectPath = (user: any) => {
   // Normal User
 
   if (user.role === "user") {
+    
     if (!user.onboardingCompleted) {
       return "/onboarding/user";
     }
-
     if (!user.hasSubmittedVerification) {
       return "/onboarding/user/profile";
     }

@@ -9,7 +9,7 @@ import { RootState } from "@/store";
 export default function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
   const { isInitialized } = useSelector((state: RootState) => state.auth);
-
+  
   useEffect(() => {
     if (isInitialized) return;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,8 +23,7 @@ export default function ForgotPasswordForm() {
       router.push(`/verify-reset-otp?type=forgot_password&email=${encodeURIComponent(email)}`);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Something went wrong."));
     },
   });
 
@@ -63,3 +63,6 @@ export default function ForgotPasswordForm() {
     </div>
   );
 }
+
+
+

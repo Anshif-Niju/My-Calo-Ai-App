@@ -12,8 +12,6 @@ export default function AuthCallbackHandler() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // The backend has already set the accessToken/refreshToken as httpOnly
-    // cookies and redirected here. We just need to fetch the user.
     const fetchUser = async () => {
       try {
         const res = await api.get("/auth/me");

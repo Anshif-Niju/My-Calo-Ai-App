@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { toast } from "sonner";
 
 interface Props {
@@ -36,7 +37,7 @@ export default function AddFoodModal({ open, onClose }: Props) {
       handleClose();
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to add food item");
+      toast.error(getErrorMessage(err, "Failed to add food item"));
     },
   });
 
@@ -235,3 +236,4 @@ export default function AddFoodModal({ open, onClose }: Props) {
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -136,8 +137,7 @@ export default function DoctorProfile() {
       toast.success("Profile details updated successfully");
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || err.message || "Failed to update profile";
-      toast.error(msg);
+      toast.error(getErrorMessage(err, "Failed to update profile"));
     },
   });
 
@@ -151,8 +151,7 @@ export default function DoctorProfile() {
       toast.success("Availability slots saved successfully");
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || err.message || "Failed to update availability";
-      toast.error(msg);
+      toast.error(getErrorMessage(err, "Failed to update availability"));
     },
   });
 
@@ -574,3 +573,4 @@ export default function DoctorProfile() {
     </div>
   );
 }
+

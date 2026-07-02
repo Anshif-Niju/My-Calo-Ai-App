@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { toast } from "sonner";
 
 interface Food {
@@ -44,7 +45,7 @@ export default function FoodTable({ foods }: Props) {
       toast.success("Food item deleted from database");
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to delete food item");
+      toast.error(getErrorMessage(err, "Failed to delete food item"));
     },
   });
 
@@ -119,3 +120,4 @@ export default function FoodTable({ foods }: Props) {
     </div>
   );
 }
+

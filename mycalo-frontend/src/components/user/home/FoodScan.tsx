@@ -16,9 +16,11 @@ function OrangeSpinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
 
   return (
     <div className={`relative ${sizeClasses[size]} flex items-center justify-center`}>
-
+      {/* Outer pulsing ring for modern visual depth */}
       <div className="absolute inset-0 rounded-full bg-orange-500/10 animate-ping opacity-75" style={{ animationDuration: "1.5s" }} />
+      {/* Soft central glowing backdrop */}
       <div className="absolute w-3/4 h-3/4 rounded-full bg-orange-500/5 blur-sm" />
+      {/* Ultra-smooth rotating gradient circle */}
       <svg
         className="w-full h-full animate-spin-smooth"
         viewBox="0 0 50 50"
@@ -78,7 +80,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
     setIsSearching(true);
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const res = await api.get(`/nutrition/search-foods?q=${searchQuery}`);
+        const res = await api.get(`/nutrition/search-foods?name=${searchQuery}`);
         setSearchResults(res.data.foods || []);
       } catch {
         toast.error("Failed to search database");
@@ -100,28 +102,28 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
 
   const calculatedNutrition = scanResult
     ? (() => {
-        if (scanResult.type === "countable") {
-          const factor = quantity;
-          const n = scanResult.nutritionPerUnit;
-          return {
-            calories: Math.round(n.calories * factor),
-            protein: Math.round(n.protein * factor * 10) / 10,
-            carbs: Math.round(n.carbs * factor * 10) / 10,
-            fat: Math.round(n.fat * factor * 10) / 10,
-            fiber: Math.round(n.fiber * factor * 10) / 10,
-          };
-        } else {
-          const factor = grams / 100;
-          const n = scanResult.nutritionPer100g;
-          return {
-            calories: Math.round(n.calories * factor),
-            protein: Math.round(n.protein * factor * 10) / 10,
-            carbs: Math.round(n.carbs * factor * 10) / 10,
-            fat: Math.round(n.fat * factor * 10) / 10,
-            fiber: Math.round(n.fiber * factor * 10) / 10,
-          };
-        }
-      })()
+      if (scanResult.type === "countable") {
+        const factor = quantity;
+        const n = scanResult.nutritionPerUnit;
+        return {
+          calories: Math.round(n.calories * factor),
+          protein: Math.round(n.protein * factor * 10) / 10,
+          carbs: Math.round(n.carbs * factor * 10) / 10,
+          fat: Math.round(n.fat * factor * 10) / 10,
+          fiber: Math.round(n.fiber * factor * 10) / 10,
+        };
+      } else {
+        const factor = grams / 100;
+        const n = scanResult.nutritionPer100g;
+        return {
+          calories: Math.round(n.calories * factor),
+          protein: Math.round(n.protein * factor * 10) / 10,
+          carbs: Math.round(n.carbs * factor * 10) / 10,
+          fat: Math.round(n.fat * factor * 10) / 10,
+          fiber: Math.round(n.fiber * factor * 10) / 10,
+        };
+      }
+    })()
     : null;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,7 +190,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
             if (!data.isFood) { toast.error(data.message || "This doesn't look like food!"); stepRef.current = "upload"; setStep("upload"); return; }
             setScanResult({ ...data }); setQuantity(data.defaultQuantity || 1); setGrams(data.defaultGrams || 100); stepRef.current = "result"; setStep("result");
           }
-        } catch {}
+        } catch { }
       };
 
       const retryTimer = setInterval(fallbackPoll, 3000);
@@ -213,7 +215,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
     setScanResult({
       isFood: true,
       foodName: food.name,
-      category: food.category,
       type: food.servingType,
       defaultQuantity: food.defaultQuantity || 1,
       defaultUnit: food.defaultUnit || "piece",
@@ -247,7 +248,6 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       const payload = {
         mealType,
         foodName: scanResult.foodName,
-        category: scanResult.category || "other",
         date,
         quantity: scanResult.type === "countable" ? quantity : 1,
         unit: scanResult.type === "countable" ? scanResult.defaultUnit : "g",
@@ -299,12 +299,12 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
               {step === "upload"
                 ? (activeTab === "scan" ? "Upload a food photo" : "Search database by name")
                 : step === "scanning"
-                ? "AI analyzing..."
-                : step === "result"
-                ? "Review nutritional content"
-                : step === "error"
-                ? "Scan failed"
-                : "Adding..."}
+                  ? "AI analyzing..."
+                  : step === "result"
+                    ? "Review nutritional content"
+                    : step === "error"
+                      ? "Scan failed"
+                      : "Adding..."}
             </p>
           </div>
           <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
@@ -317,17 +317,15 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
           <div className="flex gap-2 p-1 bg-slate-50 rounded-[18px] border border-slate-100 mb-6 shadow-inner">
             <button
               onClick={() => setActiveTab("scan")}
-              className={`flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
-                activeTab === "scan" ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
-              }`}
+              className={`flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === "scan" ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                }`}
             >
               📸 AI Scan
             </button>
             <button
               onClick={() => setActiveTab("search")}
-              className={`flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
-                activeTab === "search" ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
-              }`}
+              className={`flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === "search" ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                }`}
             >
               🔍 Search DB
             </button>
@@ -450,14 +448,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>
-                  {scanResult.category && (
-                    <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                      {scanResult.category}
-                    </span>
-                  )}
-                </div>
+                <p className="text-slate-900 font-medium text-lg leading-tight">{scanResult.foodName}</p>
                 {scanResult.imageUrl ? (
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <div className={`w-2 h-2 rounded-full ${scanResult.confidence === "high" ? "bg-emerald-400" : scanResult.confidence === "medium" ? "bg-amber-400" : "bg-red-400"}`} />

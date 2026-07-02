@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { updateUser } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { goalSchema } from "@/validators/onboarding.schema";
@@ -63,7 +64,7 @@ export default function GoalSelectionForm() {
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      toast.error(getErrorMessage(error, "Something went wrong"));
     },
   });
 
@@ -138,3 +139,4 @@ export default function GoalSelectionForm() {
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { logoutAction, updateUser } from "@/store/slices/auth.slice";
 import { doctorVerificationSchema } from "@/validators/onboarding.schema";
 import { useMutation } from "@tanstack/react-query";
@@ -86,8 +87,7 @@ export default function DoctorVerificationForm() {
       }
     },
     onError: (error: any) => {
-      const msg = error.message || error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong";
-      toast.error(msg);
+      toast.error(getErrorMessage(error, "Something went wrong"));
     },
   });
 
@@ -223,3 +223,4 @@ export default function DoctorVerificationForm() {
     </div>
   );
 }
+

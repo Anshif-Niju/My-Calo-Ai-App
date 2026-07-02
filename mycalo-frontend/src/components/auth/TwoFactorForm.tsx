@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { RootState } from "@/store";
 import { setUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
@@ -37,8 +38,7 @@ export default function TwoFactorForm() {
       else router.push("/home");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid Code. Try again";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Invalid Code. Try again"));
     },
   });
 
@@ -142,3 +142,4 @@ export default function TwoFactorForm() {
     </div>
   );
 }
+

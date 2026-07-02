@@ -1,44 +1,55 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { resetPasswordSchema, ResetPasswordFormData } from "@/validators/auth.schema";
 
 export default function NewPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetToken = searchParams.get("resetToken") || "";
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
+
   const mutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post("/auth/reset-password", { resetToken, newPassword });
+    mutationFn: async (data: ResetPasswordFormData) => {
+      const res = await api.post("/auth/reset-password", {
+        resetToken,
+        newPassword: data.newPassword,
+      });
+
       return res.data;
     },
+
     onSuccess: () => {
       router.push("/login?reset=success");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Something went wrong.";
-      toast.error(message);
+
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Something went wrong."));
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword !== confirm) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-    mutation.mutate();
-  };
+  const onSubmit = (data: ResetPasswordFormData) => {
 
+    mutation.mutate(data);
+  };
   const eyeOpen = (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -69,15 +80,14 @@ export default function NewPasswordForm() {
 
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20 space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* New Password */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">New password</label>
           <div className="relative">
             <input
               type={showNewPassword ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              {...register("newPassword")}
               placeholder="Min 8 characters"
               className="w-full px-4 py-3.5 pr-12 rounded-[16px] border border-slate-100 bg-slate-50/70 text-slate-900 font-medium text-sm focus:border-slate-950 focus:ring-2 focus:ring-slate-950/20 focus:bg-white outline-none transition-all"
             />
@@ -93,8 +103,7 @@ export default function NewPasswordForm() {
           <div className="relative">
             <input
               type={showConfirmPassword ? "text" : "password"}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              {...register("confirmPassword")}
               placeholder="Repeat your password"
               className="w-full px-4 py-3.5 pr-12 rounded-[16px] border border-slate-100 bg-slate-50/70 text-slate-900 font-medium text-sm focus:border-slate-950 focus:ring-2 focus:ring-slate-950/20 focus:bg-white outline-none transition-all"
             />
@@ -106,7 +115,7 @@ export default function NewPasswordForm() {
 
         <button
           type="submit"
-          disabled={mutation.isPending || !newPassword || !confirm}
+          disabled={mutation.isPending || !isValid}
           className="w-full h-[60px] bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-[24px] transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center text-sm">
           {mutation.isPending ? <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" /> : "Reset password"}
         </button>

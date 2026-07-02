@@ -44,12 +44,10 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-// 4. Reset Password Schema (FRONTEND - No 'body' wrapper, includes confirmPassword)
+// 4. Reset Password Schema 
 export const resetPasswordSchema = z
   .object({
-    email: z.string().email("Invalid email format"),
-    otp: z.string().length(6, "OTP must be exactly 6 digits"),
-    newPassword: passwordValidation,
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

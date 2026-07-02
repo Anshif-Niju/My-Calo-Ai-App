@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
+import { getErrorMessage } from "@/utils/errorHandler";
 import { setUser } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { useMutation } from "@tanstack/react-query";
@@ -48,8 +49,7 @@ export default function VerifyEmailForm() {
       router.replace(getRedirectPath(data.user));
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || "Invalid verification code.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Invalid verification code."));
     },
   });
 
@@ -70,7 +70,7 @@ export default function VerifyEmailForm() {
       setTimeLeft(60);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to resend code.");
+      toast.error(getErrorMessage(error, "Failed to resend code."));
     },
   });
 
@@ -196,3 +196,4 @@ export default function VerifyEmailForm() {
     </div>
   );
 }
+

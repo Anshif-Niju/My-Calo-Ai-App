@@ -19,7 +19,7 @@ router.post("/register", authLimiter, validate(zod.registerSchema), authControll
 router.post("/verify-otp", authLimiter, validate(zod.verifyOtpSchema), authController.verifyOtp);
 router.post("/resend-otp", authLimiter, validate(zod.resendOtpSchema), authController.resendOtp);
 
-// Login 
+// Login
 router.post("/login", authLimiter, validate(zod.loginSchema), authController.login);
 router.post("/refresh", authController.refresh);
 router.post("/logout", authController.logout);
