@@ -36,7 +36,8 @@ export const deleteMeal = asyncHandler(async (req, res) => {
 //Scan Food
 
 export const scanFood = asyncHandler(async (req: Request, res: Response) => {
-  const result = await nutritionService.scanFood(req.file);
+  const authUser = req.user as AuthUserPayload;
+  const result = await nutritionService.scanFood(authUser.userId, req.file);
 
   res.status(202).json(result);
 });

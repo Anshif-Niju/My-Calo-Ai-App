@@ -18,7 +18,7 @@ const DOC_FIELDS = [
   { key: "governmentId", label: "Government ID", required: true },
 ];
 
-export default function DoctorVerificationForm() {
+export default function DoctorProfileForm() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [isRedirecting, setIsRedirecting] = useState(false);

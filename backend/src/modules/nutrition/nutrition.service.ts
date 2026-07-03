@@ -299,7 +299,7 @@ export const deleteMeal = async (userId: string, mealId: string) => {
 
 //Scan Food
 
-export const scanFood = async (file?: Express.Multer.File) => {
+export const scanFood = async (userId: string, file?: Express.Multer.File) => {
   if (!file) {
     throw new AppError(400, "Image required");
   }
@@ -310,6 +310,7 @@ export const scanFood = async (file?: Express.Multer.File) => {
     "scan",
     {
       scanId,
+      userId,
       tempPath: file.path,
       mimeType: file.mimetype,
     },

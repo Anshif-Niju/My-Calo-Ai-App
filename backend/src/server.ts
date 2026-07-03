@@ -3,7 +3,7 @@ import app from "./app";
 import { connectDB } from "./config/db";
 import { env } from "./config/env";
 import { redis } from "./config/redis";
-import { initSocket } from "./config/socket";
+import { initSocket } from "./socket";
 import "./jobs/workers/cloudinary.worker";
 import "./jobs/workers/email.worker";
 import "./jobs/workers/emailNotification.worker";

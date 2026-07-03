@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { io, Socket } from "socket.io-client";
+import { getSocket, connectSocket } from "@/lib/socket";
 import { toast } from "sonner";
 
 interface Message {
@@ -58,7 +58,7 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
   const [callStatus, setCallStatus] = useState<"idle" | "calling" | "incoming" | "connected">("idle");
 
   // WebRTC & Socket refs
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -101,18 +101,13 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
 
   // Socket Connection Setup
   useEffect(() => {
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-    const socketUrl = rawApiUrl.replace("/api", "");
-
-    const socket = io(socketUrl, {
-      withCredentials: true,
-      transports: ["websocket"],
-    });
-
+    // Ensure the socket is connected (it starts with autoConnect: false)
+    connectSocket();
+    const socket = getSocket();
     socketRef.current = socket;
 
-    // Join room
-    socket.emit("join-room", { bookingId, userId: user?._id });
+    // Join the booking room — server validates the user is a participant
+    socket.emit("join-booking", { bookingId });
 
     // Handle new text messages
     socket.on("new-message", (msg: Message) => {
@@ -126,7 +121,6 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
     // WebRTC Signaling: Incoming Call
     socket.on("incoming-call", async ({ offer }) => {
       setCallStatus("incoming");
-      // Store the offer on peer connection
       const pc = getOrCreatePeerConnection();
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
     });
@@ -147,7 +141,7 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
         try {
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (e) {
-          console.error("Error adding ice candidate:", e);
+          console.error("Error adding ICE candidate:", e);
         }
       }
     });
@@ -159,17 +153,23 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
     });
 
     // WebRTC Signaling: Media state changed (remote muted/camera toggled)
-    socket.on("media-state-changed", ({ type, enabled }) => {
+    socket.on("media-state-changed", ({ type, enabled }: { type: string; enabled: boolean }) => {
       if (type === "video") {
         toast.info(enabled ? "User turned video on" : "User turned video off");
       }
     });
 
     return () => {
-      socket.disconnect();
+      // Remove booking-scoped listeners — the socket stays connected (shared singleton)
+      socket.off("new-message");
+      socket.off("incoming-call");
+      socket.off("call-answered");
+      socket.off("ice-candidate");
+      socket.off("call-ended");
+      socket.off("media-state-changed");
       cleanupCall();
     };
-  }, [bookingId, user]);
+  }, [bookingId]);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -329,9 +329,9 @@ export default function ConsultationRoom({ bookingId, role }: ConsultationRoomPr
     e.preventDefault();
     if (!newMessage.trim() || !socketRef.current) return;
 
+    // senderId is derived from the JWT on the server — never sent from the client
     socketRef.current.emit("send-message", {
       bookingId,
-      senderId: user?._id,
       senderType: role,
       message: newMessage.trim(),
       messageType: "text",

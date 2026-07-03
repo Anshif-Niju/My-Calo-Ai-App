@@ -1,25 +1,24 @@
 import fs from "fs";
 import { Worker } from "bullmq";
-import { redis } from "../../config/redis";
-import { getIO } from "../../config/socket";
-import { scanFoodWithGemini25 } from "../../service/ai/gemini25.service";
-import { scanFoodWithGemini35 } from "../../service/ai/gemini35.service";
-import { scanFoodWithGroq } from "../../service/ai/groq.service";
-import { compressImage } from "../../service/imageCompression.service";
-import { deleteTempImage } from "../../service/tempFile.service";
-import { logger } from "../../utils/logger";
-import { Foods } from "../../models/Foods.model";
-import { uploadFileToCloudinary } from "../../utils/cloudinaryUpload.util";
+import { redis } from "../../config/redis.js";
+import { getIO } from "../../socket/index.js";
+import { scanFoodWithGemini25 } from "../../service/ai/gemini25.service.js";
+import { scanFoodWithGemini35 } from "../../service/ai/gemini35.service.js";
+import { scanFoodWithGroq } from "../../service/ai/groq.service.js";
+import { compressImage } from "../../service/imageCompression.service.js";
+import { deleteTempImage } from "../../service/tempFile.service.js";
+import { logger } from "../../utils/logger.js";
+import { Foods } from "../../models/Foods.model.js";
+import { uploadFileToCloudinary } from "../../utils/cloudinaryUpload.util.js";
 
 export const foodScanWorker = new Worker(
   "food-scan",
   async (job) => {
-    const { scanId, tempPath, mimeType } = job.data;
+    const { scanId, userId, tempPath, mimeType } = job.data;
 
-    logger.info(`🔍 Processing food scan [${scanId}]`);
+    logger.info(`🔍 Processing food scan [${scanId}] for user [${userId}]`);
 
     try {
-
       const compressedBuffer = await compressImage(tempPath);
 
       // Overwrite temp file with the compressed version
@@ -27,33 +26,37 @@ export const foodScanWorker = new Worker(
 
       const imageBase64 = compressedBuffer.toString("base64");
 
-      // Ai Worker
+      // AI Worker — Groq first, then Gemini parallel fallback
       const runWithFallback = async (imageBase64: string, mimeType: string) => {
-        // Step 1: Groq alone try
         try {
           const result = await scanFoodWithGroq(imageBase64, mimeType);
-          console.log(" Groq Ai Completed ");
+          logger.info("Groq AI completed scan");
           return result;
-        } catch (groqError) {
-          console.warn(" Groq failed, trying Gemini fallback...");
+        } catch {
+          logger.warn("Groq failed — trying Gemini fallback");
         }
 
-        // Step 2: Groq failed — now Gemini both parallel
-        return Promise.any([scanFoodWithGemini25(imageBase64, mimeType), scanFoodWithGemini35(imageBase64, mimeType)]);
+        return Promise.any([
+          scanFoodWithGemini25(imageBase64, mimeType),
+          scanFoodWithGemini35(imageBase64, mimeType),
+        ]);
       };
 
       const result = await runWithFallback(imageBase64, mimeType);
 
-      // Store result in Redis (kept as fallback if socket disconnects)
+      // Store result in Redis (fallback if socket event is missed)
       await redis.set(`scan-result:${scanId}`, JSON.stringify(result), "EX", 300);
 
+      // Emit directly to the authenticated user's personal room
+      // Frontend listens for "food-scan-completed" (stable event name)
       try {
-        getIO().emit(`scan:complete:${scanId}`, { status: "done", data: result });
-        logger.info(` Socket event emitted [scan:complete:${scanId}]`);
+        getIO().to(userId).emit("food-scan-completed", { scanId, data: result });
+        logger.info(`📡 Emitted food-scan-completed to user [${userId}] scan [${scanId}]`);
       } catch {
         logger.warn("Socket.IO not ready — frontend will fallback to Redis poll");
       }
 
+      // Auto-register newly identified foods in the database
       if (result && result.isFood && result.foodName) {
         try {
           const trimmedName = result.foodName.trim();
@@ -63,15 +66,14 @@ export const foodScanWorker = new Worker(
           });
 
           if (!exists) {
-            let uploadedImageUrl = undefined;
+            let uploadedImageUrl: string | undefined;
 
             try {
-              // Upload the compressed scanned image from tempPath to Cloudinary
               const uploadResult = await uploadFileToCloudinary(tempPath, "foods");
               uploadedImageUrl = uploadResult.url;
               logger.info(`📸 Scanned food image uploaded to Cloudinary: ${uploadedImageUrl}`);
             } catch (uploadError) {
-              logger.error(`⚠️ Cloudinary upload failed for auto-registered food "${trimmedName}":`, uploadError);
+              logger.error(`⚠️ Cloudinary upload failed for "${trimmedName}":`, uploadError);
             }
 
             await Foods.create({
@@ -86,26 +88,23 @@ export const foodScanWorker = new Worker(
               imageUrl: uploadedImageUrl,
               isActive: true,
             });
-            logger.info(` Automatically added newly scanned food "${trimmedName}" to database`);
+            logger.info(`✅ Auto-registered new food "${trimmedName}" in database`);
           }
         } catch (dbError) {
-          logger.error(` Failed to automatically add scanned food "${result.foodName}" to database:`, dbError);
+          logger.error(`Failed to auto-register food "${result.foodName}":`, dbError);
         }
       }
 
-      logger.info(` Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);
+      logger.info(`✅ Scan complete [${scanId}]: ${result.isFood ? result.foodName : "not food"}`);
 
       return result;
     } finally {
-
       await deleteTempImage(tempPath);
     }
   },
   {
     connection: redis as any,
-
     concurrency: 5,
-
     limiter: {
       max: 10,
       duration: 1000,
@@ -114,26 +113,21 @@ export const foodScanWorker = new Worker(
 );
 
 foodScanWorker.on("failed", async (job, err) => {
-  logger.error(` Food scan failed [${job?.id}]`, err);
-
-
+  logger.error(`❌ Food scan failed [${job?.id}]`, err);
 
   if (job) {
+    const { scanId, userId } = job.data;
+
     const errorPayload = {
       error: true,
       message: "All AI providers failed. Please try again.",
     };
 
-    await redis.set(
-      `scan-result:${job.data.scanId}`,
-      JSON.stringify(errorPayload),
-      "EX",
-      300,
-    );
+    await redis.set(`scan-result:${scanId}`, JSON.stringify(errorPayload), "EX", 300);
 
-    // Push failure instantly to frontend
+    // Push failure to the user's personal room
     try {
-      getIO().emit(`scan:complete:${job.data.scanId}`, { status: "done", data: errorPayload });
+      getIO().to(userId).emit("food-scan-completed", { scanId, data: errorPayload });
     } catch {
       // Socket not ready — frontend timeout will handle it
     }

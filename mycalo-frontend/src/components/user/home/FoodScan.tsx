@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axios";
-import { getSocket } from "@/lib/socket";
+import { getSocket, connectSocket } from "@/lib/socket";
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -95,7 +95,7 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
   const clearTimers = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (socketEventRef.current) {
-      getSocket().off(socketEventRef.current);
+      getSocket().off("food-scan-completed");
       socketEventRef.current = null;
     }
   };
@@ -151,12 +151,19 @@ export default function FoodScanModal({ mealType, date, onClose, onAdded }: Prop
       });
 
       const { scanId } = res.data;
-      const eventName = `scan:complete:${scanId}`;
-      socketEventRef.current = eventName;
 
+      // Ensure the socket is connected before attaching the listener
+      connectSocket();
       const socket = getSocket();
 
-      socket.on(eventName, ({ data }: { status: string; data: any }) => {
+      // Mark that we have an active listener (used by clearTimers)
+      socketEventRef.current = "food-scan-completed";
+
+      // The server emits to the user's personal room — filter by scanId in payload
+      socket.on("food-scan-completed", ({ scanId: eventScanId, data }: { scanId: string; data: any }) => {
+        // Ignore events belonging to a different scan (e.g. concurrent uploads)
+        if (eventScanId !== scanId) return;
+
         clearTimers();
 
         if (data?.error) {
