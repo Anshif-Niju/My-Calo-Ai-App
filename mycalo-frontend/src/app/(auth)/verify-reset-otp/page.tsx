@@ -1,4 +1,4 @@
-import VerifyResetOtpForm from "@/components/auth/VerifyResetOtpForm";
+import VerifyResetOtpForm from "@/components/auth/VerifyResetOtp";
 import { Suspense } from "react";
 
 export default function VerifyResetOtpPage() {

@@ -9,10 +9,6 @@ import { useSelector } from "react-redux";
 export default function GuestRoute({ children }: { children: React.ReactNode }) {
   const { isInitialized, user } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
-  console.log("GuestRoute Render", {
-    isInitialized,
-    user,
-  });
 
   useEffect(() => {
     if (isInitialized && user) {

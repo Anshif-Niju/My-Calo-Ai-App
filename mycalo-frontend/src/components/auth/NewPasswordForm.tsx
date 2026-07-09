@@ -8,7 +8,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { resetPasswordSchema, ResetPasswordFormData } from "@/validators/auth.schema";
 
 export default function NewPasswordForm() {
@@ -27,9 +26,9 @@ export default function NewPasswordForm() {
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const mutation = useMutation({
+  const newPasswordMutation = useMutation({
     mutationFn: async (data: ResetPasswordFormData) => {
-      const res = await api.post("/auth/reset-password", {
+      const res = await api.post("/auth/new-password", {
         resetToken,
         newPassword: data.newPassword,
       });
@@ -47,8 +46,7 @@ export default function NewPasswordForm() {
   });
 
   const onSubmit = (data: ResetPasswordFormData) => {
-
-    mutation.mutate(data);
+    newPasswordMutation.mutate(data);
   };
   const eyeOpen = (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -88,9 +86,13 @@ export default function NewPasswordForm() {
             <input
               type={showNewPassword ? "text" : "password"}
               {...register("newPassword")}
+              autoComplete="new-password"
+              autoFocus
               placeholder="Min 8 characters"
               className="w-full px-4 py-3.5 pr-12 rounded-[16px] border border-slate-100 bg-slate-50/70 text-slate-900 font-medium text-sm focus:border-slate-950 focus:ring-2 focus:ring-slate-950/20 focus:bg-white outline-none transition-all"
             />
+            {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
+
             <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
               {showNewPassword ? eyeOpen : eyeOff}
             </button>
@@ -104,9 +106,11 @@ export default function NewPasswordForm() {
             <input
               type={showConfirmPassword ? "text" : "password"}
               {...register("confirmPassword")}
+              autoComplete="new-password"
               placeholder="Repeat your password"
               className="w-full px-4 py-3.5 pr-12 rounded-[16px] border border-slate-100 bg-slate-50/70 text-slate-900 font-medium text-sm focus:border-slate-950 focus:ring-2 focus:ring-slate-950/20 focus:bg-white outline-none transition-all"
             />
+            {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
             <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
               {showConfirmPassword ? eyeOpen : eyeOff}
             </button>
@@ -115,9 +119,9 @@ export default function NewPasswordForm() {
 
         <button
           type="submit"
-          disabled={mutation.isPending || !isValid}
+          disabled={newPasswordMutation.isPending || !isValid}
           className="w-full h-[60px] bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-[24px] transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center text-sm">
-          {mutation.isPending ? <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" /> : "Reset password"}
+          {newPasswordMutation.isPending ? <div className="w-6 h-6 border-2 border-slate-400 border-t-white rounded-full animate-spin" /> : "Reset password"}
         </button>
       </form>
     </div>

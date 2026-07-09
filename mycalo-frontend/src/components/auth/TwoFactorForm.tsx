@@ -14,7 +14,6 @@ export default function TwoFactorForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
-  const { tempToken } = useSelector((state: RootState) => state.auth);
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [activeInput, setActiveInput] = useState(0);
@@ -23,8 +22,7 @@ export default function TwoFactorForm() {
   const verifyMutation = useMutation({
     mutationFn: async (token: string) => {
       const res = await api.post("/auth/verify-2fa", {
-        token,
-        tempToken,
+        token
       });
       return res.data;
     },

@@ -18,6 +18,7 @@ const passwordValidation = z
   );
 
 // 1. Login Schema
+
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -39,12 +40,16 @@ export const registerSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
 // 3. Forgot Password Schema
+
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
 });
 
-// 4. Reset Password Schema 
+
+// 4. Reset Password Schema
+
 export const resetPasswordSchema = z
   .object({
     newPassword: z.string().min(8, "Password must be at least 8 characters"),
@@ -55,17 +60,22 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+
 // 5. Verify Email Schema
+
 export const verifyEmailSchema = z.object({
   email: z.string().email("Invalid email format"),
   otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
+
 // 6. Resend OTP Schema
+
 export const resendOtpSchema = z.object({
   email: z.string().email("Invalid email format"),
   type: z.enum(["email_verify", "forgot_password"]),
 });
+
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;

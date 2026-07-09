@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as authService from "./auth.service";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { setAccessTokenCookie, setRefreshCookie, clearAuthCookies } from "./auth.cookies";
+import { setAccessTokenCookie, setRefreshCookie, clearAuthCookies, setTemp2FACookie } from "./auth.cookies";
 import { AuthUserPayload } from "../../types";
 import fs from "fs";
 import { User } from "../../models/User.model";
@@ -29,12 +29,15 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.login(req.body.email, req.body.password);
 
   if ("requiresTwoFactor" in result) {
-    return res.status(200).json(result);
+    setTemp2FACookie(res, result.tempToken!);
+    return res.status(200).json({
+      requiresTwoFactor: true,
+    });
   }
 
-  setAccessTokenCookie(res, result.accessToken);
+  setAccessTokenCookie(res, result.accessToken!);
 
-  setRefreshCookie(res, result.refreshToken);
+  setRefreshCookie(res, result.refreshToken!);
 
   res.status(200).json({
     user: result.user,
@@ -63,18 +66,6 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   res.status(200).json(result);
 });
 
-//Refresh Token usign Acces Token Generate
-
-export const refresh = asyncHandler(async (req, res) => {
-  const result = await authService.refresh(req.cookies.refreshToken);
-
-  setAccessTokenCookie(res, result.accessToken);
-
-  res.status(200).json({
-    user: result.user,
-  });
-});
-
 //Logout
 
 export const logout = asyncHandler(async (_req, res) => {
@@ -93,18 +84,10 @@ export const resendOtp = asyncHandler(async (req, res) => {
   res.status(200).json(result);
 });
 
-//Verify Reset Otp
-
-export const verifyResetOtp = asyncHandler(async (req, res) => {
-  const result = await authService.verifyResetOtp(req.body);
-
-  res.status(200).json(result);
-});
-
 //Reset Password
 
-export const resetPassword = asyncHandler(async (req, res) => {
-  const result = await authService.resetPassword(req.body);
+export const newPassword = asyncHandler(async (req, res) => {
+  const result = await authService.newPassword(req.body);
 
   res.status(200).json(result);
 });
@@ -164,17 +147,29 @@ export const googleCallback = asyncHandler(async (req, res) => {
   return res.redirect(result.frontendRedirect);
 });
 
+//Refresh Token usign Acces Token Generate
+
+export const refresh = asyncHandler(async (req, res) => {
+  const { userId } = req.user as AuthUserPayload;
+  const result = await authService.refresh(userId);
+
+  setAccessTokenCookie(res, result.accessToken);
+
+  res.status(200).json({
+    user: result.user,
+  });
+});
+
 //Get User Details
 
 export const getMe = asyncHandler(async (req, res) => {
-  const authUser = req.user as AuthUserPayload;
-  const user = await authService.getMe(authUser.userId);
+  const { userId } = req.user as AuthUserPayload;
+  const user = await authService.getMe(userId);
 
   res.status(200).json({
     user,
   });
 });
-
 
 // Update Profile (Settings)
 
@@ -204,7 +199,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   // Recalculate targets if any health metrics change
-  const hasHealthOrGoalChanges = 
+  const hasHealthOrGoalChanges =
     req.body.height !== undefined ||
     req.body.weight !== undefined ||
     req.body.age !== undefined ||
@@ -228,9 +223,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
       const heightInMeters = height / 100;
       const bmi = parseFloat((weight / (heightInMeters * heightInMeters)).toFixed(1));
 
-      const bmr = gender === "male"
-        ? Math.round(88.362 + 13.397 * weight + 4.799 * height - 5.677 * age)
-        : Math.round(447.593 + 9.247 * weight + 3.098 * height - 4.33 * age);
+      const bmr = gender === "male" ? Math.round(88.362 + 13.397 * weight + 4.799 * height - 5.677 * age) : Math.round(447.593 + 9.247 * weight + 3.098 * height - 4.33 * age);
 
       const multipliers: Record<string, number> = {
         sedentary: 1.2,
@@ -255,14 +248,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   await user.save();
 
   // Re-issue Express access token
-  const newAccessToken = generateAccessToken(
-    user._id.toString(),
-    user.role,
-    user.email,
-    user.onboardingCompleted,
-    user.hasSubmittedVerification,
-    "not_submitted"
-  );
+  const newAccessToken = generateAccessToken(user._id.toString(), user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, "not_submitted");
   setAccessTokenCookie(res, newAccessToken);
 
   // Invalidate Redis dashboard summary cache

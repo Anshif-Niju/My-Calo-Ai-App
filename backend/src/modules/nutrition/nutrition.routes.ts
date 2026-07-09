@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { authenticate, validate } from "../../middlewares/authenticate";
+import { verifyAccessToken } from "../../middlewares/authenticate.middleware";
+import { validate } from "../../middlewares/validate.middleware";
 import { createDiskUploader } from "../../middlewares/upload.middleware";
 import { deleteMeal, getDashboard, getScanResult, logMeal, scanFood, searchFoods } from "./nutrition.controller";
 import { logMealSchema } from "./nutrition.validator";
@@ -12,10 +13,10 @@ const foodScanUpload = createDiskUploader("food-scanning", 10, (_req, file, cb) 
   else cb(new Error("Only images allowed"));
 });
 
-router.get("/dashboard", authenticate, getDashboard);
+router.get("/dashboard", verifyAccessToken, getDashboard);
 router.post(
   "/log-meal",
-  authenticate,
+  verifyAccessToken,
   foodScanUpload.single("image"),
   (req, res, next) => {
     if (req.body.data) {
@@ -30,9 +31,9 @@ router.post(
   validate(logMealSchema),
   logMeal,
 );
-router.delete("/meal/:id", authenticate, deleteMeal);
-router.post("/scan-food", authenticate, foodScanUpload.single("image"), scanFood);
-router.get("/scan-result/:jobId", authenticate, getScanResult);
-router.get("/search-foods", authenticate, searchFoods);
+router.delete("/meal/:id", verifyAccessToken, deleteMeal);
+router.post("/scan-food", verifyAccessToken, foodScanUpload.single("image"), scanFood);
+router.get("/scan-result/:jobId", verifyAccessToken, getScanResult);
+router.get("/search-foods", verifyAccessToken, searchFoods);
 
 export default router;

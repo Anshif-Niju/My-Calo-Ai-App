@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { authenticate, validate } from "../../middlewares/authenticate";
+import { verifyAccessToken } from "../../middlewares/authenticate.middleware";
+import { validate } from "../../middlewares/validate.middleware";
 import { createDiskUploader } from "../../middlewares/upload.middleware";
 import * as settingsController from "./settings.controller";
 import * as zod from "./settings.validator";
@@ -14,7 +15,7 @@ const profileUpload = createDiskUploader("profiles", 5, (_req, file, cb) => {
 // Profile Update
 router.patch(
   "/profile",
-  authenticate,
+  verifyAccessToken,
   profileUpload.single("image"),
   (req, res, next) => {
     if (req.body.data) {
@@ -27,10 +28,10 @@ router.patch(
     next();
   },
   validate(zod.updateProfileSchema),
-  settingsController.updateProfile
+  settingsController.updateProfile,
 );
 
 // Account Deletion
-router.delete("/account", authenticate, settingsController.deleteAccount);
+router.delete("/account", verifyAccessToken, settingsController.deleteAccount);
 
 export default router;

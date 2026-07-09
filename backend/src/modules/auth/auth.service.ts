@@ -13,13 +13,9 @@ import { generateOTP } from "../../utils/otp.utils";
 import type { LoginInput, RegisterInput } from "./auth.validator";
 import { generateAccessToken, generateRefreshToken, generateTemp2FAToken } from "./auth.tokens";
 
-
-//Login
-
+// Login
 export const login = async (email: string, password: string) => {
-  const user = await User.findOne({
-    email,
-  }).select("+password");
+  const user = await User.findOne({ email }).select("+password").lean();
 
   if (!user || !user.password) {
     throw new AppError(401, "Invalid credentials");
@@ -41,29 +37,22 @@ export const login = async (email: string, password: string) => {
 
   if (user.isTwoFactorEnabled) {
     return {
-      requiresTwoFactor: true,
-      tempToken: generateTemp2FAToken(user.id),
+      tempToken: generateTemp2FAToken(user._id.toString()),
     };
   }
 
-  const accessToken = generateAccessToken(
-    user.id,
-    user.role,
-    user.email,
-    user.onboardingCompleted,
-    user.hasSubmittedVerification,
-    user.verificationStatus
-  );
+  const accessToken = generateAccessToken(user._id.toString(), user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, user.verificationStatus);
 
-  const refreshToken = generateRefreshToken(user.id);
+  const refreshToken = generateRefreshToken(user._id.toString());
+
+const { password: _, ...safeUser } = user;
 
   return {
     accessToken,
     refreshToken,
-    user,
+    user:safeUser
   };
 };
-
 
 //Register
 
@@ -117,13 +106,13 @@ export const register = async (payload: RegisterInput) => {
   };
 };
 
-
 //Verify User Otp
 
-export const verifyOtp = async (payload: { email: string; otp: string; type: string }) => {
+export const verifyOtp = async (payload: { email: string; otp: string; type: "email_verify" | "password_reset" }) => {
   const { email, otp, type } = payload;
 
-  const storedOtp = await redis.get(`otp:${email}:${type}`);
+  const otpKey = `otp:${email}:${type}`;
+  const storedOtp = await redis.get(otpKey);
 
   if (!storedOtp) {
     throw new AppError(400, "OTP expired. Please request a new one.");
@@ -133,39 +122,22 @@ export const verifyOtp = async (payload: { email: string; otp: string; type: str
     throw new AppError(400, "Incorrect OTP");
   }
 
-  await redis.del(`otp:${email}:${type}`);
+  await redis.del(otpKey);
 
   if (type === "email_verify") {
-    const user = await User.findOneAndUpdate(
-      { email },
-      {
-        isEmailVerified: true,
-      },
-      {
-        returnDocument: "after",
-      },
-    );
+    const user = await User.findOneAndUpdate({ email }, { isEmailVerified: true }, { returnDocument: "after" }).lean();
 
     if (!user) {
       throw new AppError(404, "User not found");
     }
 
     return {
-        accessToken: generateAccessToken(
-          user.id,
-          user.role,
-          user.email,
-          user.onboardingCompleted,
-          user.hasSubmittedVerification,
-          user.verificationStatus
-        ),
-
-        refreshToken: generateRefreshToken(user.id),
-
-        data: {
-          user,
-        },
-      };
+      accessToken: generateAccessToken(user._id.toString(), user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, user.verificationStatus),
+      refreshToken: generateRefreshToken(user._id.toString()),
+      data: {
+        user,
+      },
+    };
   }
 
   const resetToken = jwt.sign({ email }, env.JWT_SECRET, {
@@ -179,16 +151,13 @@ export const verifyOtp = async (payload: { email: string; otp: string; type: str
   };
 };
 
-
 //Forgot Password
 
 export const forgotPassword = async (email: string) => {
-  const user = await User.findOne({
-    email,
-  });
+  const user = await User.findOne({ email }).lean();
 
   if (!user) {
-    throw new AppError(400, "This email is not registered");
+    throw new AppError(400, "If an account exists, we've sent a reset code.");
   }
 
   const otp = generateOTP();
@@ -203,38 +172,7 @@ export const forgotPassword = async (email: string) => {
   });
 
   return {
-    message: "OTP sent.",
-  };
-};
-
-
-//Refresh Token Acces Token Genrating
-
-export const refresh = async (refreshToken: string) => {
-  if (!refreshToken) {
-    throw new AppError(401, "No refresh token provided");
-  }
-
-  const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
-    userId: string;
-  };
-
-  const user = await User.findById(decoded.userId).lean();
-
-  if (!user) {
-    throw new AppError(401, "User not found");
-  }
-
-  return {
-    accessToken: generateAccessToken(
-      user._id.toString(),
-      user.role,
-      user.email,
-      user.onboardingCompleted,
-      user.hasSubmittedVerification,
-      user.verificationStatus
-    ),
-    user,
+    message: "OTP sent to your email",
   };
 };
 
@@ -256,9 +194,7 @@ export const resendOtp = async (payload: ResendOtpPayload) => {
     throw new AppError(429, "Too many OTP requests");
   }
 
-  const user = await User.findOne({
-    email,
-  });
+  const user = await User.findOne({ email }).lean();
 
   if (!user) {
     return {
@@ -284,31 +220,9 @@ export const resendOtp = async (payload: ResendOtpPayload) => {
   };
 };
 
-
-//VerifyResetOtp
-
-export const verifyResetOtp = async (payload: VerifyResetOtpPayload) => {
-  const { email, otp } = payload;
-
-  const storedOtp = await redis.get(`otp:${email}:forgot_password`);
-
-  if (storedOtp !== otp) {
-    throw new AppError(400, "Incorrect or expired OTP");
-  }
-
-  const resetToken = jwt.sign({ email }, env.JWT_SECRET, {
-    expiresIn: "10m",
-  });
-
-  return {
-    resetToken,
-  };
-};
-
-
 //ResetPassword
 
-export const resetPassword = async (payload: ResetPasswordPayload) => {
+export const newPassword = async (payload: ResetPasswordPayload) => {
   const { resetToken, newPassword } = payload;
 
   const decoded = jwt.verify(resetToken, env.JWT_SECRET) as {
@@ -349,14 +263,7 @@ export const googleCallback = async (user: any): Promise<GoogleCallbackResult> =
     };
   }
 
-  const accessToken = generateAccessToken(
-    user._id.toString(),
-    user.role,
-    user.email,
-    user.onboardingCompleted,
-    user.hasSubmittedVerification,
-    user.verificationStatus
-  );
+  const accessToken = generateAccessToken(user._id.toString(), user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, user.verificationStatus);
 
   const refreshToken = generateRefreshToken(user._id.toString());
 
@@ -372,7 +279,6 @@ export const googleCallback = async (user: any): Promise<GoogleCallbackResult> =
     frontendRedirect: `${env.FRONTEND_URL}/google-callback`,
   };
 };
-
 
 //Setup2FA
 
@@ -399,19 +305,12 @@ export const setup2FA = async (authUser: AuthUserPayload) => {
   };
 };
 
-
 //Verify2FA
 
 export const verify2FA = async (payload: Verify2FAPayload, authUser?: AuthUserPayload) => {
   let userId = authUser?.userId;
 
-  const { token, tempToken } = payload;
-
-  if (tempToken) {
-    const decoded = jwt.verify(tempToken, env.JWT_2FA_TEMP_SECRET) as any;
-
-    userId = decoded.userId;
-  }
+  const { token } = payload;
 
   const user = await User.findById(userId);
 
@@ -435,21 +334,13 @@ export const verify2FA = async (payload: Verify2FAPayload, authUser?: AuthUserPa
   await user.save();
 
   return {
-    accessToken: generateAccessToken(
-      user.id,
-      user.role,
-      user.email,
-      user.onboardingCompleted,
-      user.hasSubmittedVerification,
-      user.verificationStatus
-    ),
+    accessToken: generateAccessToken(user.id, user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, user.verificationStatus),
 
     refreshToken: generateRefreshToken(user.id),
 
     user,
   };
 };
-
 
 //Disable2FA
 
@@ -477,7 +368,6 @@ export const disable2FA = async (authUser: AuthUserPayload, password: string) =>
   };
 };
 
-
 //Get User details
 
 export const getMe = async (userId: string) => {
@@ -488,4 +378,21 @@ export const getMe = async (userId: string) => {
   }
 
   return user;
+};
+
+
+//Refresh Token Acces Token Genrating
+
+export const refresh = async (userId: string) => {
+
+  const user = await User.findById(userId).lean();
+
+  if (!user) {
+    throw new AppError(401, "User not found");
+  }
+
+  return {
+    accessToken: generateAccessToken(user._id.toString(), user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, user.verificationStatus),
+    user,
+  };
 };

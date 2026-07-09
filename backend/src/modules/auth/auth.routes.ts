@@ -1,18 +1,13 @@
 import { Router } from "express";
 import passport from "passport";
 import "../../config/passport";
-import { authenticate, validate } from "../../middlewares/authenticate";
+import { verifyAccessToken,verifyRefreshToken,verifyTemp2FAToken} from "../../middlewares/authenticate.middleware";
+import { validate } from "../../middlewares/validate.middleware";
 import { authLimiter } from "../../middlewares/rateLimiter";
-import { createDiskUploader } from "../../middlewares/upload.middleware";
 import * as authController from "./auth.controller";
 import * as zod from "./auth.validator";
 
 const router = Router();
-
-const profileUpload = createDiskUploader("profiles", 5, (_req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) cb(null, true);
-  else cb(new Error("Only images allowed"));
-});
 
 // Registration
 router.post("/register", authLimiter, validate(zod.registerSchema), authController.register);
@@ -21,25 +16,23 @@ router.post("/resend-otp", authLimiter, validate(zod.resendOtpSchema), authContr
 
 // Login
 router.post("/login", authLimiter, validate(zod.loginSchema), authController.login);
-router.post("/refresh", authController.refresh);
+router.post("/refresh",verifyRefreshToken, authController.refresh);
 router.post("/logout", authController.logout);
 
 // Password Recovery
 router.post("/forgot-password", authLimiter, validate(zod.forgotPasswordSchema), authController.forgotPassword);
-router.post("/reset-password", authLimiter, validate(zod.resetPasswordSchema), authController.resetPassword);
+router.post("/new-password", authLimiter, validate(zod.resetPasswordSchema), authController.newPassword);
 
 // 2FA
-router.post("/setup-2fa", authenticate, authController.setup2FA);
-router.post("/verify-2fa", validate(zod.twoFactorVerifySchema), authController.verify2FA);
-router.post("/disable-2fa", authenticate, validate(zod.disable2FASchema), authController.disable2FA);
+router.post("/setup-2fa", verifyAccessToken, authController.setup2FA);
+router.post("/verify-2fa",verifyTemp2FAToken, validate(zod.twoFactorVerifySchema), authController.verify2FA);
+router.post("/disable-2fa", verifyAccessToken, validate(zod.disable2FASchema), authController.disable2FA);
 
 // Google OAuth
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
 router.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login", session: false }), authController.googleCallback);
 
 // User Detail
-router.get("/me", authenticate, authController.getMe);
-
-
+router.get("/me", verifyAccessToken, authController.getMe);
 
 export default router;

@@ -1,4 +1,3 @@
-import React from "react";
 import AuthContainer from "@/components/auth/AuthContainer";
 import { Metadata } from "next";
 
@@ -10,4 +9,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return <AuthContainer initialMode="login" />;
 }
+
+
+
 

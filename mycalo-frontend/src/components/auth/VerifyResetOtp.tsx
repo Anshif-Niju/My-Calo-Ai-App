@@ -2,71 +2,83 @@
 
 import { api } from "@/lib/axios";
 import { getErrorMessage } from "@/utils/errorHandler";
-import { setUser } from "@/store/slices/auth.slice";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
 import { toast } from "sonner";
-import { getRedirectPath } from "../../utils/getRedirectPath";
+import Link from "next/link";
+
+
+const OTP_LENGTH = 6;
+const RESEND_TIME = 60;
+const OTP_TYPE = "forgot_password";
+
 
 export default function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dispatch = useDispatch();
 
   const email = searchParams.get("email") || "";
-  const type = searchParams.get("type") as "email_verify" | "forgot_password";
 
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
-  const [activeInput, setActiveInput] = useState<number>(0);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(60);
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const [timeLeft, setTimeLeft] = useState<number>(RESEND_TIME);
 
+    const resetOtp = () => {
+    setOtp(Array(OTP_LENGTH).fill(""));
+    setTimeLeft(RESEND_TIME);
+    inputRefs.current[0]?.focus();
+  };
+
+  // 1 min showing for resend
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   useEffect(() => {
     if (timeLeft <= 0) return;
-    const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+    const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
+
+  // NEW: Auto-focus the first input box on page load
   useEffect(() => {
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
   }, []);
 
+  // Verify Otp Mutation
   const verifyMutation = useMutation({
-    mutationFn: async (data: { email: string; otp: string; type: string }) => {
-      const res = await api.post("/auth/verify-otp", data);
+    mutationFn: async ({ otp }: { otp: string }) => {
+      const res = await api.post("/auth/verify-otp", {
+        email: email,
+        otp: otp,
+        type: OTP_TYPE,
+      });
       return res.data;
     },
     onSuccess: (data) => {
-      if (type === "email_verify") {
-        dispatch(setUser({ user: data.user }));
-        router.push(getRedirectPath(data.user));
-      } else {
-        router.push(`/new-password?resetToken=${encodeURIComponent(data.resetToken)}`);
-      }
+      router.push(`/new-password?resetToken=${encodeURIComponent(data.resetToken)}`);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Invalid code. Please try again."));
     },
   });
 
+  // Resend Mutation
   const resendMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post("/auth/resend-otp", { email, type });
+      const res = await api.post("/auth/resend-otp", { email, type: OTP_TYPE });
       return res.data;
     },
     onSuccess: () => {
-      setSuccessMessage("A new code has been sent!");
-      setTimeLeft(60);
+      toast.success("A new code has been sent.");
+
+  resetOtp()
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed to resend code."));
     },
   });
 
+  // Otp Inbox next going
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const value = e.target.value;
     if (!/^[0-9]*$/.test(value)) return;
@@ -74,18 +86,18 @@ export default function VerifyOtpForm() {
     newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
     if (value && index < 5) {
-      setActiveInput(index + 1);
       inputRefs.current[index + 1]?.focus();
     }
   };
 
+  // Otp Inbox Back going
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      setActiveInput(index - 1);
       inputRefs.current[index - 1]?.focus();
     }
   };
 
+  // Otp Copy and Paste
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text/plain").slice(0, 6).split("");
@@ -96,28 +108,27 @@ export default function VerifyOtpForm() {
     });
     setOtp(newOtp);
     const focusIndex = Math.min(pastedData.length, 5);
-    setActiveInput(focusIndex);
     inputRefs.current[focusIndex]?.focus();
   };
 
+  // On Submit
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMessage(null);
     const otpString = otp.join("");
     if (otpString.length !== 6) {
       toast.error("Please enter all 6 digits.");
       return;
     }
-    verifyMutation.mutate({ email, otp: otpString, type });
+    verifyMutation.mutate({ otp: otpString });
   };
 
-  if (!email || !type) {
+  if (!email) {
     return (
       <div className="w-full bg-white p-8 rounded-[32px] text-center border border-slate-100">
         <p className="text-slate-500 font-medium text-sm">Invalid request. Please try again.</p>
-        <button onClick={() => router.push("/login")} className="mt-4 text-slate-950 font-bold underline">
+        <Link href="/login" className="mt-4 text-slate-950 font-bold underline">
           Back to login
-        </button>
+        </Link>
       </div>
     );
   }
@@ -129,8 +140,6 @@ export default function VerifyOtpForm() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        {successMessage && <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-[16px] text-xs font-semibold text-emerald-600 text-center animate-in fade-in zoom-in duration-300">{successMessage}</div>}
-
         <div className="flex justify-between gap-2 sm:gap-3" onPaste={handlePaste}>
           {otp.map((digit, index) => (
             <input
@@ -139,15 +148,27 @@ export default function VerifyOtpForm() {
                 inputRefs.current[index] = el;
               }}
               type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(e, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              onFocus={() => setActiveInput(index)}
-              className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-black rounded-2xl border transition-all outline-none
-    ${activeInput === index ? "border-slate-950 ring-2 ring-slate-950/20 bg-white" : "border-slate-100 bg-slate-50/70 text-slate-900"}`}
+              className="
+w-10 h-12
+sm:w-12 sm:h-14
+text-center
+text-xl
+font-black
+rounded-2xl
+border
+border-slate-100
+bg-slate-50
+focus:border-slate-950
+focus:ring-2
+focus:ring-slate-950/20
+focus:bg-white
+outline-none
+transition-all
+"
             />
           ))}
         </div>
@@ -174,4 +195,3 @@ export default function VerifyOtpForm() {
     </div>
   );
 }
-

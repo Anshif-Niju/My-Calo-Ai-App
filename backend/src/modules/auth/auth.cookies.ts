@@ -19,7 +19,20 @@ export const setAccessTokenCookie = (res: Response, token: string) => {
   });
 };
 
+export const setTemp2FACookie = (res: Response, token: string) => {
+  res.cookie("tempToken", token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
 export const clearAuthCookies = (res: Response) => {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
+};
+
+export const clearTemp2FACookie = (res: Response) => {
+  res.clearCookie("tempToken");
 };

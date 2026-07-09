@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { authenticate, authorize } from "../../middlewares/authenticate";
+import { verifyAccessToken } from "../../middlewares/authenticate.middleware";
+import { authorize } from "../../middlewares/authorize.middleware";
 import { createDiskUploader } from "../../middlewares/upload.middleware";
 import * as adminController from "./admin.controller";
 
@@ -10,15 +11,15 @@ const foodUpload = createDiskUploader("foods", 10, (_req, file, cb) => {
   else cb(new Error("Only images allowed"));
 });
 
-router.get("/dashboard", authenticate, authorize(["admin"]), adminController.getDashboard);
-router.get("/users", authenticate, authorize(["admin"]), adminController.getAllUsers);
-router.get("/users/:id", authenticate, authorize(["admin"]), adminController.getUserById);
-router.get("/users/:id/daily-log", authenticate, authorize(["admin"]), adminController.getUserDailyLog);
-router.patch("/users/:id/block", authenticate, authorize(["admin"]), adminController.blockUser);
-router.delete("/users/:id", authenticate, authorize(["admin"]), adminController.deleteUser);
+router.get("/dashboard", verifyAccessToken, authorize(["admin"]), adminController.getDashboard);
+router.get("/users", verifyAccessToken, authorize(["admin"]), adminController.getAllUsers);
+router.get("/users/:id", verifyAccessToken, authorize(["admin"]), adminController.getUserById);
+router.get("/users/:id/daily-log", verifyAccessToken, authorize(["admin"]), adminController.getUserDailyLog);
+router.patch("/users/:id/block", verifyAccessToken, authorize(["admin"]), adminController.blockUser);
+router.delete("/users/:id", verifyAccessToken, authorize(["admin"]), adminController.deleteUser);
 router.post(
   "/foods",
-  authenticate,
+  verifyAccessToken,
   authorize(["admin"]),
   foodUpload.single("image"),
   (req, res, next) => {
@@ -33,6 +34,6 @@ router.post(
   },
   adminController.createFood,
 );
-router.get("/foods", authenticate, authorize(["admin"]), adminController.getAllFoods);
-router.delete("/foods/:id", authenticate, authorize(["admin"]), adminController.deleteFood);
+router.get("/foods", verifyAccessToken, authorize(["admin"]), adminController.getAllFoods);
+router.delete("/foods/:id", verifyAccessToken, authorize(["admin"]), adminController.deleteFood);
 export default router;

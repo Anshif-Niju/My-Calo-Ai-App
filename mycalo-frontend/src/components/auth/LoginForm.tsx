@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/lib/axios";
-import { setTwoFactorRequired, setUser } from "@/store/slices/auth.slice";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { LoginFormData, loginSchema } from "@/validators/auth.schema";
@@ -19,10 +18,8 @@ interface LoginFormProps {
 
 export default function LoginForm({ onNavigate }: LoginFormProps) {
   const router = useRouter();
-  const dispatch = useDispatch();
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
     register: loginRegister,
@@ -38,18 +35,13 @@ export default function LoginForm({ onNavigate }: LoginFormProps) {
       return response.data;
     },
     onSuccess: (data) => {
-      console.log(data);
       if (data.requiresTwoFactor) {
-        setIsRedirecting(true);
-        dispatch(setTwoFactorRequired({ tempToken: data.tempToken }));
         router.replace("/two-factor");
         return;
       }
-      dispatch(setUser({ user: data.user }));
-      setIsRedirecting(true);
       router.replace(getRedirectPath(data.user));
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Something went wrong. Please try again later"));
     },
   });
@@ -108,6 +100,8 @@ export default function LoginForm({ onNavigate }: LoginFormProps) {
           <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 ml-0.5">Email address</label>
           <input
             type="email"
+            autoFocus
+            autoComplete="email"
             {...loginRegister("email")}
             placeholder="Enter Your Email"
             className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-slate-900 font-medium placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 transition-all outline-none text-sm"
@@ -117,13 +111,14 @@ export default function LoginForm({ onNavigate }: LoginFormProps) {
         <div>
           <div className="flex justify-between items-center mb-1 ml-0.5">
             <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">Password</label>
-            <a href="/forgot-password" className="text-[10px] font-bold text-slate-400 hover:text-slate-950 transition-colors">
+            <Link href="/forgot-password" className="text-[10px] font-bold text-slate-400 hover:text-slate-950 transition-colors">
               Forgot password?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <input
               type={showLoginPassword ? "text" : "password"}
+              autoComplete="current-password"
               {...loginRegister("password")}
               placeholder="Enter your password"
               className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 bg-white text-slate-900 font-medium placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 transition-all outline-none text-sm"
@@ -153,9 +148,9 @@ export default function LoginForm({ onNavigate }: LoginFormProps) {
         </div>
         <button
           type="submit"
-          disabled={loginMutation.isPending || isRedirecting}
+          disabled={loginMutation.isPending}
           className="w-full h-11 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-[0_4px_12px_rgba(15,23,42,0.15)] active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 text-xs cursor-pointer">
-          {loginMutation.isPending || isRedirecting ? (
+          {loginMutation.isPending ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
@@ -168,7 +163,7 @@ export default function LoginForm({ onNavigate }: LoginFormProps) {
         </button>
       </form>
       <p className="text-center text-xs font-medium text-slate-500 pt-2">
-        Don&apos;t have a workspace?{" "}
+        Don&apos;t have a account?{" "}
         <button onClick={() => onNavigate("register")} className="font-bold text-slate-950 hover:underline cursor-pointer">
           Create one free
         </button>

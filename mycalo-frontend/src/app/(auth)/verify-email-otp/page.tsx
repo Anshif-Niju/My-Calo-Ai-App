@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import VerifyEmailForm from "@/components/auth/VerifyEmailForm";
+import VerifyEmailForm from "@/components/auth/VerifyEmailOtp";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
