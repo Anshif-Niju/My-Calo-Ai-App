@@ -1,4 +1,4 @@
-import DoctorVerificationForm from "@/components/onboarding/doctor/DoctorVerificationForm";
+import DoctorProfileForm from "@/components/onboarding/doctor/DoctorProfileForm";
 export default function DoctorProfilePage() {
-  return <DoctorVerificationForm />;
+  return <DoctorProfileForm />;
 }
