@@ -86,16 +86,6 @@ export default function TwoFactorForm() {
     if (newOtp.join("").length === 6) verifyMutation.mutate(newOtp.join(""));
   };
 
-  if (!tempToken) {
-    return (
-      <div className="w-full bg-white p-8 rounded-[32px] text-center border border-slate-100">
-        <p className="text-slate-500 font-medium text-sm">Invalid session. Please login again.</p>
-        <button onClick={() => router.push("/login")} className="mt-4 text-slate-950 font-bold underline">
-          Back to login
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full bg-white p-6 sm:p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20">
