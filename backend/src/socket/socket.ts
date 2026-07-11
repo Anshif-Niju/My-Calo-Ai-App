@@ -5,19 +5,9 @@ import { applySocketAuth } from "./socketAuth.js";
 import { registerBookingEvents } from "./bookingEvents.js";
 import { registerUserEvents } from "./userEvents.js";
 
-// Singleton — one io instance shared across the whole app
 let io: SocketIOServer | null = null;
 
-/**
- * Initialises the Socket.IO server and wires up the full connection pipeline:
- *
- *   initSocket()
- *     └─ applySocketAuth()        — JWT cookie verification + user room join
- *     └─ registerBookingEvents()  — join-booking, chat, WebRTC
- *     └─ registerUserEvents()     — disconnect logging, future user events
- *
- * Must be called once on server startup before any worker calls getIO().
- */
+
 export const initSocket = (httpServer: HttpServer): SocketIOServer => {
   io = new SocketIOServer(httpServer, {
     cors: {
@@ -38,12 +28,6 @@ export const initSocket = (httpServer: HttpServer): SocketIOServer => {
   return io;
 };
 
-/**
- * Returns the shared Socket.IO instance.
- * Used by BullMQ workers to push events to user or booking rooms.
- *
- * @throws if called before initSocket()
- */
 export const getIO = (): SocketIOServer => {
   if (!io) {
     throw new Error("Socket.IO not initialised — call initSocket() first");

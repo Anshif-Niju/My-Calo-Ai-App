@@ -4,30 +4,9 @@ import { Booking } from "../models/Booking.model.js";
 import { SocketWithUser } from "./types.js";
 import { logger } from "../utils/logger.js";
 
-/**
- * Registers all booking-scoped socket events on the given io instance.
- *
- * Events handled:
- *  - join-booking   → validates user owns this booking, then socket.join(bookingId)
- *  - send-message   → saves to MongoDB, broadcasts new-message to booking room
- *  - call-user      → WebRTC offer relay
- *  - answer-call    → WebRTC answer relay
- *  - ice-candidate  → WebRTC ICE candidate relay
- *  - end-call       → signals remote peer to close
- *  - toggle-media   → relays mic/camera state to remote peer
- *
- * The authenticated user identity always comes from `socket.user` — the
- * frontend never sends a userId in any event payload.
- */
 export const registerBookingEvents = (io: SocketIOServer): void => {
   io.on("connection", (socket) => {
     const authedSocket = socket as SocketWithUser;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // join-booking
-    // Frontend sends: { bookingId }
-    // Server verifies the authenticated user is booking.userId or booking.doctorId
-    // ─────────────────────────────────────────────────────────────────────────
     socket.on("join-booking", async ({ bookingId }: { bookingId: string }) => {
       try {
         if (!bookingId) {

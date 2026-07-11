@@ -61,25 +61,9 @@ export const resetPasswordSchema = z
   });
 
 
-// 5. Verify Email Schema
-
-export const verifyEmailSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  otp: z.string().length(6, "OTP must be exactly 6 digits"),
-});
-
-
-// 6. Resend OTP Schema
-
-export const resendOtpSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  type: z.enum(["email_verify", "forgot_password"]),
-});
 
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
-export type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
-export type ResendOtpFormData = z.infer<typeof resendOtpSchema>;

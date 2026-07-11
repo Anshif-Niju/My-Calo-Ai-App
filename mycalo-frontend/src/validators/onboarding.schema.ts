@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-export const roleSelectSchema = z.object({
-  role: z.enum(["user", "doctor"], {
-    message: "Please select a role to continue",
-  }),
-});
 
 export const healthProfileSchema = z.object({
   age: z.coerce.number().min(10, "Must be at least 10").max(100, "Invalid age"),

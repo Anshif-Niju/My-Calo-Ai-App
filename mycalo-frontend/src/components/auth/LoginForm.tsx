@@ -11,6 +11,8 @@ import { api } from "@/lib/axios";
 import { getRedirectPath } from "@/utils/getRedirectPath";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { LoginFormData, loginSchema } from "@/validators/auth.schema";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/slices/auth.slice";
 
 interface LoginFormProps {
   onNavigate: (mode: "login" | "register") => void;
@@ -18,6 +20,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onNavigate }: LoginFormProps) {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
@@ -39,6 +42,8 @@ export default function LoginForm({ onNavigate }: LoginFormProps) {
         router.replace("/two-factor");
         return;
       }
+
+      dispatch(setUser({ user: data.user }));
       router.replace(getRedirectPath(data.user));
     },
     onError: (error: unknown) => {
