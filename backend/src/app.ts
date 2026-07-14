@@ -16,7 +16,6 @@ import { globalLimiter, authLimiter, scanLimiter } from "./middlewares/rateLimit
 
 const app = express();
 
-
 // 1. Compression
 app.use(compression());
 
