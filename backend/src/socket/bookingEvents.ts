@@ -1,6 +1,6 @@
 import { Server as SocketIOServer } from "socket.io";
 import { ChatMessage } from "../models/ChatMessage.model.js";
-import { Booking } from "../models/TempBooking.model.js";
+import { Booking } from "../models/Booking.model.js";
 import { SocketWithUser } from "./types.js";
 import { logger } from "../utils/logger.js";
 

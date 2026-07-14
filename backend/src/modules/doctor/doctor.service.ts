@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Booking } from "../../models/TempBooking.model";
+import { Booking } from "../../models/Booking.model";
 import { DoctorProfile } from "../../models/Doctor.Profile.model";
 import { User } from "../../models/User.model";
 import { CreateBookingInput, UpdateAvailabilityInput, UpdateDoctorProfileInput } from "./doctor.validation";
