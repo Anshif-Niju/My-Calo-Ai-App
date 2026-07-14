@@ -23,7 +23,7 @@ const BookingSchema = new Schema<IBooking>(
       enum: ["pending_payment", "confirmed", "cancelled", "completed"],
       default: "pending_payment",
     },
-    
+
     chatSessionId: { type: String },
     chatStartTime: { type: Date },
     chatEndTime: { type: Date },
