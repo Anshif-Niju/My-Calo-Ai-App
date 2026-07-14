@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Booking } from "../../models/Booking.model";
+import { Booking } from "../../models/TempBooking.model";
 import { DoctorProfile } from "../../models/Doctor.Profile.model";
 import { User } from "../../models/User.model";
 import { CreateBookingInput, UpdateAvailabilityInput, UpdateDoctorProfileInput } from "./doctor.validation";
@@ -74,22 +74,11 @@ export async function listDoctors(filters: { specialization?: string; search?: s
 
   if (specialization) query.specialization = specialization;
   if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { specialization: { $regex: search, $options: "i" } },
-      { services: { $elemMatch: { $regex: search, $options: "i" } } },
-    ];
+    query.$or = [{ name: { $regex: search, $options: "i" } }, { specialization: { $regex: search, $options: "i" } }, { services: { $elemMatch: { $regex: search, $options: "i" } } }];
   }
 
   const skip = (page - 1) * limit;
-  const [doctors, total] = await Promise.all([
-    DoctorProfile.find(query)
-      .select("name profilePhoto specialization experience qualifications services consultationFee about")
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    DoctorProfile.countDocuments(query),
-  ]);
+  const [doctors, total] = await Promise.all([DoctorProfile.find(query).select("name profilePhoto specialization experience qualifications services consultationFee about").skip(skip).limit(limit).lean(), DoctorProfile.countDocuments(query)]);
 
   return {
     doctors,
@@ -194,7 +183,7 @@ export async function createBookingOrder(userId: string, userEmail: string, user
             amount: profile.consultationFee * 100, // paise
             currency: "INR",
             on_hold: false,
-          }
+          },
         ];
       }
 

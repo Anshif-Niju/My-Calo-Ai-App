@@ -2,7 +2,7 @@ import { User } from "../../models/User.model";
 import { MealLog } from "../../models/Meal.model";
 import { DailyLog } from "../../models/DailyLog.model";
 import { Appointment } from "../../models/Appointment.model";
-import { Booking } from "../../models/Booking.model";
+import { Booking } from "../../models/TempBooking.model";
 import { DoctorProfile } from "../../models/Doctor.Profile.model";
 import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { redis } from "../../config/redis";
@@ -22,9 +22,7 @@ export const updateProfileService = async (userId: string, file: Express.Multer.
       entityType: "User",
       entityId: user._id.toString(),
       folder: "profiles",
-      files: [
-        { fieldName: "image", path: file.path }
-      ]
+      files: [{ fieldName: "image", path: file.path }],
     });
   }
 
@@ -34,13 +32,7 @@ export const updateProfileService = async (userId: string, file: Express.Multer.
   }
 
   // Recalculate targets if any health metrics change
-  const hasHealthOrGoalChanges = 
-    data.height !== undefined ||
-    data.weight !== undefined ||
-    data.activityLevel !== undefined ||
-    data.goalType !== undefined ||
-    data.targetWeight !== undefined ||
-    data.diseases !== undefined;
+  const hasHealthOrGoalChanges = data.height !== undefined || data.weight !== undefined || data.activityLevel !== undefined || data.goalType !== undefined || data.targetWeight !== undefined || data.diseases !== undefined;
 
   if (hasHealthOrGoalChanges) {
     const height = data.height !== undefined ? Number(data.height) : user.healthProfile?.height;
@@ -56,9 +48,7 @@ export const updateProfileService = async (userId: string, file: Express.Multer.
       const heightInMeters = height / 100;
       const bmi = parseFloat((weight / (heightInMeters * heightInMeters)).toFixed(1));
 
-      const bmr = gender === "male"
-        ? Math.round(88.362 + 13.397 * weight + 4.799 * height - 5.677 * age)
-        : Math.round(447.593 + 9.247 * weight + 3.098 * height - 4.33 * age);
+      const bmr = gender === "male" ? Math.round(88.362 + 13.397 * weight + 4.799 * height - 5.677 * age) : Math.round(447.593 + 9.247 * weight + 3.098 * height - 4.33 * age);
 
       const multipliers: Record<string, number> = {
         sedentary: 1.2,
@@ -83,14 +73,7 @@ export const updateProfileService = async (userId: string, file: Express.Multer.
   await user.save();
 
   // Re-issue Express access token
-  const newAccessToken = generateAccessToken(
-    user._id.toString(),
-    user.role,
-    user.email,
-    user.onboardingCompleted,
-    user.hasSubmittedVerification,
-    "not_submitted"
-  );
+  const newAccessToken = generateAccessToken(user._id.toString(), user.role, user.email, user.onboardingCompleted, user.hasSubmittedVerification, "not_submitted");
 
   // Invalidate Redis dashboard summary cache
   const todayStr = new Date().toISOString().split("T")[0];

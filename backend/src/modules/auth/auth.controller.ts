@@ -8,7 +8,7 @@ import { User } from "../../models/User.model";
 import { MealLog } from "../../models/Meal.model";
 import { DailyLog } from "../../models/DailyLog.model";
 import { Appointment } from "../../models/Appointment.model";
-import { Booking } from "../../models/Booking.model";
+import { Booking } from "../../models/TempBooking.model";
 import { DoctorProfile } from "../../models/Doctor.Profile.model";
 import { DoctorVerification } from "../../models/Doctor.Verification.model";
 import { redis } from "../../config/redis";
