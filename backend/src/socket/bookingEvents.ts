@@ -1,6 +1,6 @@
 import { Server as SocketIOServer } from "socket.io";
 import { ChatMessage } from "../models/ChatMessage.model.js";
-import { Booking } from "../models/Booking.model.js";
+import { Booking } from "../models/Booking.model";
 import { SocketWithUser } from "./types.js";
 import { logger } from "../utils/logger.js";
 
@@ -22,9 +22,7 @@ export const registerBookingEvents = (io: SocketIOServer): void => {
         }
 
         const userId = authedSocket.user.userId;
-        const isParticipant =
-          booking.userId.toString() === userId ||
-          booking.doctorId.toString() === userId;
+        const isParticipant = booking.userId.toString() === userId || booking.doctorId.toString() === userId;
 
         if (!isParticipant) {
           socket.emit("error", { message: "Unauthorized: not a participant of this booking" });
@@ -49,38 +47,23 @@ export const registerBookingEvents = (io: SocketIOServer): void => {
     // Frontend sends: { bookingId, senderType, message, messageType?, fileUrl? }
     // senderId comes from socket.user — never trusted from frontend
     // ─────────────────────────────────────────────────────────────────────────
-    socket.on(
-      "send-message",
-      async ({
-        bookingId,
-        senderType,
-        message,
-        messageType,
-        fileUrl,
-      }: {
-        bookingId: string;
-        senderType: "user" | "doctor";
-        message: string;
-        messageType?: "text" | "file" | "call_log";
-        fileUrl?: string;
-      }) => {
-        try {
-          const chatMsg = await ChatMessage.create({
-            bookingId,
-            senderId: authedSocket.user.userId, // Always from JWT, never from frontend
-            senderType,
-            message,
-            messageType: messageType ?? "text",
-            fileUrl,
-          });
+    socket.on("send-message", async ({ bookingId, senderType, message, messageType, fileUrl }: { bookingId: string; senderType: "user" | "doctor"; message: string; messageType?: "text" | "file" | "call_log"; fileUrl?: string }) => {
+      try {
+        const chatMsg = await ChatMessage.create({
+          bookingId,
+          senderId: authedSocket.user.userId, // Always from JWT, never from frontend
+          senderType,
+          message,
+          messageType: messageType ?? "text",
+          fileUrl,
+        });
 
-          io.to(bookingId).emit("new-message", chatMsg);
-        } catch (err) {
-          logger.error("send-message error:", err);
-          socket.emit("error", { message: "Failed to send message" });
-        }
+        io.to(bookingId).emit("new-message", chatMsg);
+      } catch (err) {
+        logger.error("send-message error:", err);
+        socket.emit("error", { message: "Failed to send message" });
       }
-    );
+    });
 
     // ─────────────────────────────────────────────────────────────────────────
     // WebRTC Signaling — relay only, no business logic changes
@@ -102,11 +85,8 @@ export const registerBookingEvents = (io: SocketIOServer): void => {
       socket.to(bookingId).emit("call-ended");
     });
 
-    socket.on(
-      "toggle-media",
-      ({ bookingId, type, enabled }: { bookingId: string; type: "audio" | "video"; enabled: boolean }) => {
-        socket.to(bookingId).emit("media-state-changed", { type, enabled });
-      }
-    );
+    socket.on("toggle-media", ({ bookingId, type, enabled }: { bookingId: string; type: "audio" | "video"; enabled: boolean }) => {
+      socket.to(bookingId).emit("media-state-changed", { type, enabled });
+    });
   });
 };
